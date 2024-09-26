@@ -52,7 +52,10 @@ def process_directory(current_dir):
     # 递归搜索所有PDF文件
     pdf_files = glob.glob(f"{current_dir}/**/*.pdf", recursive=True)
     pdf_files += glob.glob(f"{current_dir}/**/*.PDF", recursive=True)
-    valid_files = random.shuffle([f for f in pdf_files if not Path(f+".txt").exists()])
+    valid_files = [f for f in pdf_files if not Path(f+".txt").exists()]
+    
+    #打乱顺序，确保多线程不冲突
+    random.shuffle(valid_files)
     global total_cnt
     total_cnt = len(valid_files)
     for i,f in enumerate(valid_files):
