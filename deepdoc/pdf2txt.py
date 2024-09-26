@@ -58,11 +58,11 @@ def process_directory(current_dir):
     random.shuffle(valid_files)
     global total_cnt
     total_cnt = len(valid_files)
-    # for i,f in enumerate(valid_files):
-    #     ocr_pdf_file(f,f+".txt",i)
-    proc_num = min(16,os.cpu_count() * 2)
-    with Pool(processes=proc_num) as pool:  # 根据需要调整进程数
-        results = pool.starmap(ocr_pdf_file, [(f,f+".txt",i) for i,f in enumerate(valid_files)])
+    for i,f in enumerate(valid_files):
+        ocr_pdf_file(f,f+".txt",i)
+    # proc_num = min(16,os.cpu_count() * 2)
+    # with Pool(processes=proc_num) as pool:  # 根据需要调整进程数
+    #     results = pool.starmap(ocr_pdf_file, [(f,f+".txt",i) for i,f in enumerate(valid_files)])
                 
 def main():
     # 从输入目录开始处理
