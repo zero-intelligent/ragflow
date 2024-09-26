@@ -38,6 +38,8 @@ def ocr_pdf_file(input_path,output_txt_file,index):
     for img in images:
         results = ocr.ocr(np.array(img), cls=True)
         for result in results:
+            if not result:
+                continue
             for r in result:
                 ocr_results.append(r[1][0])    
                 
