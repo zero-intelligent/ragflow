@@ -55,7 +55,7 @@ def process_directory(current_dir):
     valid_files = [f for f in pdf_files if not Path(f+".txt").exists()]
     global total_cnt
     total_cnt = len(valid_files)
-    proc_num = max(16,cpu_count() * 2)
+    proc_num = min(16,cpu_count() * 2)
     with Pool(processes=proc_num) as pool:  # 根据需要调整进程数
         results = pool.starmap(ocr_pdf_file, [(f,f+".txt",i) for i,f in enumerate(valid_files)])
                 
