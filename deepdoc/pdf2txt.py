@@ -11,8 +11,7 @@ import pdfplumber
 from multiprocessing import Pool
 
 
-# 初始化 OCR
-ocr = PaddleOCR(use_angle_cls=True, lang='ch')  # 根据需要选择语言
+
 
 def process_page(page):
     try:
@@ -26,6 +25,9 @@ def get_pdf_pages(pdf_file):
     return [process_page(p) for p in pdf.pages]
 
 def ocr_pdf_file(input_path,output_txt_file,index):
+    # 初始化 OCR
+    ocr = PaddleOCR(use_angle_cls=True, lang='ch')  # 根据需要选择语言
+
     print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {input_path},{os.path.getsize(input_path)/1024/1024.0:.2f}M")
     start = time.time()
     images = get_pdf_pages(input_path)
