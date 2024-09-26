@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 要执行的 Python 脚本路径
-SCRIPT_PATH="/Users/mac/python_projects/ragflow/deepdoc/pdf2txt.py"
+SCRIPT_PATH="./deepdoc/pdf2txt.py"
 INPUT_DIR="/mnt/disk5/dataset/800本宠物医学电子书"
 
 # 激活虚拟环境
