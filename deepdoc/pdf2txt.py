@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from os import cpu_count
+import random
 from pathlib import Path
 import sys
 import time
@@ -52,12 +52,14 @@ def process_directory(current_dir):
     # 递归搜索所有PDF文件
     pdf_files = glob.glob(f"{current_dir}/**/*.pdf", recursive=True)
     pdf_files += glob.glob(f"{current_dir}/**/*.PDF", recursive=True)
-    valid_files = [f for f in pdf_files if not Path(f+".txt").exists()]
+    valid_files = random.shuffle([f for f in pdf_files if not Path(f+".txt").exists()])
     global total_cnt
     total_cnt = len(valid_files)
-    proc_num = min(16,cpu_count() * 2)
-    with Pool(processes=proc_num) as pool:  # 根据需要调整进程数
-        results = pool.starmap(ocr_pdf_file, [(f,f+".txt",i) for i,f in enumerate(valid_files)])
+    for i,f in enumerate(valid_files):
+        ocr_pdf_file(f,f+".txt",i)
+    # proc_num = min(16,os.cpu_count() * 2)
+    # with Pool(processes=proc_num) as pool:  # 根据需要调整进程数
+    #     results = pool.starmap(ocr_pdf_file, [(f,f+".txt",i) for i,f in enumerate(valid_files)])
                 
 def main():
     # 从输入目录开始处理
