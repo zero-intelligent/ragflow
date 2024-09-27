@@ -47,12 +47,15 @@ check_depends() {
         "libcudnn_cnn_infer.so.8"
         "libcudnn_ops_infer.so.8"
     )
+
     for file in "${files[@]}"; do
-        if ! echo "$LD_LIBRARY_PATH" | tr ':' '\n' | xargs -I{} bash -c "[ -f \"{}/$file\" ]" &> /dev/null; then
+        found=$(find ${LD_LIBRARY_PATH//:/ } -name "$file" -print -quit)
+        if [ -z "$found" ]; then
             echo "Could not find $file in directories specified by LD_LIBRARY_PATH."
             exit 1
         fi
     done
+
 }
 
 # 循环执行直到不再出现 ModuleNotFoundError 错误
