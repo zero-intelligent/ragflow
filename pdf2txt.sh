@@ -100,7 +100,7 @@ while true; do
         break
     fi
 
-    if ((proc_num < 6)); then
+    if ((proc_num < 5)); then
         cd $APP_HOME;nohup python $SCRIPT_PATH $INPUT_DIR 2>&1 &
     fi
 
