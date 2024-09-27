@@ -8,10 +8,6 @@ import glob
 import numpy as np
 from paddleocr import PaddleOCR
 import pdfplumber
-from multiprocessing import Pool
-
-
-
 
 def process_page(page):
     try:
@@ -21,8 +17,12 @@ def process_page(page):
         return None
 
 def get_pdf_pages(pdf_file):
-    pdf = pdfplumber.open(pdf_file)
-    return [process_page(p) for p in pdf.pages]
+    try:
+        pdf = pdfplumber.open(pdf_file)
+        return [process_page(p) for p in pdf.pages]
+    except Exception as ex:
+        print(ex.message)
+        return []
 
 def ocr_pdf_file(input_path,output_txt_file,index):
     # 初始化 OCR
@@ -31,7 +31,9 @@ def ocr_pdf_file(input_path,output_txt_file,index):
     print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {input_path},{os.path.getsize(input_path)/1024/1024.0:.2f}M")
     start = time.time()
     images = get_pdf_pages(input_path)
-    print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {input_path} get_pdf_pages {time.time()-start:.2f}s")
+    print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {input_path} get {len(images)} pdf_pages {time.time()-start:.2f}s")
+    if not images:
+        return False
     
     # 执行 OCR 识别
     ocr_results = []
