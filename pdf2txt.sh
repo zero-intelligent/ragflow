@@ -88,12 +88,7 @@ check_depends
 
 while true; do
     # 如果 pdf2txt 少于5个，就启动新的
-    proc_num=$(pgrep -f "pdf2txt" | wc -l)
-    if ((proc_num < 5)); then
-        cd $APP_HOME;nohup python $SCRIPT_PATH $INPUT_DIR 2>&1 &
-    fi
-
-    sleep 60
+    proc_num=$(pgrep -f $SCRIPT_PATH | wc -l)
 
     pdf_cnt=$(find $INPUT_DIR -type f -name "*.pdf" | wc -l) 
     pdf_cnt=$((pdf_cnt + $(find $INPUT_DIR -type f -name "*.PDF" | wc -l)))
@@ -104,6 +99,12 @@ while true; do
     if (($txt_cnt >= $pdf_cnt));then
         break
     fi
+
+    if ((proc_num < 6)); then
+        cd $APP_HOME;nohup python $SCRIPT_PATH $INPUT_DIR 2>&1 &
+    fi
+
+    sleep 60
 
 done
 
