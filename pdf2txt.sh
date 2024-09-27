@@ -34,7 +34,7 @@ fi
 
 # 激活虚拟环境
 cd $APP_HOME
-conda activate ragflow
+source ~/anaconda3/bin/activate ragflow
 
 # 确保依赖so文件能找到
 export LD_LIBRARY_PATH=/home/admin/anaconda3/lib/python3.11/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH
