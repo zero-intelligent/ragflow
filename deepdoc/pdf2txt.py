@@ -36,6 +36,8 @@ def ocr_pdf_file(input_path,output_txt_file,index):
     # 执行 OCR 识别
     ocr_results = []
     for img in images:
+        if Path(output_txt_file).exists(): # 如果其他进程已经完成输出，则退出当前文件处理
+            return False
         results = ocr.ocr(np.array(img), cls=True)
         for result in results:
             if not result:
