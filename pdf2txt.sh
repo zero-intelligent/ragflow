@@ -38,7 +38,7 @@ source ~/anaconda3/bin/activate ragflow
 
 # 确保依赖so文件能找到
 export LD_LIBRARY_PATH=/home/admin/anaconda3/lib/python3.11/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/home/admin/.conda/pkgs/libcublas-12.1.0.26-0/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.1/targets/x86_64-linux/lib:$LD_LIBRARY_PATH
 
 check_depends() {
     files=(
