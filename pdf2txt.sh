@@ -2,9 +2,10 @@
 
 # 要执行的 Python 脚本路径
 SCRIPT_PATH="./deepdoc/pdf2txt.py"
-APP_HOME=$(dirname "$PWD/$0")
+APP_HOME=$(dirname "$0")
 
 INPUT_DIR=""
+INSTALL=false
 
 # 解析命令行参数
 while [[ "$#" -gt 0 ]]; do
@@ -46,7 +47,7 @@ check_depends() {
         "libcudnn_ops_infer.so.8"
     )
     for file in "${files[@]}"; do
-        if ! echo "$LD_LIBRARY_PATH" | tr ':' '\n' | xargs -I{} sh -c "[ -f "{}/$file" ]" &> /dev/null; then
+        if ! echo "$LD_LIBRARY_PATH" | tr ':' '\n' | xargs -I{} bash -c "[ -f \"{}/$file\" ]" &> /dev/null; then
             echo "Could not find $file in directories specified by LD_LIBRARY_PATH."
             exit 1
         fi
@@ -58,7 +59,7 @@ install_missing_modules() {
     while true; do
         # 执行 Python 脚本并将标准错误输出重定向到标准输出
         output=$(python $SCRIPT_PATH $INPUT_DIR 2>&1)
-        echo $output
+        echo "$output"
         
         # 检查输出中是否存在 ModuleNotFoundError
         if echo "$output" | grep -q "ModuleNotFoundError: No module named"; then
