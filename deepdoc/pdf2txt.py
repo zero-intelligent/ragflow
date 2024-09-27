@@ -21,7 +21,7 @@ def get_pdf_pages(pdf_file):
         pdf = pdfplumber.open(pdf_file)
         return [process_page(p) for p in pdf.pages]
     except Exception as ex:
-        print(ex.message)
+        print(str(ex))
         return []
 
 def ocr_pdf_file(input_path,output_txt_file,index):
