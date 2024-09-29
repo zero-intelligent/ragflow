@@ -10,10 +10,11 @@ import traceback
 import numpy as np
 from paddleocr import PaddleOCR
 import fitz
+import torch
 
     
 # 初始化 OCR
-ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_gpu=True)
+ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_gpu=torch.cuda.is_available())
 
 def extract_images_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
