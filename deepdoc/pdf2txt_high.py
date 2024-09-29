@@ -59,13 +59,19 @@ def ocr_pdf_file(input_path,index=0):
         ocr_results = []
         
         with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(ocr.ocr, np.array(img)):txt for txt,images in txt_images for img in images}
-            for future,txt in futures.items():
+            futures = [(executor.submit(ocr.ocr, np.array(img)),txt) for txt,images in txt_images for img in images]
+            for future,txt in futures:
                 img_result = future.result()
-                ocr_results.append(txt)
-                if img_result:
-                    for r in img_result:
+                if txt:
+                    ocr_results.append(txt)
+                if not img_result:
+                    continue
+                for rr in img_result:
+                    if not rr:
+                        continue
+                    for r in rr:
                         ocr_results.append(r[1][0])
+                    
                     
         # for txt,images in txt_images:
         #     if txt:
