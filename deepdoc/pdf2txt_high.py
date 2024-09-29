@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import io
 import os
 import random
 from pathlib import Path
@@ -11,29 +12,33 @@ import numpy as np
 from paddleocr import PaddleOCR
 import fitz
 import torch
+from PIL import Image
+
 
     
 # 初始化 OCR
 ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_gpu=torch.cuda.is_available())
 
-def extract_images_from_pdf(pdf_path):
+def extract_txt_images_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
-    images = []
+    results = []
 
     for page_idx,page in enumerate(doc):
         # 提取当前页面的图像列表
         
         page_images = page.get_images(full=True)
         text_content = page.get_text()
+        images = []
         for img_index, img in enumerate(page_images):
             xref = img[0]
             base_image = doc.extract_image(xref)
-            
             image_bytes = base_image["image"]
-            images.append(image_bytes)
-
+            image = Image.open(io.BytesIO(image_bytes))
+    
+            images.append(image)
+        results.append((text_content,images))
     doc.close()
-    return images
+    return results
 
 def ocr_pdf_file(input_path,index=0):
     locker_file = Path(f"{input_path}.lock")
@@ -45,29 +50,32 @@ def ocr_pdf_file(input_path,index=0):
         locker_file.touch()
         print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {input_path},{os.path.getsize(input_path)/1024/1024.0:.2f}M")
         start = time.time()
-        images = extract_images_from_pdf(input_path)
-        print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {input_path} get {len(images)} pdf_pages {time.time()-start:.2f}s")
-        if not images:
+        txt_images = extract_txt_images_from_pdf(input_path)
+        print(f"{datetime.now():%Y-%m-%d %H:%M:%S} {input_path} get {len(txt_images)} pdf_pages {time.time()-start:.2f}s")
+        if not txt_images:
             return False
         
         # 执行 OCR 识别
         ocr_results = []
         
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(ocr.ocr, np.array(img)) for img in images]
-            for future in futures:
-                result = future.result()
-                if result:
-                    for r in result:
+            futures = {executor.submit(ocr.ocr, np.array(img)):txt for txt,images in txt_images for img in images}
+            for future,txt in futures.items():
+                img_result = future.result()
+                ocr_results.append(txt)
+                if img_result:
+                    for r in img_result:
                         ocr_results.append(r[1][0])
                     
-        # for img in images:
-        #     results = ocr.ocr(np.array(img), cls=True)
-        #     for result in results:
-        #         if not result:
-        #             continue
-        #         for r in result:
-        #             ocr_results.append(r[1][0])
+        # for txt,images in txt_images:
+        #     if txt:
+        #         ocr_results.append(txt)
+        #     for img in images:
+        #         results = ocr.ocr(np.array(img), cls=True)
+        #         for result in results:
+        #             if result:
+        #                 for r in result:
+        #                     ocr_results.append(r[1][0])
         
         with open(output_txt_file, "a") as f:
             f.write('\n'.join(ocr_results))
@@ -76,6 +84,7 @@ def ocr_pdf_file(input_path,index=0):
 
     except Exception as ex:
         with open(error_file, 'w', encoding='utf-8') as file:
+            print(f"Traceback:\n{traceback.format_exc()}\n")
             file.write(f"Exception: {ex}\n")
             file.write(f"Traceback:\n{traceback.format_exc()}\n")
         
