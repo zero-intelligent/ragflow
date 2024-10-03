@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 要执行的 Python 脚本路径
-SCRIPT_PATH="./deepdoc/pdf2txt.py"
+SCRIPT_PATH="./deepdoc/pdf2txt_high.py"
 APP_HOME=$(dirname "$0")
 
 INPUT_DIR=""
