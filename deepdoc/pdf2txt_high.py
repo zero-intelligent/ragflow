@@ -184,8 +184,6 @@ def segment_image_by_columns(image: np.array,page_index:int = 0):
         # 分割每一栏
         for i, (left, right) in enumerate(column_boundaries):
             cropped_image = image[top:bottom, left:right]
-            if not (right > left) or not (bottom > top) or cropped_image.shape[0] == 0 or cropped_image.shape[1] == 0:
-                log.error("error")
             segment_results.append(cropped_image)
             # cv2.imwrite(f'page_{page_index}_row_{len(column_boundaries_per_row)-1}_column_{i}.jpg', cropped_image)
 

@@ -5,6 +5,7 @@ SCRIPT_PATH="./deepdoc/pdf2txt_high.py"
 # 并行进程数量
 PROCESS_NUM=4
 APP_HOME=$(dirname "$0")
+CUDA_VISIBLE_DEVICES="0"
 
 INPUT_DIR=""
 INSTALL=false
@@ -36,7 +37,7 @@ fi
 
 # 激活虚拟环境
 cd $APP_HOME
-source ~/anaconda3/bin/activate ragflow
+source ~/miniconda3/bin/activate ragflow
 
 check_depends() {
     files=(
