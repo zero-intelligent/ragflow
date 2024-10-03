@@ -2,6 +2,8 @@
 
 # 要执行的 Python 脚本路径
 SCRIPT_PATH="./deepdoc/pdf2txt_high.py"
+# 并行进程数量
+PROCESS_NUM=4
 APP_HOME=$(dirname "$0")
 
 INPUT_DIR=""
@@ -96,7 +98,7 @@ while true; do
         break
     fi
 
-    if ((proc_num < 4)); then
+    if ((proc_num < PROCESS_NUM)); then
         cd $APP_HOME;nohup python $SCRIPT_PATH $INPUT_DIR 2>&1 &
     fi
 
