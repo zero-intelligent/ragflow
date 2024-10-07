@@ -6,7 +6,7 @@ mysql:
   user: 'root'
   password: 'infini_rag_flow'
   host: 'mysql'
-  port: 5445
+  port: 5455
   max_connections: 100
   stale_timeout: 30
 minio:
