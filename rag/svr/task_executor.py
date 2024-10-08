@@ -237,7 +237,7 @@ def init_kb(row):
 
 
 def embedding(docs, mdl, parser_config={}, callback=None):
-    batch_size = 32
+    batch_size = 512
     tts, cnts = [rmSpace(d["title_tks"]) for d in docs if d.get("title_tks")], [
         re.sub(r"</?(table|td|caption|tr|th)( [^<>]{0,12})?>", " ", d["content_with_weight"]) for d in docs]
     tk_count = 0
