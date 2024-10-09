@@ -244,7 +244,7 @@ def embedding(docs, mdl, parser_config={}, callback=None):
     if len(tts) == len(cnts):
         tts_ = np.array([])
         for i in range(0, len(tts), batch_size):
-            vts, c = mdl.encode(tts[i: i + batch_size])
+            vts, c = mdl.encode(tts[i: i + batch_size],batch_size)
             if len(tts_) == 0:
                 tts_ = vts
             else:
