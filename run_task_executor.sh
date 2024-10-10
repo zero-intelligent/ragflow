@@ -6,6 +6,9 @@ cd "$APP_HOME"
 source .venv/bin/activate
 
 export CUDA_VISIBLE_DEVICES=0 
-export PYTHONPATH=$APP_HOME
+export PYTHONPATH=$(pwd)
 
-python rag/svr/task_executor.py 1
+task_num=${1:-1}
+for ((i=1;i<=task_num;i++)); do
+    python rag/svr/task_executor.py $i
+done
