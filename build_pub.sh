@@ -10,14 +10,15 @@ source .venv/bin/activate
 npm i --force && npm run build
 
 
-RAGFLOW_VERSION=dev5
+OLD_VERSION=dev4
+NEW_VERSION=dev5
 
 #构建容器
 docker buildx build -t infiniflow/ragflow:$RAGFLOW_VERSION -f Dockerfile.cuda .
 
 # 关闭之前容器的内容
 cd docker
-sed -i 's/RAGFLOW_VERSION=dev4/RAGFLOW_VERSION=$RAGFLOW_VERSION/' .venv
+sed -i 's/RAGFLOW_VERSION=$OLD_VERSION/RAGFLOW_VERSION=$NEW_VERSION/' .venv
 
 docker compose -f docker-compose.yml down
 
