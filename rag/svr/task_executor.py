@@ -244,7 +244,7 @@ def embedding(docs, mdl, parser_config={}, callback=None):
     if len(tts) == len(cnts):
         tts_ = np.array([])
         for i in range(0, len(tts), batch_size):
-            vts, c = mdl.encode(tts[i: i + batch_size])
+            vts, c = mdl.encode(tts[i: i + batch_size],batch_size)
             if len(tts_) == 0:
                 tts_ = vts
             else:
@@ -357,7 +357,7 @@ def main():
                 tk_count = embedding(cks, embd_mdl, r["parser_config"], callback)
             except Exception as e:
                 callback(-1, "Embedding error:{}".format(str(e)))
-                cron_logger.error(str(e))
+                cron_logger.error(e)
                 tk_count = 0
             cron_logger.info("Embedding elapsed({}): {:.2f}".format(r["name"], timer() - st))
             callback(msg="Finished embedding({:.2f})! Start to build index!".format(timer() - st))

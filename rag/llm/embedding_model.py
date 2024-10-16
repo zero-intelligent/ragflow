@@ -85,7 +85,7 @@ class DefaultEmbedding(Base):
             token_count += num_tokens_from_string(t)
         res = []
         for i in range(0, len(texts), batch_size):
-            res.extend(self._model.encode(texts[i:i + batch_size]).tolist())
+            res.extend(self._model.encode(texts[i:i + batch_size],batch_size=batch_size).tolist())
         return np.array(res), token_count
 
     def encode_queries(self, text: str):

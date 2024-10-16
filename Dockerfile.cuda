@@ -9,7 +9,7 @@ RUN pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstu
 
 
 ADD ./web ./web
-RUN cd ./web && npm i --force && npm run build
+# RUN cd ./web && npm i --force && npm run build
 
 ADD ./api ./api
 ADD ./conf ./conf
