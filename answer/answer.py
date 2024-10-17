@@ -12,16 +12,15 @@ REQ_AUTHORIZATION = 'ImNhM2ZiZDFhOGMyZDExZWY4ZDRiMDI0MmFjMTIwMDAzIg.ZxBzcA.UYB--
 DIALOG_ID = '834e71e4807511ef861d0242ac120006'  # '8e70f44885e311efb24b0242ac120006'
 REQ_CONTENT_TYPE = 'application/json;charset=UTF-8'
 
-RESULT_PATH = './评测数据GPT_600行-result.xlsx'
-ORIGIN_PATH = './评测数据GPT_600行.xlsx'
-
+RESULT_PATH = './数据-result.xlsx'
+ORIGIN_PATH = './数据.xlsx'
 TEST_LINES = 20000
 START_ROW = 0;
 CONCURRENCY_NUM = 100
 
 
 # 替换为你的Excel文件路径
-def readExcel(file_path='./res/评测数据GPT_600行.xlsx'):
+def readExcel(file_path):
     return pd.read_excel(file_path)
 
 
@@ -119,20 +118,25 @@ def write2Excel(originRow, rag, refs, ws, dir='./', fileName="result.xlsx"):
 
 
 def splitExcelFile(fileNum):
-    df = readExcel()
+    df = readExcel(ORIGIN_PATH)
 
     # 计算每个文件应包含的行数 地板除法
     rows_per_file = len(df) // fileNum
-
+    remainder = len(df) % fileNum
+    start_row=0
+    end_row = 0
     # 分割 DataFrame 并保存为不同的 Excel 文件
     for i in range(fileNum):
-        start_row = i * rows_per_file
+        start_row = end_row;
         # 如果是最后一个文件，包含剩余所有行
         if i == fileNum - 1:
             df_chunk = df[start_row:]
         else:
-            df_chunk = df[start_row:start_row + rows_per_file]
+            extra = 1 if i < remainder else 0
+            end_row = start_row + rows_per_file + extra
+            df_chunk = df[start_row:end_row]
 
+        print(f"###########{start_row}, {end_row}")
         resultName = os.path.abspath(os.path.join(os.path.dirname(ORIGIN_PATH),
                                                   os.path.basename(ORIGIN_PATH).replace('.xlsx', f'_{i + 1}.xlsx')))
         df_chunk.to_excel(resultName, index=False)
