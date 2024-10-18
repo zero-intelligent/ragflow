@@ -1,23 +1,27 @@
+import glob
 import json
 import os
-from tkinter.dialog import DIALOG_ICON
+import re
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import requests
 from openpyxl.reader.excel import load_workbook
 
-REQ_AUTHORIZATION = 'ImY1MTBmM2E0OGI4MDExZWZhNWM1MDI0MmFjMTIwMDAzIg.Zw9ReQ.GjAMjrV9Zyg-QKRLNzinTJvxC8k'
+REQ_AUTHORIZATION = 'ImNhM2ZiZDFhOGMyZDExZWY4ZDRiMDI0MmFjMTIwMDAzIg.ZxBzcA.UYB--IaaZ1q_mr21prELXH3JtSQ'
+DIALOG_ID = '834e71e4807511ef861d0242ac120006'  # '8e70f44885e311efb24b0242ac120006'
 REQ_CONTENT_TYPE = 'application/json;charset=UTF-8'
-DIALOG_ID= '734e43928b8711efae200242ac120003' #'8e70f44885e311efb24b0242ac120006'
-RESULT_PATH = './result.xlsx'
 
-TEST_LINES = 1000
+RESULT_PATH = './数据-result.xlsx'
+ORIGIN_PATH = './数据.xlsx'
+TEST_LINES = 20000
 START_ROW = 0;
+CONCURRENCY_NUM = 100
+
 
 # 替换为你的Excel文件路径
-def readExcel(file_path='./res/数据.xlsx'):
-    df = pd.read_excel(file_path)
-    return df.iterrows();
+def readExcel(file_path):
+    return pd.read_excel(file_path)
 
 
 def getRef(cid):
@@ -113,20 +117,42 @@ def write2Excel(originRow, rag, refs, ws, dir='./', fileName="result.xlsx"):
          ' '.join([] if refs is None else refs)])
 
 
+def splitExcelFile(fileNum):
+    df = readExcel(ORIGIN_PATH)
+
+    # 计算每个文件应包含的行数 地板除法
+    rows_per_file = len(df) // fileNum
+    remainder = len(df) % fileNum
+    start_row=0
+    end_row = 0
+    # 分割 DataFrame 并保存为不同的 Excel 文件
+    for i in range(fileNum):
+        start_row = end_row;
+        # 如果是最后一个文件，包含剩余所有行
+        if i == fileNum - 1:
+            df_chunk = df[start_row:]
+        else:
+            extra = 1 if i < remainder else 0
+            end_row = start_row + rows_per_file + extra
+            df_chunk = df[start_row:end_row]
+
+        print(f"###########{start_row}, {end_row}")
+        resultName = os.path.abspath(os.path.join(os.path.dirname(ORIGIN_PATH),
+                                                  os.path.basename(ORIGIN_PATH).replace('.xlsx', f'_{i + 1}.xlsx')))
+        df_chunk.to_excel(resultName, index=False)
 
 
-
-def main():
-    rows = readExcel()
-    if not os.path.exists(RESULT_PATH):
+def answer(originPath, resultPath):
+    rows = readExcel(originPath).iterrows()
+    if not os.path.exists(resultPath):
         df = pd.DataFrame()
-        df.to_excel(RESULT_PATH, index=False)
+        df.to_excel(resultPath, index=False)
 
-    wb = load_workbook(RESULT_PATH)
+    wb = load_workbook(resultPath)
     # wb = Workbook()
     ws = wb.active
 
-    df = pd.read_excel(RESULT_PATH)
+    df = pd.read_excel(resultPath)
 
     # 检查是否有标题
     if df.empty or df.columns.empty:
@@ -154,7 +180,81 @@ def main():
             print('################################')
 
             write2Excel(row, ans, refs, ws)
-            wb.save(RESULT_PATH)
+            wb.save(resultPath)
+
+
+def mergeFiles(resultFile):
+    # 定义文件的通配符路径，n 是变量，这里使用 * 来匹配数字
+
+    file_pattern = os.path.abspath(os.path.join(os.path.dirname(resultFile),
+                                                os.path.basename(resultFile).replace('.xlsx', f'_*.xlsx')))
+    # 使用 glob 获取所有匹配的文件名
+    files = glob.glob(file_pattern)
+
+    def extract_number(file_name):
+        match = re.search(r'result_(\d+)', file_name)
+        if match:
+            return int(match.group(1))  # 提取并返回数字部分
+        return 0
+
+    # 对文件列表按 n 进行排序
+    files.sort(key=lambda x: extract_number(x))
+
+    # 创建一个空的 DataFrame 来存放合并后的数据
+    combined_df = pd.DataFrame()
+
+    # 遍历所有文件，将它们的数据读取并合并
+    for file in files:
+        df = pd.read_excel(file)  # 读取当前文件
+        combined_df = pd.concat([combined_df, df], ignore_index=True)  # 合并数据
+
+    # 保存合并后的数据到新的 Excel 文件
+    combined_df.to_excel(resultFile, index=False)
+    print(f"成功合并 {len(files)} 个文件，合并后的数据已保存为 {resultFile}")
+
+
+def clearFiles(filePath):
+    # 构建匹配的文件路径模式
+    file_pattern = os.path.abspath(os.path.join(os.path.dirname(filePath),
+                                                os.path.basename(filePath).replace('.xlsx', f'_*.xlsx')))
+    # 使用 glob 获取所有匹配的文件名
+    files_to_delete = glob.glob(file_pattern)
+
+    # 删除所有匹配的文件
+    for file in files_to_delete:
+        try:
+            os.remove(file)  # 删除文件
+            print(f"已删除文件: {file}")
+        except Exception as e:
+            print(f"删除文件 {file} 时发生错误: {e}")
+
+    print(f"已成功删除 {len(files_to_delete)} 个文件。")
+
+
+def main():
+    clearFiles(RESULT_PATH)
+    clearFiles(ORIGIN_PATH)
+    splitExcelFile(CONCURRENCY_NUM)
+
+    with ThreadPoolExecutor(max_workers=CONCURRENCY_NUM) as executor:
+
+        futures = []
+        for i in range(CONCURRENCY_NUM):
+            originName = os.path.abspath(os.path.join(os.path.dirname(ORIGIN_PATH),
+                                                      os.path.basename(ORIGIN_PATH).replace('.xlsx', f'_{i + 1}.xlsx')))
+            resultName = os.path.abspath(os.path.join(os.path.dirname(ORIGIN_PATH),
+                                                      os.path.basename(RESULT_PATH).replace('.xlsx', f'_{i + 1}.xlsx')))
+
+            futures.append(executor.submit(answer, originName, resultName))
+        for future in futures:
+            try:
+                print(f"结果: {future.result()}")
+            except Exception as e:
+                print(f"任务引发异常: {e}")
+
+    mergeFiles(RESULT_PATH)
+    clearFiles(RESULT_PATH)
+    clearFiles(ORIGIN_PATH)
 
 
 if __name__ == '__main__':
