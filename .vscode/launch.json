@@ -1,0 +1,37 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "pdf2txt_high",
+            "program": "${workspaceFolder}/deepdoc/pdf2txt_high.py",
+            "env": {"PYTHONPATH": "${workspaceFolder}",
+                    "CUDA_VISIBLE_DEVICES": "0"},
+            "args": ["/data/dataset/800本宠物医学电子书v2"],
+            "justMyCode": false
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "task_executor",
+            "program": "${workspaceFolder}/rag/svr/task_executor.py",
+            "env": {"PYTHONPATH": "${workspaceFolder}"},
+            "cwd":"${workspaceFolder}",
+            "args": ["1"],
+            "justMyCode": false 
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "ragflow_server",
+            "program": "${workspaceFolder}/api/ragflow_server.py",
+            "env": {"PYTHONPATH": "${workspaceFolder}"},
+            "cwd":"${workspaceFolder}",
+            "justMyCode": false 
+        }
+    ]
+}
