@@ -10,7 +10,7 @@ source .venv/bin/activate
 
 # 编译前端
 cd "$APP_HOME/web"
-if [ ! -d dist ] || [ $(find dist -newer src/app.tsx) ]; then 
+if [ ! -d dist ] || [ "$(find src -type f -newer dist | wc -l)" -gt 0 ]; then
     npm i --force && npm run build; 
 else 
     echo 'Build is up-to-date'; 
@@ -27,7 +27,7 @@ docker buildx build -t infiniflow/ragflow:$NEW_VERSION -f Dockerfile.cuda .
 
 # 关闭之前容器的内容
 cd docker
-sed -i 's/RAGFLOW_VERSION=$OLD_VERSION/RAGFLOW_VERSION=$NEW_VERSION/' .env
+sed -i "s/RAGFLOW_VERSION=$OLD_VERSION/RAGFLOW_VERSION=$NEW_VERSION/" .env
 
 docker compose -f docker-compose.yml down
 
