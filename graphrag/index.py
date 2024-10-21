@@ -116,7 +116,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
     prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
     for i, sub_text in enumerate(sub_texts_2d):
         cids = []
-        for j, line in sub_text:
+        for j, line in enumerate(sub_text):
             cid = i + "-" + j
             cids.append(cid)
             lines.append(build_line(cid, line, prompt_vars))
@@ -126,7 +126,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
     LOGGER.info(f"########## ccids={ccids}")
     LOGGER.info(f"########## lines={lines}")
 
-    f_name = time.time_ns() + ".txt"
+    f_name = str(time.time_ns()) + ".txt"
     LOGGER.info(f"########## f_name={f_name}")
 
     inputs_dir = os.path.join(os.getcwd(), 'inputs')

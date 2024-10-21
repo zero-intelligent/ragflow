@@ -31,20 +31,20 @@ DEFAULT_COMPLETION_DELIMITER = "<|COMPLETE|>"
 DEFAULT_ENTITY_TYPES = ["organization", "person", "location", "event", "time"]
 ENTITY_EXTRACTION_MAX_GLEANINGS = 1
 
-DEFAULT_TUPLE_DELIMITER_KEY='tuple_delimiter',
-DEFAULT_RECORD_DELIMITER_KEY='record_delimiter',
-DEFAULT_COMPLETION_DELIMITER_KEY='completion_delimiter',
-DEFAULT_ENTITY_TYPES_KEY='entity_types',
-DEFAULT_INPUT_TEXT_KEY='input_text',
+DEFAULT_TUPLE_DELIMITER_KEY = 'tuple_delimiter'
+DEFAULT_RECORD_DELIMITER_KEY = 'record_delimiter'
+DEFAULT_COMPLETION_DELIMITER_KEY = 'completion_delimiter'
+DEFAULT_ENTITY_TYPES_KEY = 'entity_types'
+DEFAULT_INPUT_TEXT_KEY = 'input_text'
 
 
-def create_prompt_variables( prompt_variables,
-                             _tuple_delimiter_key=DEFAULT_TUPLE_DELIMITER_KEY,
-                             _record_delimiter_key=DEFAULT_RECORD_DELIMITER_KEY,
-                             _completion_delimiter_key=DEFAULT_COMPLETION_DELIMITER_KEY,
-                             _entity_types_key=DEFAULT_ENTITY_TYPES_KEY,
-                             _input_text_key=DEFAULT_INPUT_TEXT_KEY,
-                             _extraction_prompt=GRAPH_EXTRACTION_PROMPT):
+def create_prompt_variables(prompt_variables,
+                            _tuple_delimiter_key=DEFAULT_TUPLE_DELIMITER_KEY,
+                            _record_delimiter_key=DEFAULT_RECORD_DELIMITER_KEY,
+                            _completion_delimiter_key=DEFAULT_COMPLETION_DELIMITER_KEY,
+                            _entity_types_key=DEFAULT_ENTITY_TYPES_KEY,
+                            _input_text_key=DEFAULT_INPUT_TEXT_KEY,
+                            _extraction_prompt=GRAPH_EXTRACTION_PROMPT):
     if prompt_variables is None:
         prompt_variables = {}
     # Wire defaults into the prompt variables
@@ -64,6 +64,7 @@ def create_prompt_variables( prompt_variables,
 
     return prompt_variables
 
+
 def process(
         text,
         prompt_variables,
@@ -79,12 +80,9 @@ def process(
     messages = chat_1(text, [{"role": "user", "content": "Output:"}])
     return messages
 
+
 def chat_1(text, history):
     if text:
         history.insert(0, {"role": "system", "content": text})
 
     return history;
-
-
-messages = process('abc', create_prompt_variables({"entity_types": "person"}))
-print(messages)
