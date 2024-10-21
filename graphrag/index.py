@@ -13,21 +13,30 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import re
-from concurrent.futures import ThreadPoolExecutor
 import json
+import os
+import time
 from functools import reduce
 from typing import List
+
 import networkx as nx
+from trio import sleep
+
 from api.db import LLMType
 from api.db.services.llm_service import LLMBundle
 from api.db.services.user_service import TenantService
+from api.utils.log_utils import getLogger
+from graphrag import openai_batch, prompt_messages, graph_extractor
 from graphrag.community_reports_extractor import CommunityReportsExtractor
 from graphrag.entity_resolution import EntityResolution
 from graphrag.graph_extractor import GraphExtractor
 from graphrag.mind_map_extractor import MindMapExtractor
+from graphrag.prompt_messages import DEFAULT_TUPLE_DELIMITER, DEFAULT_RECORD_DELIMITER, DEFAULT_TUPLE_DELIMITER_KEY, \
+    DEFAULT_RECORD_DELIMITER_KEY
 from rag.nlp import rag_tokenizer
 from rag.utils import num_tokens_from_string
+
+LOGGER = getLogger()
 
 
 def graph_merge(g1, g2):
@@ -43,7 +52,7 @@ def graph_merge(g1, g2):
 
     for source, target, attr in g1.edges(data=True):
         if g.has_edge(source, target):
-            g[source][target].update({"weight": attr["weight"]+1})
+            g[source][target].update({"weight": attr["weight"] + 1})
             continue
         g.add_edge(source, target, **attr)
 
@@ -52,7 +61,44 @@ def graph_merge(g1, g2):
     return g
 
 
-def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback, entity_types=["organization", "person", "location", "event", "time"]):
+def build_sub_texts_2d(chunks: List[str], left_token_count):
+    BATCH_SIZE = 4
+    texts, sub_texts, graphs = [], [], []
+    cnt = 0
+
+    for i in range(len(chunks)):
+        tkn_cnt = num_tokens_from_string(chunks[i])
+        if cnt + tkn_cnt >= left_token_count and texts:
+            for b in range(0, len(texts), BATCH_SIZE):
+                sub_texts.append(texts[b:b + BATCH_SIZE])
+
+            texts = []
+            cnt = 0
+        texts.append(chunks[i])
+        cnt += tkn_cnt
+    if texts:
+        for b in range(0, len(texts), BATCH_SIZE):
+            sub_texts.append(texts[b:b + BATCH_SIZE])
+
+    return sub_texts
+
+
+def build_line(custom_id, content, prompt_vars):
+    data = {
+        "custom_id": custom_id,
+        "method": "POST",
+        "url": "/v1/chat/completions",
+        "body": {
+            "model": "qwen-plus",
+            "messages": prompt_messages.process(content, prompt_vars)
+        }
+    }
+
+    return json.dumps(data, ensure_ascii=False)
+
+
+def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
+                                entity_types=["organization", "person", "location", "event", "time"]):
     _, tenant = TenantService.get_by_id(tenant_id)
     llm_bdl = LLMBundle(tenant_id, LLMType.CHAT, tenant.llm_id)
     ext = GraphExtractor(llm_bdl)
@@ -61,29 +107,75 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback, ent
 
     assert left_token_count > 0, f"The LLM context length({llm_bdl.max_length}) is smaller than prompt({ext.prompt_token_count})"
 
-    BATCH_SIZE=4
-    texts, graphs = [], []
-    cnt = 0
-    threads = []
-    exe = ThreadPoolExecutor(max_workers=50)
-    for i in range(len(chunks)):
-        tkn_cnt = num_tokens_from_string(chunks[i])
-        if cnt+tkn_cnt >= left_token_count and texts:
-            for b in range(0, len(texts), BATCH_SIZE):
-                threads.append(exe.submit(ext, ["\n".join(texts[b:b+BATCH_SIZE])], {"entity_types": entity_types}, callback))
-            texts = []
-            cnt = 0
-        texts.append(chunks[i])
-        cnt += tkn_cnt
-    if texts:
-        for b in range(0, len(texts), BATCH_SIZE):
-            threads.append(exe.submit(ext, ["\n".join(texts[b:b+BATCH_SIZE])], {"entity_types": entity_types}, callback))
+    sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
+
+    LOGGER.info(f"########## sub_texts_2d={sub_texts_2d}")
+
+    ccids = []
+    lines = []
+    prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
+    for i, sub_text in enumerate(sub_texts_2d):
+        cids = []
+        for j, line in sub_text:
+            cid = i + "-" + j
+            cids.append(cid)
+            lines.append(build_line(cid, line, prompt_vars))
+
+        ccids.append(cids)
+
+    LOGGER.info(f"########## ccids={ccids}")
+    LOGGER.info(f"########## lines={lines}")
+
+    f_name = time.time_ns() + ".txt"
+    LOGGER.info(f"########## f_name={f_name}")
+
+    inputs_dir = os.path.join(os.getcwd(), 'inputs')
+    os.makedirs(inputs_dir, exist_ok=True)
+    openai_batch.write_file("\n".join(lines), f_name, inputs_dir)
+
+    fid = openai_batch.file_upload(os.path.join(inputs_dir, f_name))
+    LOGGER.info(f"########## fid={fid}")
+
+    bid = openai_batch.batch_create(fid)
+    LOGGER.info(f"########## bid={bid}")
+
+    chat_results = []
+    while True:
+        sleep(60)
+        batch = openai_batch.query(bid)
+        if batch.status == 'completed':
+            chat_results = openai_batch.get_results(batch.output_file_id)
+            break;
+        elif batch.status == 'failed' or batch.status == 'expired' or batch.status == 'cancelling' or batch.status == 'cancelled':
+            raise ValueError(batch)
+
+    idxed_chat_results: dict[int, str] = {}
+    for chat_result in chat_results:
+        idxed_chat_results[chat_result['id'], chat_result]
+
+    LOGGER.info(f"########## idxed_chat_results={idxed_chat_results}")
+
+    ordered_chat_results = []
+    for cids in ccids:
+        tmp = []
+        for cid in cids:
+            tmp.append(idxed_chat_results[cid])
+        ordered_chat_results.append(tmp)
+
+    LOGGER.info(f"########## ordered_chat_results={ordered_chat_results}")
+
+    outputs = [graph_extractor.GraphExtractor.process_results(chat_result,
+                                                              prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,
+                                                                              DEFAULT_TUPLE_DELIMITER),
+                                                              prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,
+                                                                              DEFAULT_RECORD_DELIMITER)
+                                                              )
+               for chat_result in ordered_chat_results]
 
     callback(0.5, "Extracting entities.")
     graphs = []
-    for i, _ in enumerate(threads):
-        graphs.append(_.result().output)
-        callback(0.5 + 0.1*i/len(threads), f"Entities extraction progress ... {i+1}/{len(threads)}")
+    for i, output in enumerate(outputs):
+        graphs.append(output)
 
     graph = reduce(graph_merge, graphs) if graphs else nx.Graph()
     er = EntityResolution(llm_bdl)
@@ -143,9 +235,3 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback, ent
         })
 
     return chunks
-
-
-
-
-
-
