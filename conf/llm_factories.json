@@ -99,6 +99,18 @@
                     "model_type": "chat"
                 },
                 {
+                    "llm_name": "qwen-max-0428",
+                    "tags": "LLM,CHAT,32K",
+                    "max_tokens": 32768,
+                    "model_type": "chat"
+                },
+                {
+                    "llm_name": "qwen-long",
+                    "tags": "LLM,CHAT,32K",
+                    "max_tokens": 10000000,
+                    "model_type": "chat"
+                },
+                {
                     "llm_name": "qwen-plus",
                     "tags": "LLM,CHAT,32K",
                     "max_tokens": 32768,
