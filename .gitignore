@@ -19,7 +19,8 @@ Cargo.lock
 *.pdb
 *.trie
 .venv
-
+wheels/
+.pytest_cache
 .idea/
 
 # Exclude Mac generated files
