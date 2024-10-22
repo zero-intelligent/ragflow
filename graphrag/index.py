@@ -20,12 +20,10 @@ from functools import reduce
 from typing import List
 
 import networkx as nx
-from trio import sleep
 
 from api.db import LLMType
 from api.db.services.llm_service import LLMBundle
 from api.db.services.user_service import TenantService
-from api.utils.log_utils import getLogger
 from graphrag import openai_batch, prompt_messages, graph_extractor
 from graphrag.community_reports_extractor import CommunityReportsExtractor
 from graphrag.entity_resolution import EntityResolution
@@ -36,8 +34,17 @@ from graphrag.prompt_messages import DEFAULT_TUPLE_DELIMITER, DEFAULT_RECORD_DEL
 from rag.nlp import rag_tokenizer
 from rag.utils import num_tokens_from_string
 
-LOGGER = getLogger()
+import sys
+from loguru import logger as LOGGER
+LOGGER.add(sys.stdout,
+           format="{time} {level} {message}",
+           filter=lambda record: record["level"].no < 40,
+           colorize=True)
 
+# 文件输出配置
+LOGGER.add("logs/pdf2txt.log",
+           format="{time} {level} {message}",
+           filter=lambda record: record["level"].no >= 30)
 
 def graph_merge(g1, g2):
     g = g2.copy()
@@ -141,7 +148,8 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
 
     chat_results = []
     while True:
-        sleep(60)
+        time.sleep(60)
+        LOGGER.info(f"#### batch query ###### bid={bid}")
         batch = openai_batch.query(bid)
         if batch.status == 'completed':
             chat_results = openai_batch.get_results(batch.id)
@@ -159,7 +167,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
     for cids in ccids:
         tmp = {}
         for cid in cids:
-            tmp[cid] = idxed_chat_results[cid]
+            tmp[cid] = idxed_chat_results[str(cid)]
         ordered_chat_results.append(tmp)
 
     LOGGER.info(f"########## ordered_chat_results={ordered_chat_results}")
