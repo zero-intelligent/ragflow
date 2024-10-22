@@ -8,7 +8,7 @@ from openai import OpenAI
 file_path = './res/text'
 
 client = OpenAI(
-    api_key='sk-607fab2b39f141cdbb3a9e1294d65210',  # 如果您没有配置环境变量，请在此处用您的API Key进行替换
+    api_key='sk-94156f9a5e684cba87df8727b56920e2',  # 如果您没有配置环境变量，请在此处用您的API Key进行替换
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",  # 填写DashScope服务的base_url
 )
 
