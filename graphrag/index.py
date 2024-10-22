@@ -117,7 +117,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
     for i, sub_text in enumerate(sub_texts_2d):
         cids = []
         for j, line in enumerate(sub_text):
-            cid = i + "-" + j
+            cid = (i * 1000) + j  # i + "-" + j
             cids.append(cid)
             lines.append(build_line(cid, line, prompt_vars))
 
@@ -144,22 +144,22 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
         sleep(60)
         batch = openai_batch.query(bid)
         if batch.status == 'completed':
-            chat_results = openai_batch.get_results(batch.output_file_id)
+            chat_results = openai_batch.get_results(batch.id)
             break;
         elif batch.status == 'failed' or batch.status == 'expired' or batch.status == 'cancelling' or batch.status == 'cancelled':
             raise ValueError(batch)
 
     idxed_chat_results: dict[int, str] = {}
     for chat_result in chat_results:
-        idxed_chat_results[chat_result['id'], chat_result]
+        idxed_chat_results[chat_result['id']] = chat_result['content']
 
     LOGGER.info(f"########## idxed_chat_results={idxed_chat_results}")
 
     ordered_chat_results = []
     for cids in ccids:
-        tmp = []
+        tmp = {}
         for cid in cids:
-            tmp.append(idxed_chat_results[cid])
+            tmp[cid] = idxed_chat_results[cid]
         ordered_chat_results.append(tmp)
 
     LOGGER.info(f"########## ordered_chat_results={ordered_chat_results}")
