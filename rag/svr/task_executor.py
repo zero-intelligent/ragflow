@@ -13,46 +13,55 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
 import datetime
+import hashlib
 import json
 import logging
 import os
-import hashlib
-import copy
 import re
 import sys
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-
-from api.db.services.file2document_service import File2DocumentService
-from api.settings import retrievaler
-from rag.raptor import RecursiveAbstractiveProcessing4TreeOrganizedRetrieval as Raptor
-from rag.utils.storage_factory import STORAGE_IMPL
-from api.db.db_models import close_connection
-from rag.settings import database_logger, SVR_QUEUE_NAME
-from rag.settings import cron_logger, DOC_MAXIMUM_SIZE
-from multiprocessing import Pool
-import numpy as np
-from elasticsearch_dsl import Q, Search
-from multiprocessing.context import TimeoutError
-from api.db.services.task_service import TaskService
-from rag.utils.es_conn import ELASTICSEARCH
-from timeit import default_timer as timer
-from rag.utils import rmSpace, findMaxTm, num_tokens_from_string
-
-from rag.nlp import search, rag_tokenizer
 from io import BytesIO
-import pandas as pd
+from multiprocessing.context import TimeoutError
+from timeit import default_timer as timer
 
-from rag.app import laws, paper, presentation, manual, qa, table, book, resume, picture, naive, one, audio, knowledge_graph, email
+import numpy as np
+import pandas as pd
+from elasticsearch_dsl import Q
+from loguru import logger as LOGGER
 
 from api.db import LLMType, ParserType
+from api.db.db_models import close_connection
 from api.db.services.document_service import DocumentService
+from api.db.services.file2document_service import File2DocumentService
 from api.db.services.llm_service import LLMBundle
+from api.db.services.task_service import TaskService
+from api.settings import retrievaler
 from api.utils.file_utils import get_project_base_directory
+from rag.app import laws, paper, presentation, manual, qa, table, book, resume, picture, naive, one, audio, \
+    knowledge_graph, email
+from rag.nlp import search, rag_tokenizer
+from rag.raptor import RecursiveAbstractiveProcessing4TreeOrganizedRetrieval as Raptor
+from rag.settings import cron_logger, DOC_MAXIMUM_SIZE
+from rag.settings import database_logger, SVR_QUEUE_NAME
+from rag.utils import rmSpace, num_tokens_from_string
+from rag.utils.es_conn import ELASTICSEARCH
 from rag.utils.redis_conn import REDIS_CONN
+from rag.utils.storage_factory import STORAGE_IMPL
+
+LOGGER.add(sys.stdout,
+           format="{time} {level} {message}",
+           filter=lambda record: record["level"].no < 40,
+           colorize=True)
+
+# 文件输出配置
+LOGGER.add("logs/task_executor.log",
+           format="{time} {level} {message}",
+           filter=lambda record: record["level"].no >= 30)
 
 BATCH_SIZE = 64
 
@@ -75,11 +84,10 @@ FACTORY = {
 }
 
 CONSUMEER_NAME = "task_consumer_" + ("0" if len(sys.argv) < 2 else sys.argv[1])
-PAYLOAD = None
+
 
 def set_progress(task_id, from_page=0, to_page=-1,
                  prog=None, msg="Processing..."):
-    global PAYLOAD
     if prog is not None and prog < 0:
         msg = "[ERROR]" + msg
     cancel = TaskService.do_cancel(task_id)
@@ -100,16 +108,16 @@ def set_progress(task_id, from_page=0, to_page=-1,
 
     close_connection()
     if cancel:
-        if PAYLOAD:
-            PAYLOAD.ack()
-            PAYLOAD = None
         os._exit(0)
 
 
 def collect():
-    global CONSUMEER_NAME, PAYLOAD
+    LOGGER.info(f"开始搜集任务")
+    global CONSUMEER_NAME
+    PAYLOAD = None
     try:
         PAYLOAD = REDIS_CONN.get_unacked_for(CONSUMEER_NAME, SVR_QUEUE_NAME, "rag_flow_svr_task_broker")
+        LOGGER.info(f"###########PAYLOAD 1 = {PAYLOAD}#######")
         if not PAYLOAD:
             PAYLOAD = REDIS_CONN.queue_consumer(SVR_QUEUE_NAME, "rag_flow_svr_task_broker", CONSUMEER_NAME)
         if not PAYLOAD:
@@ -120,20 +128,26 @@ def collect():
         return pd.DataFrame()
 
     msg = PAYLOAD.get_message()
+    LOGGER.info(f"###########PAYLOAD 2 = {PAYLOAD} msg={msg}#######")
     if not msg:
         return pd.DataFrame()
 
     if TaskService.do_cancel(msg["id"]):
+        LOGGER.info(f"##########任务取消 = {PAYLOAD} msg={msg}#######")
         cron_logger.info("Task {} has been canceled.".format(msg["id"]))
         return pd.DataFrame()
     tasks = TaskService.get_tasks(msg["id"])
+    LOGGER.info(f"###########tasks={tasks}#######")
     if not tasks:
         cron_logger.warn("{} empty task!".format(msg["id"]))
         return []
 
+    LOGGER.info(f"收到任务：{tasks}")
     tasks = pd.DataFrame(tasks)
     if msg.get("type", "") == "raptor":
         tasks["task_type"] = "raptor"
+
+    LOGGER.info(f"具体任务：{tasks}")
     return tasks
 
 
@@ -181,7 +195,7 @@ def build(row):
             "Chunking({}) {}/{}".format(timer() - st, row["location"], row["name"]))
     except Exception as e:
         callback(-1, f"Internal server error while chunking: %s" %
-                     str(e).replace("'", ""))
+                 str(e).replace("'", ""))
         cron_logger.error(
             "Chunking {}/{}: {}".format(row["location"], row["name"], str(e)))
         traceback.print_exc()
@@ -244,7 +258,7 @@ def embedding(docs, mdl, parser_config={}, callback=None):
     if len(tts) == len(cnts):
         tts_ = np.array([])
         for i in range(0, len(tts), batch_size):
-            vts, c = mdl.encode(tts[i: i + batch_size],batch_size)
+            vts, c = mdl.encode(tts[i: i + batch_size], batch_size)
             if len(tts_) == 0:
                 tts_ = vts
             else:
@@ -277,7 +291,7 @@ def embedding(docs, mdl, parser_config={}, callback=None):
 
 def run_raptor(row, chat_mdl, embd_mdl, callback=None):
     vts, _ = embd_mdl.encode(["ok"])
-    vctr_nm = "q_%d_vec"%len(vts[0])
+    vctr_nm = "q_%d_vec" % len(vts[0])
     chunks = []
     for d in retrievaler.chunk_list(row["doc_id"], row["tenant_id"], fields=["content_with_weight", vctr_nm]):
         chunks.append((d["content_with_weight"], np.array(d[vctr_nm])))
@@ -316,79 +330,86 @@ def run_raptor(row, chat_mdl, embd_mdl, callback=None):
     return res, tk_count
 
 
-def main():
-    rows = collect()
-    if len(rows) == 0:
+def process_row(r):
+    LOGGER.info(f"开始执行任务：{r}")
+    callback = partial(set_progress, r["id"], r["from_page"], r["to_page"])
+    try:
+        embd_mdl = LLMBundle(r["tenant_id"], LLMType.EMBEDDING, llm_name=r["embd_id"], lang=r["language"])
+    except Exception as e:
+        callback(-1, msg=str(e))
+        cron_logger.error(str(e))
         return
 
-    for _, r in rows.iterrows():
-        callback = partial(set_progress, r["id"], r["from_page"], r["to_page"])
+    if r.get("task_type", "") == "raptor":
         try:
-            embd_mdl = LLMBundle(r["tenant_id"], LLMType.EMBEDDING, llm_name=r["embd_id"], lang=r["language"])
+            chat_mdl = LLMBundle(r["tenant_id"], LLMType.CHAT, llm_name=r["llm_id"], lang=r["language"])
+            cks, tk_count = run_raptor(r, chat_mdl, embd_mdl, callback)
         except Exception as e:
             callback(-1, msg=str(e))
             cron_logger.error(str(e))
-            continue
-
-        if r.get("task_type", "") == "raptor":
-            try:
-                chat_mdl = LLMBundle(r["tenant_id"], LLMType.CHAT, llm_name=r["llm_id"], lang=r["language"])
-                cks, tk_count = run_raptor(r, chat_mdl, embd_mdl, callback)
-            except Exception as e:
-                callback(-1, msg=str(e))
-                cron_logger.error(str(e))
-                continue
-        else:
-            st = timer()
-            cks = build(r)
-            cron_logger.info("Build chunks({}): {}".format(r["name"], timer() - st))
-            if cks is None:
-                continue
-            if not cks:
-                callback(1., "No chunk! Done!")
-                continue
-            # TODO: exception handler
-            ## set_progress(r["did"], -1, "ERROR: ")
-            callback(
-                msg="Finished slicing files(%d). Start to embedding the content." %
-                    len(cks))
-            st = timer()
-            try:
-                tk_count = embedding(cks, embd_mdl, r["parser_config"], callback)
-            except Exception as e:
-                callback(-1, "Embedding error:{}".format(str(e)))
-                cron_logger.error(e)
-                tk_count = 0
-            cron_logger.info("Embedding elapsed({}): {:.2f}".format(r["name"], timer() - st))
-            callback(msg="Finished embedding({:.2f})! Start to build index!".format(timer() - st))
-
-        init_kb(r)
-        chunk_count = len(set([c["_id"] for c in cks]))
+            return
+    else:
         st = timer()
-        es_r = ""
-        es_bulk_size = 4
-        for b in range(0, len(cks), es_bulk_size):
-            es_r = ELASTICSEARCH.bulk(cks[b:b + es_bulk_size], search.index_name(r["tenant_id"]))
-            if b % 128 == 0:
-                callback(prog=0.8 + 0.1 * (b + 1) / len(cks), msg="")
+        cks = build(r)
+        cron_logger.info("Build chunks({}): {}".format(r["name"], timer() - st))
+        if cks is None:
+            return
+        if not cks:
+            callback(1., "No chunk! Done!")
+            return
+        # TODO: exception handler
+        ## set_progress(r["did"], -1, "ERROR: ")
+        callback(
+            msg="Finished slicing files(%d). Start to embedding the content." %
+                len(cks))
+        st = timer()
+        try:
+            tk_count = embedding(cks, embd_mdl, r["parser_config"], callback)
+        except Exception as e:
+            callback(-1, "Embedding error:{}".format(str(e)))
+            cron_logger.error(e)
+            tk_count = 0
+        cron_logger.info("Embedding elapsed({}): {:.2f}".format(r["name"], timer() - st))
+        callback(msg="Finished embedding({:.2f})! Start to build index!".format(timer() - st))
 
-        cron_logger.info("Indexing elapsed({}): {:.2f}".format(r["name"], timer() - st))
-        if es_r:
-            callback(-1, f"Insert chunk error, detail info please check ragflow-logs/api/cron_logger.log. Please also check ES status!")
+    init_kb(r)
+    chunk_count = len(set([c["_id"] for c in cks]))
+    st = timer()
+    es_r = ""
+    es_bulk_size = 4
+    for b in range(0, len(cks), es_bulk_size):
+        es_r = ELASTICSEARCH.bulk(cks[b:b + es_bulk_size], search.index_name(r["tenant_id"]))
+        if b % 128 == 0:
+            callback(prog=0.8 + 0.1 * (b + 1) / len(cks), msg="")
+
+    cron_logger.info("Indexing elapsed({}): {:.2f}".format(r["name"], timer() - st))
+    if es_r:
+        callback(-1,
+                 f"Insert chunk error, detail info please check ragflow-logs/api/cron_logger.log. Please also check ES status!")
+        ELASTICSEARCH.deleteByQuery(
+            Q("match", doc_id=r["doc_id"]), idxnm=search.index_name(r["tenant_id"]))
+        cron_logger.error(str(es_r))
+    else:
+        if TaskService.do_cancel(r["id"]):
             ELASTICSEARCH.deleteByQuery(
                 Q("match", doc_id=r["doc_id"]), idxnm=search.index_name(r["tenant_id"]))
-            cron_logger.error(str(es_r))
-        else:
-            if TaskService.do_cancel(r["id"]):
-                ELASTICSEARCH.deleteByQuery(
-                    Q("match", doc_id=r["doc_id"]), idxnm=search.index_name(r["tenant_id"]))
-                continue
-            callback(1., "Done!")
-            DocumentService.increment_chunk_num(
-                r["doc_id"], r["kb_id"], tk_count, chunk_count, 0)
-            cron_logger.info(
-                "Chunk doc({}), token({}), chunks({}), elapsed:{:.2f}".format(
-                    r["id"], tk_count, len(cks), timer() - st))
+            return
+        callback(1., "Done!")
+        DocumentService.increment_chunk_num(
+            r["doc_id"], r["kb_id"], tk_count, chunk_count, 0)
+        cron_logger.info(
+            "Chunk doc({}), token({}), chunks({}), elapsed:{:.2f}".format(
+                r["id"], tk_count, len(cks), timer() - st))
+
+
+def main(executor):
+    rows = collect()
+    LOGGER.info(f"任务数量：{len(rows)}")
+    if len(rows) == 0:
+        return
+    for _, r in rows.iterrows():
+        LOGGER.info(f"提交任务：{r}")
+        executor.submit(process_row(r))
 
 
 def report_status():
@@ -396,12 +417,14 @@ def report_status():
     while True:
         try:
             obj = REDIS_CONN.get("TASKEXE")
-            if not obj: obj = {}
-            else: obj = json.loads(obj)
+            if not obj:
+                obj = {}
+            else:
+                obj = json.loads(obj)
             if CONSUMEER_NAME not in obj: obj[CONSUMEER_NAME] = []
             obj[CONSUMEER_NAME].append(timer())
             obj[CONSUMEER_NAME] = obj[CONSUMEER_NAME][-60:]
-            REDIS_CONN.set_obj("TASKEXE", obj, 60*2)
+            REDIS_CONN.set_obj("TASKEXE", obj, 60 * 2)
         except Exception as e:
             print("[Exception]:", str(e))
         time.sleep(30)
@@ -415,9 +438,7 @@ if __name__ == "__main__":
 
     exe = ThreadPoolExecutor(max_workers=1)
     exe.submit(report_status)
-
-    while True:
-        main()
-        if PAYLOAD:
-            PAYLOAD.ack()
-            PAYLOAD = None
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        while True:
+            main(executor)
+            time.sleep(10)

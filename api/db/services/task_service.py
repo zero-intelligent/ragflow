@@ -30,6 +30,17 @@ from rag.settings import SVR_QUEUE_NAME
 from rag.utils.storage_factory import STORAGE_IMPL
 from rag.utils.redis_conn import REDIS_CONN
 
+import sys
+from loguru import logger as LOGGER
+LOGGER.add(sys.stdout,
+           format="{time} {level} {message}",
+           filter=lambda record: record["level"].no < 40,
+           colorize=True)
+
+# 文件输出配置
+LOGGER.add("logs/task_service.log",
+           format="{time} {level} {message}",
+           filter=lambda record: record["level"].no >= 30)
 
 class TaskService(CommonService):
     model = Task
@@ -183,5 +194,6 @@ def queue_tasks(doc, bucket, name):
     bulk_insert_into_db(Task, tsks, True)
     DocumentService.begin2parse(doc["id"])
 
+    LOGGER.info(f"生产任务：{tsks}")
     for t in tsks:
         assert REDIS_CONN.queue_product(SVR_QUEUE_NAME, message=t), "Can't access Redis. Please check the Redis' status."
