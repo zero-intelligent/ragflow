@@ -37,9 +37,8 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "test",
-            "module": "pytest",
-            "args":["${workspaceFolder}/test/test_graph_extractor.py"],
+            "name": "test_graph_extractor",
+            "program": "${workspaceFolder}/graphrag/test_graph_extractor.py",
             "env": {"PYTHONPATH": "${workspaceFolder}"},
             "cwd":"${workspaceFolder}",
             "justMyCode": false 
