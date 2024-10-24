@@ -7,6 +7,8 @@ Reference:
 
 import logging
 import numbers
+import random
+import time
 import re
 import traceback
 from dataclasses import dataclass
@@ -95,7 +97,8 @@ class GraphExtractor:
     def __call__(
         self, texts: list[str],
             prompt_variables: dict[str, Any] | None = None,
-            callback: Callable | None = None
+            callback: Callable | None = None,
+            retry_cnt:int = 3
     ) -> GraphExtractionResult:
         """Call method definition."""
         if prompt_variables is None:
@@ -123,24 +126,30 @@ class GraphExtractor:
         total = len(texts)
         total_token_count = 0
         for doc_index, text in enumerate(texts):
-            try:
-                # Invoke the entity extraction
-                result, token_count = self._process_document(text, prompt_variables)
-                source_doc_map[doc_index] = text
-                all_records[doc_index] = result
-                total_token_count += token_count
-                if callback: callback(msg=f"{doc_index+1}/{total}, elapsed: {timer() - st}s, used tokens: {total_token_count}")
-            except Exception as e:
-                if callback: callback(msg="Knowledge graph extraction error:{}".format(str(e)))
-                logging.exception("error extracting graph")
-                self._on_error(
-                    e,
-                    traceback.format_exc(),
-                    {
-                        "doc_index": doc_index,
-                        "text": text,
-                    },
-                )
+            left_cnt = retry_cnt
+            while left_cnt > 0:
+                try:
+                    # Invoke the entity extraction
+                    result, token_count = self._process_document(text, prompt_variables)
+                    source_doc_map[doc_index] = text
+                    all_records[doc_index] = result
+                    total_token_count += token_count
+                    if callback: callback(msg=f"{doc_index+1}/{total}, elapsed: {timer() - st}s, used tokens: {total_token_count}")
+                    time.sleep(random.random())
+                    break
+                except Exception as e:
+                    if callback: callback(msg="Knowledge graph extraction error:{}".format(str(e)))
+                    logging.exception("error extracting graph")
+                    self._on_error(
+                        e,
+                        traceback.format_exc(),
+                        {
+                            "doc_index": doc_index,
+                            "text": text,
+                        },
+                    )
+                finally:
+                    left_cnt -= 1
 
         output = self._process_results(
             all_records,
@@ -170,22 +179,22 @@ class GraphExtractor:
         results = response or ""
         history = [{"role": "system", "content": text}, {"role": "assistant", "content": response}]
 
-        # Repeat to ensure we maximize entity count
-        for i in range(self._max_gleanings):
-            text = perform_variable_replacements(CONTINUE_PROMPT, history=history, variables=variables)
-            history.append({"role": "user", "content": text})
-            response = self._llm.chat("", history, gen_conf)
-            if response.find("**ERROR**") >=0: raise Exception(response)
-            results += response or ""
+        # # Repeat to ensure we maximize entity count
+        # for i in range(self._max_gleanings):
+        #     text = perform_variable_replacements(CONTINUE_PROMPT, history=history, variables=variables)
+        #     history.append({"role": "user", "content": text})
+        #     response = self._llm.chat("", history, gen_conf)
+        #     if response.find("**ERROR**") >=0: raise Exception(response)
+        #     results += response or ""
 
-            # if this is the final glean, don't bother updating the continuation flag
-            if i >= self._max_gleanings - 1:
-                break
-            history.append({"role": "assistant", "content": response})
-            history.append({"role": "user", "content": LOOP_PROMPT})
-            continuation = self._llm.chat("", history, self._loop_args)
-            if continuation != "YES":
-                break
+        #     # if this is the final glean, don't bother updating the continuation flag
+        #     if i >= self._max_gleanings - 1:
+        #         break
+        #     history.append({"role": "assistant", "content": response})
+        #     history.append({"role": "user", "content": LOOP_PROMPT})
+        #     continuation = self._llm.chat("", history, self._loop_args)
+        #     if continuation != "YES":
+        #         break
 
         return results, token_count
 

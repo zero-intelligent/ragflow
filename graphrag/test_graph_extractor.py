@@ -1,7 +1,5 @@
 
 from functools import reduce
-import pytest
-import logging
 import networkx as nx
 from api.db import LLMType
 from api.db.services.llm_service import LLMBundle
@@ -11,12 +9,7 @@ from graphrag.index import graph_merge
 from rag.app import naive
 from rag.utils import num_tokens_from_string
 from neo4j import GraphDatabase
-
-log = logging.getLogger(__name__)
-
-@pytest.fixture
-def graphExtractor():
-    return GraphExtractor()
+from loguru import logger as log
 
 def graph2neo4j(graph:nx.Graph):
     """
@@ -57,7 +50,7 @@ def graph2neo4j(graph:nx.Graph):
 
 
 def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
-                        llm_id = "qwen-plus",
+                        llm_id = "moonshot-v1-128k",
                         filename = '/home/admin/python_projects/MedicalGPT/data/pretrain/pet_books/094小动物疾病学.pdf.txt'):
     
     parser_config = {"chunk_token_num": 512, "delimiter": "\n!。；?！？", "layout_recognize": False}
@@ -68,7 +61,6 @@ def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
         log.info(f"progess:{prog},{msg}")
     
     log.info(f"naive.chunking with config:{parser_config}")
-    print(f"naive.chunking with config:{parser_config}")
     chunks = naive.chunk(filename, binary, from_page=0, to_page=10000, section_only=True,parser_config=parser_config,callback=progress)
     log.info(f"{filename} chunked")
     
@@ -76,23 +68,25 @@ def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
     llm_bdl = LLMBundle(tenant_id, LLMType.CHAT, llm_id)
     extract = GraphExtractor(llm_bdl)
     left_token_count = llm_bdl.max_length - extract.prompt_token_count - 1024
-    left_token_count = min(llm_bdl.max_length * 0.4, left_token_count)
+    left_token_count = min(int(llm_bdl.max_length * 0.3), left_token_count)
     
     texts, graphs = [], []
     cnt = 0
     for i in range(len(chunks)):
         texts.append(chunks[i])
-        tkn_cnt = num_tokens_from_string(chunks[i])
-        log.info(f"chunk:{i}/{len(chunks)},{1.0*i/len(chunks):.2%}%")
-        cnt += tkn_cnt
-        if texts and (cnt+tkn_cnt >= left_token_count or i == len(chunks)-1):
-            graph = extract(["\n".join(texts)], {"entity_types": entity_types}, callback=progress)
+        cnt += num_tokens_from_string(chunks[i])
+        log.info(f"chunk:{i}/{len(chunks)},token_cnt:{cnt}/{left_token_count},{1.0*i/len(chunks):.2%}")
+        if texts and (cnt >= left_token_count or i == len(chunks)-1):
+            log.info(f"extracting:{len(texts)} chunks, last one: {"\n".join(texts).replace('\n',' ')}")
+            graph = extract(["\n".join(texts)], {"entity_types": entity_types}, callback=progress).output
+            log.info(f"graph,nodes:{graph.number_of_nodes()},edges:{graph.number_of_edges()}")
             graphs.append(graph)
             texts = []
             cnt = 0
         
-
+    log.info(f"reduce of graph cnt:{len(graphs)}")
     graph = reduce(graph_merge, graphs) if graphs else nx.Graph()
+    log.info(f"EntityResolution of graph nodes cnt:{len(graph)}")
     er = EntityResolution(llm_bdl)
     graph = er(graph).output
     
@@ -100,3 +94,14 @@ def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
     assert graph.nodes.get('细小病毒',{}).get('entity_type') == '疾病'
     assert graph.has_edge('细小病毒','胃肠炎')
 
+
+
+if __name__ == "__main__":
+    import json
+    with open('/home/admin/python_projects/ragflow/graphrag/xiaodongwubook.json', 'r', encoding='utf-8') as f:
+        json_data = json.load(f)
+        graph = nx.node_link_graph(json_data)
+        graph2neo4j(graph)
+    
+    
+    # test_extractor_file()
