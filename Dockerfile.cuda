@@ -9,6 +9,7 @@ ADD ./wheels/onnxruntime_gpu-1.19.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_
 RUN pip install onnxruntime_gpu-1.19.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
 RUN rm ./onnxruntime_gpu-1.19.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
 
+RUN pip install -U openai --extra-index-url https://pypi.tuna.tsinghua.edu.cn/simple 
 
 ADD ./web ./web
 # RUN cd ./web && npm i --force && npm run build
