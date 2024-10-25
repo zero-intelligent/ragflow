@@ -7,6 +7,15 @@
         {
             "type": "debugpy",
             "request": "launch",
+            "name": "rul_expr",
+            "program": "${workspaceFolder}/graphrag/rule_exp.py",
+            "env": {"PYTHONPATH": "${workspaceFolder}"},
+            "cwd":"${workspaceFolder}",
+            "justMyCode": false 
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
             "name": "pdf2txt_high",
             "program": "${workspaceFolder}/deepdoc/pdf2txt_high.py",
             "env": {"PYTHONPATH": "${workspaceFolder}",

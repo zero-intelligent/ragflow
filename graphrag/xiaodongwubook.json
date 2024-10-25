@@ -1,0 +1,2149 @@
+{
+    "directed": false,
+    "multigraph": false,
+    "graph": {},
+    "nodes": [
+        {
+            "entity_type": "疾病",
+            "description": "一种以运氧能力降低和血容量减少为主要特征的临床综合征，与贫血程度、发生快慢、其他疾病及机体的代偿能力有关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 3,
+            "id": "再生性贫血"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "皮肤黏膜苍白，心率和呼吸加快是贫血的主要体征。\\n由各种原因引起的血液中红细胞或血红蛋白总量低于正常值，导致氧气运输能力下降。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 5,
+            "id": "贫血"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由于创伤、外漏手术、胃肠道出血等原因引起的贫血，可分为急性和慢性两种。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "失血性贫血"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由各种原因引起的红细胞大量溶解导致的贫血，病因包括生物性、遗传性、免疫性等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "溶血性贫血"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "与再生性贫血相对，骨髓反应不活跃的贫血类型。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "非可生性贫血"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "血液中的主要成分之一，负责运输氧气，其生成和破坏之间的动态平衡对贫血症状有重要影响。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "红细胞"
+        },
+        {
+            "entity_type": "体征",
+            "description": "反映红细胞再生的速度，是再生性贫血最有用的指标之一。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "网织红细胞"
+        },
+        {
+            "entity_type": "体征",
+            "description": "包括皮肤黏膜苍白，心率和呼吸加快等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "贫血的临床表现"
+        },
+        {
+            "entity_type": "事件",
+            "description": "指外伤、创伤性内脏破裂等原因引起的快速失血，会导致心脏活动加强和外周血管收缩等症状。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "急性失血"
+        },
+        {
+            "entity_type": "事件",
+            "description": "长期小量出血，如由肿瘤或寄生虫感染引起，会导致铁的缺乏，从而引发贫血。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "慢性失血"
+        },
+        {
+            "entity_type": "事件",
+            "description": "红细胞的大量溶解，是溶血性贫血的主要特征。\\n蜂毒中毒可能导致的严重病变",
+            "source_id": "0",
+            "weight": 2,
+            "rank": 0,
+            "id": "溶血"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "用于区分再生性贫血和非再生性贫血的医学检查方法。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "贫血按骨髓反应情况的分类"
+        },
+        {
+            "entity_type": "激素",
+            "description": "在缺氧情况下刺激红细胞生成，是调节红细胞数量的重要激素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "红细胞生成素（EPO）"
+        },
+        {
+            "entity_type": "营养",
+            "description": "动物必需的微量元素，对红细胞的成熟和血红蛋白合成有重要作用。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "铁"
+        },
+        {
+            "entity_type": "症状",
+            "description": "指宠物眼睛对光敏感，是眼部疾病的症状之一。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "温丶羞明"
+        },
+        {
+            "entity_type": "体征",
+            "description": "描述眼睛结膜血管充血的情况，常由眼部炎症或感染引起。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "结膜充血"
+        },
+        {
+            "entity_type": "症状",
+            "description": "指宠物因疾病或伤害而感受到的不适或痛苦感增强。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "疼痛加剧"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指疾病的发展较为缓慢，症状持续时间较长，治疗过程和恢复期也较长。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "慢性型"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "一种眼部疾病，通常由细菌感染引起，表现为大量脓性分泌物。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "化脓性结膜炎"
+        },
+        {
+            "entity_type": "症状",
+            "description": "指角膜透明度降低，变得模糊不清，可能由多种原因引起。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "角膜浑浊"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "一种眼部疾病，特征是结膜下淋巴组织增生，形成滤泡。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "滤泡性结膜炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由衣原体引起的感染，可影响多个器官系统，包括眼部。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "衣原体感染"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "角膜因受微生物、外伤、化学及物理性因素影响而发生的炎症。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "角膜炎"
+        },
+        {
+            "entity_type": "症状",
+            "description": "指宠物对光线敏感，常见于眼部疾病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "畏光"
+        },
+        {
+            "entity_type": "症状",
+            "description": "指宠物眼睛不自主地流出泪液，可能因眼部疾病或刺激引起。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "流泪"
+        },
+        {
+            "entity_type": "病变",
+            "description": "指角膜组织损伤，形成溃烂，可能由外伤或感染引起。指皮肤或黏膜上的损伤，形成溃烂面，可能由多种原因引起。",
+            "source_id": "0",
+            "weight": 2,
+            "rank": 0,
+            "id": "角膜溃"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指泪液不能正常流入鼻腔排出，导致泪溢，可能由多种原因引起。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "泪道阻塞"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "因泪液分泌减少或丧失而引起的角膜和结膜的炎症。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "干性角膜结膜炎"
+        },
+        {
+            "entity_type": "病变",
+            "description": "指瞬膜下的腺体向外翻转、脱出于眼球表面的情况。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "瞬膜腺脱出"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指眼睛前色素层的炎症，可能与多种因素相关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "前色素层炎"
+        },
+        {
+            "entity_type": "病变",
+            "description": "指眼内晶体浑浊，影响视力，可能由多种原因引起。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "白内障"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "一种眼病，特征是眼压升高，导致视神经损伤和视野缺损。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "青光眼"
+        },
+        {
+            "entity_type": "损伤",
+            "description": "指眼球受到钝性外力冲击导致的损伤。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "眼球挫伤"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指耳朵局部因血管破裂血液渗出而引起的肿胀。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "耳血肿"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指外耳道的炎症，通常与感染有关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "外耳道炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指齿龈的炎症，特征是齿龈充血和肿胀。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "齿龈炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指牙周膜及其周围组织的炎症，特征是齿周袋形成、齿松动和齿龈萎缩。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "牙周病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "指食物或其他物体阻塞食道，可能是由于采食过急或异物吞入引起...For the content length reason, it stopped, continue?",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "食道阻塞"
+        },
+        {
+            "entity_type": "药物",
+            "description": "用于破坏蛇毒，帮助排毒",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "高锰酸钾液"
+        },
+        {
+            "entity_type": "药物",
+            "description": "用于破坏蛇毒，帮助排毒",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "胃蛋白酶"
+        },
+        {
+            "entity_type": "药物",
+            "description": "用于局部封闭，以帮助排毒",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "背鲁卡因液"
+        },
+        {
+            "entity_type": "药物",
+            "description": "用于解毒，治疗蛇咬伤",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "季德蛇药片"
+        },
+        {
+            "entity_type": "毒素",
+            "description": "由蜂类分泌，可导致动物中毒",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "蜂毒"
+        },
+        {
+            "entity_type": "生物胺",
+            "description": "存在于蜂毒中，导致动物生理反应",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "乙酰胆碱"
+        },
+        {
+            "entity_type": "生物胺",
+            "description": "存在于蜂毒中，导致动物生理反应",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "5-羟色胺"
+        },
+        {
+            "entity_type": "酶",
+            "description": "存在于蜂毒中，导致动物生理反应",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "透明质酸酶"
+        },
+        {
+            "entity_type": "酶",
+            "description": "存在于蜂毒中，导致动物生理反应",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "磷脂酶A"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由蜂毒引起，表现为动物生理功能紊乱",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "蜂毒中毒"
+        },
+        {
+            "entity_type": "体征",
+            "description": "动物被蜂蛰伤后的常见体征",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肿胀"
+        },
+        {
+            "entity_type": "体征",
+            "description": "动物被蜂蛰伤后的常见体征",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "热痛"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由动物食入含铅化合物引起，影响多个器官系统",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "铅中毒"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "脑脊液流动受阻或生成过多引起的脑病",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "脑积水"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "脑膜和脑实质的炎症性疾病",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "脑膜脑炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由严重肝脏疾病引起的中枢神经系统功能障碍",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肝性脑病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由于高温引起的中枢神经系统紊乱",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "热射病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "脊髓实质的炎症，可能导致运动、感觉、反射机能障碍",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "脊髓炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "大脑神经元异常放电引起的脑机能障碍",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "癫痫"
+        },
+        {
+            "entity_type": "病变",
+            "description": "由感染引起的组织局部化脓性病变",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "脓肿"
+        },
+        {
+            "entity_type": "病变",
+            "description": "疏松结缔组织的急性弥漫性化脓性炎症",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "蜂窝织炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由致病菌及其活动产物引起的全身性病理过程",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "败血症"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "皮肤感染化脓性细菌引起的化脓性皮肤病",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "脓皮病"
+        },
+        {
+            "entity_type": "",
+            "description": "",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 4,
+            "id": "蛇毒"
+        },
+        {
+            "entity_type": "药物",
+            "description": "长期使用黄体酮可能导致内分泌疾病，影响人体激素平衡。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "黄体酮"
+        },
+        {
+            "entity_type": "病变",
+            "description": "垂体肿瘤可能导致体内激素分泌异常，影响多种生理功能。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "垂体肿瘤"
+        },
+        {
+            "entity_type": "激素",
+            "description": "类胰岛素生长因子具有促进骨骼、软骨等组织生长的功能。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "胰岛素生长因子"
+        },
+        {
+            "entity_type": "激素",
+            "description": "生长激素具有促进脂肪分解和产生高糖血症的作用，可能导致糖尿病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "生长激素"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "糖尿病是一种以高血糖为特征的代谢性疾病，可导致多种并发症。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "糖尿病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "尿崩症是由于抗利尿激素分泌不足引起的，临床上以多尿、多饮为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "尿崩症"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "下丘脑是内分泌系统的一部分，负责调节多种激素的分泌，包括抗利尿激素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "下丘脑"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "脑垂体是内分泌系统的主要腺体，负责分泌多种激素，包括促甲状腺激素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "脑垂体"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "甲状旁腺机能亢进症是由于甲状旁腺激素分泌过多引起的，导致钙磷代谢紊乱。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "甲状旁腺机能亢进症"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "甲状旁腺是内分泌腺体，负责调节体内钙磷平衡，分泌甲状旁腺激素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "甲状旁腺"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "甲状腺机能减退症是由于甲状腺激素合成和分泌不足引起的，影响全身代谢。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "甲状腺机能减退症"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "甲状腺是内分泌腺体，负责合成和分泌甲状腺激素，调节新陈代谢。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "甲状腺"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "甲状腺机能亢进症是由于甲状腺激素生成过多引起的，导致基础代谢增加。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "甲状腺机能亢进症"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "糖尿病是一种以胰岛素分泌不足为特征的碳水化合物代谢障碍性疾病，临床上以多尿、多饮、多食、体重减轻和血糖升高为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "糖尿病（DIABETES MELLITUS）"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "肾上腺皮质机能亢进症是由于肾上腺皮质激素分泌过多引起的，临床上以多尿、烦渴、贪食、肥胖、脱毛和皮肤钙质沉着为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肾上腺皮质机能亢进症"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "高胃泌索血症是血液里胃泌素含量异常增多为特征的综合征，与多种消化系统疾病相关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "高胃泌索血症"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "佐-埃二氏综合征是一种胰腺瘤，引起胃泌素分泌增多，导致胃和小肠上部溃疡。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "佐-埃二氏综合征"
+        },
+        {
+            "entity_type": "药物",
+            "description": "四环素是一种抗生素，用于治疗革兰氏阳性菌感染。\\n用于预防和治疗某些感染，例如口服长效四环素可以预防感染，并且在治疗立克次体感染中也有效。",
+            "source_id": "0",
+            "weight": 2,
+            "rank": 0,
+            "id": "四环素"
+        },
+        {
+            "entity_type": "药物",
+            "description": "庆人霉素是一种抗生素，用于治疗革兰氏阳性菌感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "庆人霉素"
+        },
+        {
+            "entity_type": "药物",
+            "description": "妥布拉霉素是一种抗生素，用于治疗革兰氏阳性菌感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "妥布拉霉素"
+        },
+        {
+            "entity_type": "药物",
+            "description": "西梭霉素是一种抗生素，用于治疗革兰氏阳性菌感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "西梭霉素"
+        },
+        {
+            "entity_type": "药物",
+            "description": "卡那霉素是一种抗生素，用于治疗革兰氏阳性菌感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "卡那霉素"
+        },
+        {
+            "entity_type": "药物",
+            "description": "氯霉素是一种抗生素，用于治疗革兰氏阳性菌感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "氯霉素"
+        },
+        {
+            "entity_type": "药物",
+            "description": "二性霉素B是治疗真菌性心内膜炎的有效药物，具有毒性，需谨慎使用。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "二性霉素B"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "心力衰竭是多种疾病过程中发生的一种综合征，表现为心肌收缩力减弱、心脏排血量减少等一系列症状和体征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心力衰竭"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "扩张性心肌病是心力衰竭的一个病因，影响心肌功能。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "扩张性心肌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "猫的牛磺酸缺乏是心力衰竭的一个病因，与心肌功能有关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "猫的牛磺酸缺乏"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "心肌炎是心力衰竭的一个病因，涉及心肌的炎症。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心肌炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "心脏瓣膜闭锁不全可能引起负荷加重，是心力衰竭的一个病因。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心脏瓣膜闭锁不全"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "先天性动脉导管未闭可能引起负荷加重，是心力衰竭的一个病因。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "先天性动脉导管未闭"
+        },
+        {
+            "entity_type": "病变",
+            "description": "病毒如瘟热、细小病毒等引起的心肌炎，是心力衰竭的一个病因。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "病毒"
+        },
+        {
+            "entity_type": "病变",
+            "description": "寄生虫如犬恶心丝虫、弓形虫等引起的心肌炎，是心力衰竭的一个病因。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "寄生虫"
+        },
+        {
+            "entity_type": "营养",
+            "description": "硒、铜、维生素B等微量元素缺乏引起的心肌变性，是心力衰竭的一个病因。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "硒、铜、维生素B"
+        },
+        {
+            "entity_type": "环境因素",
+            "description": "触电或过量静脉注射钙剂等有毒物质引起的心肌收缩受抑制，是心力衰竭的一个病因。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "触电"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "心包积液或积而使心脏受压，是心力衰竭的一个病因。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心包积液"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "心包疾病如心包积液，引起冠状循环供血不足，导致心力衰竭。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心包疾病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "心律失常是脉搏异常和不规则心音的病症，可能引起虚弱、衰竭、癫痫样发作或突然死亡。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心律失常"
+        },
+        {
+            "entity_type": "营养",
+            "description": "电解质代谢紊乱是心律失常的一个心脏外因素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "电解质代谢紊乱"
+        },
+        {
+            "entity_type": "病变",
+            "description": "自主神经紊乱是心律失常的一个心脏外因素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "自主神经紊乱"
+        },
+        {
+            "entity_type": "体征",
+            "description": "低血氧是心律失常的一个心脏外因素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "低血氧"
+        },
+        {
+            "entity_type": "体征",
+            "description": "酸中毒是心律失常的一个心脏外因素。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "酸中毒"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "胰腺炎分为急性和慢性两种，主要影响犬和猫，常通过死后检查发现。急性胰腺炎特征为突发性腹部剧痛、休克和腹膜炎。病因可能与肥胖、高脂血症等有关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "胰腺炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "腹膜炎是由细菌感染或化学物质刺激引起的腹膜炎症，分为急性和慢性，有原发性和继发性，以及局限性和弥漫性之分。症状包括剧烈腹痛、体温升高等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "腹膜炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "腹泻指粪便稀薄如水样或稀粥样，临床上表现为排粪次数增多。病因可能包括食物过敏、肠道淋巴管炎、急性胰腺炎等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "腹泻"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "便秘是肠蠕动机能障碍，导致肠内容物滞留于肠腔的一种常见病。病因包括食物和环境因素、直肠或肛门受到机械性压迫等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "便秘"
+        },
+        {
+            "entity_type": "症状",
+            "description": "呕吐是不自主地将胃内容物从口排出的现象，可能与食物、毒素、胃功能障碍等相关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "呕吐"
+        },
+        {
+            "entity_type": "症状",
+            "description": "返流指食物被动逆行到食道括约肌的近端，常由巨食道或继发性巨食道、重症肌无力等因素引起。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "返流"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "鼻炎是鼻黏膜的炎症，以鼻黏膜充血、肿胀、流鼻液、呼吸困难、打喷嚏为主要特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "鼻炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "喉炎是喉黏膜及黏膜下层组织的炎症，主要表现为剧烈咳嗽、喉部敏感、肿胀。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "喉炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "气管支气管炎是气管、支气管黏膜的炎症，以咳嗽、气端、胸部听诊有啰音为主要特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "气管支气管炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "肺炎是肺实质的炎症，以发热、呼吸障碍、听诊出现散在或广泛的浊音区、低氧血症为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肺炎"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "肺水肿是肺毛细血管内血液液体成分渗漏到肺泡、支气管及间质内的非炎性疾病，以极度呼吸困难、流泡沫样鼻液为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肺水肿"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "肺气肿指肺因空气含量过多而致体积膨胀，包括肺泡性肺气肿和间质性肺气肿。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肺气肿"
+        },
+        {
+            "entity_type": "症状",
+            "description": "咳嗽是一种保护性反射动作，能将呼吸道异物或分泌物排出体外，也是病理性呼吸障碍的症状之一。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "咳嗽"
+        },
+        {
+            "entity_type": "症状",
+            "description": "呼吸困难是呼吸频率增加、呼吸深度加强的一种复杂病理性呼吸障碍，可能由多种原因引起。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "呼吸困难"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "贝尔曼法是一种用于诊断粪便中幼虫的检查方法，可用于确诊某些寄生虫病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "贝尔曼法"
+        },
+        {
+            "entity_type": "药物",
+            "description": "左咪唑是一种用于治疗寄生虫病的药物，具有特定的剂量和服用方式。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "左咪唑"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "类圆线虫病是由类圆属的粪类圆线虫引起的寄生虫病，影响犬、猫、狐和人等动物。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "类圆线虫病"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "杆形目是宠物可能感染的寄生虫种类之一，与类圆线虫病有关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "杆形目"
+        },
+        {
+            "entity_type": "品种",
+            "description": "类圆属是引起类圆线虫病的寄生虫品种，其雌虫寄生于宿主的十二指肠黏膜中。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "类圆属"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "粪类圆线虫是引起类圆线虫病的寄生虫种类，具有世界性分布，尤其在热带和亚热带地区广泛分布。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "粪类圆线虫"
+        },
+        {
+            "entity_type": "体征",
+            "description": "丝虫型幼虫是类圆线虫生活史中的一个阶段，能在肠黏膜中孵化并引起相应症状。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "丝虫型幼虫"
+        },
+        {
+            "entity_type": "体征",
+            "description": "杆虫型幼虫是类圆线虫的另一种幼虫形式，能在适宜环境中发育并进行间接发育。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "杆虫型幼虫"
+        },
+        {
+            "entity_type": "药物",
+            "description": "噻苯唑是一种用于治疗类圆线虫病的药物，具有特定的剂量和服用方式。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "噻苯唑"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "肾膨结线虫是一种寄生于人、貂、狐等动物肾脏或腹腔中的寄生虫，可引起膨结线虫病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肾膨结线虫"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "麦地那龙线虫是一种寄生在宿主皮下或器官结缔组织内的寄生虫，可引起麦地那龙线虫病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "麦地那龙线虫"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "眼虫病是一种由丽嫩吮线虫引起的寄生虫病，影响犬、猫等动物，可引起结膜炎和角膜炎。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "眼虫病"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "肺毛细线虫是一种寄生在狐狸、人和猫的支气管和气管中的寄生虫，可引起肺毛细线虫病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肺毛细线虫"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "犬复孔绦虫是一种寄生在犬、猫等动物小肠中的绦虫，其幼虫期可感染其他家畜或人。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "犬复孔绦虫"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "豆状带绦虫是一种寄生在人、猫、狐狸等小肠中的绦虫，其幼虫期以啮齿类动物为中间宿主。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "豆状带绦虫"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "细粒棘球绦虫是一种寄生在人和犬、猫等动物小肠中的绦虫，其幼虫期以羊、猪等为中间宿主。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "细粒棘球绦虫"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "华支睾吸虫是一种寄生在人、猫、猪等动物肝脏胆管和胆囊内的吸虫，可引起华支睾吸虫病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "华支睾吸虫"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "后睾吸虫是一种寄生在猫、人、猪及狐狸胆管内的吸虫，可引起后睾吸虫病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "后睾吸虫"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "卫氏...For the content length reason, it stopped, continue?",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "卫氏并殖虫"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "破伤风是一种由破伤风毒素引起的疾病，其症状包括肌肉强直和痉挛，潜伏期为5～10天，严重时可导致呼吸困难和死亡。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "破伤风"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "猫作为宠物种类，在文中提到其对破伤风毒素有较强的抵抗力，临床上局部性强直较常见。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "猫"
+        },
+        {
+            "entity_type": "诊断测试",
+            "description": "文中提到了通过观察临床症状如肌肉强直性痉挛和应激性增高等来怀疑破伤风疾病，也提到了创伤分泌物或创内坏死组织进行细菌培养和生化试验作为诊断测试。",
+            "source_id": "0",
+            "weight": 2,
+            "rank": 3,
+            "id": "诊断测试"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "治疗破伤风包括加强护理、消除病原、使用抗毒素和镇静解痉等对症疗法。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "治疗"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "肉毒梭菌毒素中毒是由肉毒梭菌产生的神经毒素引起的中毒性疾病，临床上以运动中枢神经麻痹和延脑麻痹为特征，死亡率很高。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肉毒梭菌毒素中毒"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "放线菌病是由放线菌引起的一种人兽共患慢性传染病，特征为组织增生、形成肿瘤和慢性化脓灶。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "放线菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "诺卡氏菌病是由诺卡氏菌引起的一种疾病，可以导致化脓、坏死或形成脓肿。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "诺卡氏菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "皮肤癣菌病是由皮肤癣菌引起的感染，主要影响毛发、爪和皮肤等角质组织，引起脱毛、渗出及结痂等症状。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "皮肤癣菌病"
+        },
+        {
+            "entity_type": "品种",
+            "description": "犬小孢子菌是引起皮肤癣菌病的病原之一，在沙氏培养基上生长快，菌落是白色棉花样至羊绒样。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "犬小孢子菌"
+        },
+        {
+            "entity_type": "品种",
+            "description": "须毛癣菌是引起人和猫皮肤癣菌病的病原之一，其感染主要来源于啮齿动物和兔子。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "须毛癣菌"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "芽生菌病是一种由皮炎芽生菌引起的慢性肉芽肿性和化脓性病变，可以扩散到全身多个器官。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "芽生菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "组织胞浆菌病是由荚膜组织胞浆菌引起的一种真菌性疾病，可以引起多系统脏器的肉芽肿性炎性反应。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "组织胞浆菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "球孢子菌病是由粗球孢子菌侵入肺并扩散引起的全身性真菌感染性疾病，以肺和淋巴结的脓性肉芽肿为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "球孢子菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "隐球菌病是由新型隐球菌真菌扩散到皮肤、眼或中枢神经系统引起的条件性真菌感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "隐球菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "孢子丝菌病是由中克孢子丝菌引起的慢性肉芽肿性疾病，主要表现为皮肤感染，也可扩散到其他脏器。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "孢子丝菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "曲霉菌病是由曲霉属真菌引起的一种传染病，主要表现为鼻腔和鼻旁窦组织感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "曲霉菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "念珠菌病是由念珠菌过度繁殖引起的局部或全身性感染，主要特征是黏膜溃疡或全身多处脏器出现小脓肿。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "念珠菌病"
+        },
+        {
+            "entity_type": "品种",
+            "description": "弓首属包括引起寄生虫病的虫体，如犬弓首虫和猫弓首虫，寄生于动物小肠引起幼龄犬猫发育不良。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "弓首属"
+        },
+        {
+            "entity_type": "药物",
+            "description": "在治疗多种疾病中发挥重要作用，包括但不限于各种细菌感染的治疗。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "抗生素"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "用于辅助治疗慢性病例，尤其在抗生素治疗以外，对慢性病例尤为重要。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "支持疗法"
+        },
+        {
+            "entity_type": "寄生虫",
+            "description": "作为传播病原体的媒介，如传播立克次体等，需要被控制或消灭以防止疾病传播。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "蜱"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由立克次体引起的疾病，如落基山斑点热，可以通过蜱传播给人类和动物。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "立克次体"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由立氏立克次体引起的疾病，可经蜱传播，感染后未经治疗可能导致死亡。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "落基山斑点热（RMSF）"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由贝纳柯克斯体引起的人畜共患病，可以导致急性发热、肺炎、肝炎甚至心内膜炎。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "Q热"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由血l巴尔通体引起的猫和犬的疾病，表现为免疫介导性红细胞损伤。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "血巴尔通体病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由汉赛巴通体引起的猫和人的共患性疾病，特征为局部皮肤损伤和淋巴结肿大。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "猫抓病（CSD）"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由衣原体引起的疾病，如引起猫的结膜炎和上呼吸道感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "衣原体病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "是一种由钩端螺旋体引起的传染病，影响犬和多种动物，也能感染人。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "钩端螺旋体病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由疏螺旋体引起的多系统性疾病，通过蜱传播，与人和动物的多发性关节炎有关。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "莱姆病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由犬布鲁氏菌引起的人兽共患性传染病，主要通过感染动物传播。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "犬布鲁氏菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由沙门氏菌属细菌引起的人和动物共患性疾病，通过消化道途径传播。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "沙门氏菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由耶尔森菌引起的多动物和人的共患性传染病，主要表现为胃肠炎或全身性症状。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "耶尔森菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "是一种多动物和人共患的自然疫源性传染病，主要影响淋巴系统和肺脏。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "鼠疫"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由葡萄球菌引起的人和动物多种疾病的总称，常见于局部化脓性炎症。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "葡萄球菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由致病性链球菌引起的多种家畜和动物的化脓性感染、败血症以及毒性休克综合征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "链球菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由土拉弗朗西斯菌引起的多动物和人共患病，亦称野兔热，以体温升高和淋巴结肿大为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "土拉菌病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由结核分枝杆菌引起的人、畜和禽类共患的慢性传染性疾病，特征是形成肉芽肿和干酪样病灶。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "结核病"
+        },
+        {
+            "entity_type": "疾病",
+            "description": "由空肠弯曲菌和结肠弯曲菌引起的人和多利动物共患的腹泻性疾病。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "弯曲菌病"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "冠状病毒是引起犬猫等宠物肠道疾病的病原体，能在人或动物中持续存在，导致本病在自然界中长期传播。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "冠状病毒"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "轮状病毒是一类能够导致多种动物腹泻的病原体，具有囊膜，对酸和胰蛋白酶稳定，能耐受乙醚、氯仿和去氧胆酸盐。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "轮状病毒"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "猫合胞体形成病毒（FeSFV）是一种能在灵长类、猫和牛体内引起持久和无症状感染的反转录病毒。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "猫合胞体形成病毒"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "猫麻疹病毒（CLDV）是一种单股RNA病毒，属副黏病毒科，可引起猫科动物的致死性感染。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "猫麻疹病毒"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "猫痘病毒感染由牛痘病毒或类牛痘病毒引起，在家猫和野猫中不常发生，主要见于西欧。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "猫痘病毒"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "狂犬病病毒是一种单股负链RNA病毒，是引起所有温血动物急性致死的主要病原体，几乎100%致死。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "狂犬病病毒"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "伪狂犬病病毒（PRV）是一种圆形或圆形外观的疱疹病毒，引起多动物的急性感染，病毒仅局限于神经组织。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "伪狂犬病病毒"
+        },
+        {
+            "entity_type": "宠物种类",
+            "description": "埃利希体是专性细胞内寄生的革兰氏阴性小球菌，可引起犬等多种动物的临床和亚临床感染，以呕吐、黄疽、进行性消瘦、脾肿大等为特征。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "埃利希体"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "指小型动物的皮肤组织，经常涉及到手术切开和组织剥离等操作。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "小动物皮肤"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "一种外科手术工具，用于夹住血管以防止出血。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "止血钳"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "手术刀的柄，用于手术过程中的各种切开、分离等操作。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "刀柄"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "在外科手术中，医生用手指进行组织间隙的插入和剥离。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "手指"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "外科手术工具之一，用于剥离和推开周围的组织。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "剥离器"
+        },
+        {
+            "entity_type": "缝合材料",
+            "description": "一种不可吸收的缝合材料，具有组织抗张力强、价格低廉等特点。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "丝线"
+        },
+        {
+            "entity_type": "缝合材料",
+            "description": "一种可吸收的缝合材料，临床上也较常用。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "肠线"
+        },
+        {
+            "entity_type": "缝合材料",
+            "description": "一种不可吸收的缝合材料，抗张力强，组织反应小。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "尼龙线"
+        },
+        {
+            "entity_type": "缝合材料",
+            "description": "具有强张力，对组织不引起炎症反应，用于固定骨折等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "不锈钢丝"
+        },
+        {
+            "entity_type": "缝合方法",
+            "description": "分为间断缝合和连续缝合，用于不同情况下的组织缝合。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "单纯对合缝合法"
+        },
+        {
+            "entity_type": "缝合方法",
+            "description": "将缝合组织的边缘内翻，使缝合组织的表面平滑，多用于胃肠等的缝合。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "内翻缝合"
+        },
+        {
+            "entity_type": "打结方法",
+            "description": "一种打结方式，通过缠绕两次以增加摩擦面，不易松动。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "三重结"
+        },
+        {
+            "entity_type": "绷带包扎法",
+            "description": "一种轻便的保护性绷带，用于保护撕裂的伤口和外科切口。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "纱布绷带"
+        },
+        {
+            "entity_type": "绷带包扎法",
+            "description": "坚固耐用，用于固定夹板、肢体等，提供支持，防止水肿和组织损伤。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "棉布绷带"
+        },
+        {
+            "entity_type": "绷带包扎法",
+            "description": "具有弹性的网织品，用于烧伤、关节损伤的包扎。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "弹力绷带"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "将创口、体腔或其他感染部位的液体引出体外以进行治疗的方法。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "引流法"
+        },
+        {
+            "entity_type": "引流方法",
+            "description": "使用纱布条进行引流，适用于一般切口的引流，维持创腔的开放。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "纱布条引流"
+        },
+        {
+            "entity_type": "引流方法",
+            "description": "适用于腹腔内较多积液的引流和腹膜透析等，保证引流通畅。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "双腔管引流"
+        },
+        {
+            "entity_type": "引流方法",
+            "description": "用于胸腔，保证胸腔负压状态，引出气体或液体。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "胸腔闭式引流"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "对无治疗价值或预后不良的严重病例采取简单而无痛的方法致死。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "安乐死术"
+        },
+        {
+            "entity_type": "安乐死术",
+            "description": "使用饱和硫酸镁进行安乐死，镁离子抑制中枢神经系统，导致意识丧失和心跳停止。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "饱和硫酸镁法"
+        },
+        {
+            "entity_type": "安乐死术",
+            "description": "使用戊巴比妥钠进行安乐死，导致动物由兴奋转为嗜眠直至死亡。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "戊巴比妥钠法"
+        },
+        {
+            "entity_type": "安乐死术",
+            "description": "使用高浓度氯化钾进行安乐死，导致心脏停搏。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "三氯化钊法"
+        },
+        {
+            "entity_type": "安乐死术",
+            "description": "使用T-61进行安乐死，该药物为箭...For the content length reason, it stopped, continue?",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "T-61法"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "补液是一种治疗措施，用于在手术过程中监护动物的尿生成情况。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "补液"
+        },
+        {
+            "entity_type": "体征",
+            "description": "尿生成异常是指在补液后监测到的异常情况，可能需要特别关注和处理。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "尿生成异常"
+        },
+        {
+            "entity_type": "器材",
+            "description": "测压计由盐水静压柱与标尺、导管等组成，用于测定动物的血管压力，是小动物临床手术中的重要器材。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "测压计"
+        },
+        {
+            "entity_type": "环境因素",
+            "description": "小动物临床是指在动物医院里进行的对小动物的医疗行为，涉及到的器材和方法都应适合动物的体型和特点。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "小动物临床"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "消毒是手术前对所用器械进行的处理，目的是防止手术过程中的感染，属于保定法的一部分，确保手术安全。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "消毒"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "颈静脉是手术中用于插管的血管，通过特定的操作将插管留置针经皮肤刺入颈静脉，用于输液或测量血管压力。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "颈静脉"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "输液是一种治疗方法，通过将生理盐水等液体输入动物体内，以补充血容量、改善循环功能或直接投药。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "输液"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "心脏功能指的是心脏泵血和循环血液的能力，其好坏会影响CVP（中心静脉压）的高低，是评估动物手术和疾病状态的重要指标。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心脏功能"
+        },
+        {
+            "entity_type": "器官或系统",
+            "description": "血管张力是指血管壁的紧张度，影响着血压和血液流动，与心脏功能及CVP相互影响，是动物手术监护的重要参数。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "血管张力"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "X射线诊断学利用X射线特性观察动物机体器官和组织结构的形态、功能，以及疾病过程中的改变，是诊断疾病性质的科学方法。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "X射线诊断学"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "造影检查是一种特殊检查方法，通过使用造影剂改变密度差别，观察器官和组织结构，以获得更清晰的内部影像。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "造影检查"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "超声波检查运用超声波的物理特性及动物体的声学特性，对动物体的组织器官形态结构与功能状态做出判断的非创伤性检查法。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "超声波检查"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "内窥镜检查是利用内窥镜观察动物体内腔道或器官内部情况的一种检查方法，可用于诊断和治疗。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "内窥镜检查"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "CT检查即计算机断层扫描，通过X射线对动物机体某一层进行扫描，获得横断面图像，用于病变的检出和诊断。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "CT检查"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "核磁共振检查利用核磁共振技术对动物机体进行成像，主要用于诊断脑部和脊髓等疾病，对软组织的检查尤为敏感。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "核磁共振（MRI）检查"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "注射法是将药物通过皮下、肌肉、静脉等途径注入动物体内，以产生药效的常见治疗方法。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "注射法"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "采血法是从动物体内采集血液样本的一系列方法，包括静脉采血和动脉采血，用于血液学检查和血液成分的分析。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "采血法"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "投药法是将药物通过口服或其他方式投入动物体内，以治疗疾病的方法，包括经口投药和直肠投药等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "投药法"
+        },
+        {
+            "entity_type": "治疗方法",
+            "description": "导尿法是通过插入导尿管到动物的尿道，以引流尿液、冲洗膀胱或进行膀胱给...For the content length reason, it stopped, continue?",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "导尿法"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "在小动物诊疗过程中，用人力、器械或药物等制动动物的方法，称为保定法，目的是确保诊疗动物疾病时人和动物的安全。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "小动物保定法"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "包括口套和扎口保定法、站立保定法、侧卧保定法、颈圈保定法、体架保定法、静脉穿刺保定法等多种方法，具体选择依据犬个体大小、行为和诊疗目的。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "犬的保定法"
+        },
+        {
+            "entity_type": "保定法",
+            "description": "包括抓猫保定法、布卷裹和猫袋保定法、扎口保定法、侧卧保定法、静脉穿刺保定法、颈圈保定法等，旨在安全有效地控制猫的行为。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "猫的保定法"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "包括问诊、视诊、触诊、叩诊、听诊、嗅诊，用于收集动物疾病的详细信息。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 2,
+            "id": "临床检查基本方法"
+        },
+        {
+            "entity_type": "检查",
+            "description": "涉及全身状态的检查，包括精神状态、营养状况、体格发育、姿势、运动、行为等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "一般检查"
+        },
+        {
+            "entity_type": "检查",
+            "description": "包括心血管、呼吸、消化、泌尿、神经系统的检查，以及特殊检查如X射线、心电图或化验等。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "系统检查"
+        },
+        {
+            "entity_type": "检查方法",
+            "description": "对心律失常、心脏肥大、心肌梗塞和电解质紊乱的诊断具有重要意义。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "心电图检查"
+        },
+        {
+            "entity_type": "心电图",
+            "description": "包括P波、QRS波群、T波等，反映心脏电生理活动的不同阶段。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "心电图各组成部分"
+        },
+        {
+            "entity_type": "心电轴",
+            "description": "代表心室除极向量环在额面上的方向，用于评估心脏的电生理特性。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 0,
+            "id": "平均心电轴"
+        },
+        {
+            "entity_type": "诊断测试",
+            "description": "用于测量心脏收缩时血液对动脉管壁的压力，反映心血管系统的功能状态。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "血压测定"
+        },
+        {
+            "entity_type": "诊断测试",
+            "description": "反映右心房与腔静脉的压力，用于评估血容量、心功能和血管张力的综合状况。",
+            "source_id": "0",
+            "weight": 1,
+            "rank": 1,
+            "id": "中心静脉压的测定"
+        }
+    ],
+    "links": [
+        {
+            "weight": 1.0,
+            "description": "再生性贫血是一种特定的贫血类型，其特征是骨髓中的红细胞再生活跃。",
+            "source_id": "0",
+            "source": "再生性贫血",
+            "target": "贫血"
+        },
+        {
+            "weight": 1.0,
+            "description": "红细胞的生成与破坏之间的动态平衡对再生性贫血的病情有直接影响。",
+            "source_id": "0",
+            "source": "再生性贫血",
+            "target": "红细胞"
+        },
+        {
+            "weight": 1.0,
+            "description": "网织红细胞的数量可以反映再生性贫血中红细胞再生的速度。",
+            "source_id": "0",
+            "source": "再生性贫血",
+            "target": "网织红细胞"
+        },
+        {
+            "weight": 1.0,
+            "description": "失血性贫血是由外部或内部出血引起的贫血状态。",
+            "source_id": "0",
+            "source": "贫血",
+            "target": "失血性贫血"
+        },
+        {
+            "weight": 1.0,
+            "description": "溶血性贫血是由红细胞过早破坏导致的贫血状态。",
+            "source_id": "0",
+            "source": "贫血",
+            "target": "溶血性贫血"
+        },
+        {
+            "weight": 1.0,
+            "description": "非可生性贫血是贫血的一种形式，其骨髓反应不活跃，红细胞生成减少。",
+            "source_id": "0",
+            "source": "贫血",
+            "target": "非可生性贫血"
+        },
+        {
+            "weight": 1.0,
+            "description": "贫血的临床表现用于判断贫血的程度和影响。",
+            "source_id": "0",
+            "source": "贫血",
+            "target": "贫血的临床表现"
+        },
+        {
+            "weight": 1.0,
+            "description": "急性失血是失血性贫血的一个常见原因，会导致快速的血容量下降。",
+            "source_id": "0",
+            "source": "失血性贫血",
+            "target": "急性失血"
+        },
+        {
+            "weight": 1.0,
+            "description": "高锰酸钾液可破坏蛇毒，帮助排毒",
+            "source_id": "0",
+            "source": "高锰酸钾液",
+            "target": "蛇毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "胃蛋白酶可破坏蛇毒，帮助排毒",
+            "source_id": "0",
+            "source": "胃蛋白酶",
+            "target": "蛇毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "背鲁卡因液可用于局部封闭，帮助排毒",
+            "source_id": "0",
+            "source": "背鲁卡因液",
+            "target": "蛇毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "季德蛇药片用于解毒，治疗蛇咬伤",
+            "source_id": "0",
+            "source": "季德蛇药片",
+            "target": "蛇毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "蜂毒中含有乙酰胆碱，导致动物生理反应",
+            "source_id": "0",
+            "source": "蜂毒",
+            "target": "乙酰胆碱"
+        },
+        {
+            "weight": 1.0,
+            "description": "长期使用黄体酮可能导致垂体肿瘤的发生，影响内分泌功能。",
+            "source_id": "0",
+            "source": "黄体酮",
+            "target": "垂体肿瘤"
+        },
+        {
+            "weight": 1.0,
+            "description": "胰岛素生长因子和生长激素共同参与体内代谢调节，影响脂肪分解和血糖水平。",
+            "source_id": "0",
+            "source": "胰岛素生长因子",
+            "target": "生长激素"
+        },
+        {
+            "weight": 1.0,
+            "description": "糖尿病患者可能因为血糖控制不良而出现尿崩症的症状。",
+            "source_id": "0",
+            "source": "糖尿病",
+            "target": "尿崩症"
+        },
+        {
+            "weight": 1.0,
+            "description": "下丘脑通过释放激素调节脑垂体的激素分泌，影响多种生理功能。",
+            "source_id": "0",
+            "source": "下丘脑",
+            "target": "脑垂体"
+        },
+        {
+            "weight": 1.0,
+            "description": "胰腺炎可能引起腹膜炎，因为胰腺炎导致的炎症可能扩散到腹膜。",
+            "source_id": "0",
+            "source": "胰腺炎",
+            "target": "腹膜炎"
+        },
+        {
+            "weight": 1.0,
+            "description": "腹膜炎可能与腹泻相关，因为肠道炎症可能导致肠道内容物移动加快，引起腹泻。",
+            "source_id": "0",
+            "source": "腹膜炎",
+            "target": "腹泻"
+        },
+        {
+            "weight": 1.0,
+            "description": "腹泻和便秘是相反的症状，表明肠道功能可能存在问题。",
+            "source_id": "0",
+            "source": "腹泻",
+            "target": "便秘"
+        },
+        {
+            "weight": 1.0,
+            "description": "便秘可能导致呕吐，因为肠内容物的滞留可能引起胃部不适和呕吐。",
+            "source_id": "0",
+            "source": "便秘",
+            "target": "呕吐"
+        },
+        {
+            "weight": 1.0,
+            "description": "呕吐可能与返流相关，因为食道括约肌功能异常可能导致食物返流并引起呕吐。",
+            "source_id": "0",
+            "source": "呕吐",
+            "target": "返流"
+        },
+        {
+            "weight": 1.0,
+            "description": "心电图检查是诊断测试的一种，专注于心脏功能的评估。",
+            "source_id": "0",
+            "source": "诊断测试",
+            "target": "心电图检查"
+        },
+        {
+            "weight": 1.0,
+            "description": "血压测定是诊断测试的一种，用于评估心血管系统的压力状况。",
+            "source_id": "0",
+            "source": "诊断测试",
+            "target": "血压测定"
+        },
+        {
+            "weight": 1.0,
+            "description": "中心静脉压的测定是诊断测试的一种，用于评估心脏和血管的综合功能。",
+            "source_id": "0",
+            "source": "诊断测试",
+            "target": "中心静脉压的测定"
+        },
+        {
+            "weight": 1.0,
+            "description": "这两种病毒均可引起动物的肠道感染，具有不同的特性和稳定性，但均可导致动物腹泻。",
+            "source_id": "0",
+            "source": "冠状病毒",
+            "target": "轮状病毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "冠状病毒和猫合胞体形成病毒均可在猫体内引起感染，但冠状病毒主要影响消化系统，猫合胞体形成病毒则无明显临床症状。",
+            "source_id": "0",
+            "source": "冠状病毒",
+            "target": "猫合胞体形成病毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "轮状病毒和埃利希体均可引起动物的肠道感染，但埃利希体还可引起血液和淋巴系统的感染。",
+            "source_id": "0",
+            "source": "轮状病毒",
+            "target": "埃利希体"
+        },
+        {
+            "weight": 1.0,
+            "description": "猫合胞体形成病毒和猫麻疹病毒均可导致猫科动物的致死性感染，但属于不同的病毒科。",
+            "source_id": "0",
+            "source": "猫合胞体形成病毒",
+            "target": "猫麻疹病毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "猫麻疹病毒和狂犬病病毒均可引起猫科动物的致死性感染，但狂犬病病毒对所有温血动物致病性更强。",
+            "source_id": "0",
+            "source": "猫麻疹病毒",
+            "target": "狂犬病病毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "狂犬病病毒和伪狂犬病病毒均可引起动物的急性感染，但伪狂犬病病毒主要影响猪和鼠类。",
+            "source_id": "0",
+            "source": "狂犬病病毒",
+            "target": "伪狂犬病病毒"
+        },
+        {
+            "weight": 1.0,
+            "description": "伪狂犬病病毒和埃利希体均可引起动物的感染，但伪狂犬病病毒主要影响神经系统，而埃利希体主要影响血液和淋巴系统。",
+            "source_id": "0",
+            "source": "伪狂犬病病毒",
+            "target": "埃利希体"
+        },
+        {
+            "weight": 1.0,
+            "description": "犬的保定法是小动物保定法中专门针对犬类的具体实施方法。",
+            "source_id": "0",
+            "source": "小动物保定法",
+            "target": "犬的保定法"
+        },
+        {
+            "weight": 1.0,
+            "description": "猫的保定法是小动物保定法中专门针对猫类的具体实施方法。",
+            "source_id": "0",
+            "source": "小动物保定法",
+            "target": "猫的保定法"
+        },
+        {
+            "weight": 1.0,
+            "description": "一般检查是临床检查基本方法的一部分，用于初步评估动物的健康状况。",
+            "source_id": "0",
+            "source": "临床检查基本方法",
+            "target": "一般检查"
+        },
+        {
+            "weight": 1.0,
+            "description": "系统检查是临床检查基本方法的一部分，用于深入评估动物的生理系统状态。",
+            "source_id": "0",
+            "source": "临床检查基本方法",
+            "target": "系统检查"
+        }
+    ]
+}

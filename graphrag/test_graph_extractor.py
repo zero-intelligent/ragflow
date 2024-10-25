@@ -8,8 +8,8 @@ from graphrag.graph_extractor import GraphExtractor
 from graphrag.index import graph_merge
 from rag.app import naive
 from rag.utils import num_tokens_from_string
-from neo4j import GraphDatabase
 from loguru import logger as log
+from graphrag.db.neo4j import driver
 
 def graph2neo4j(graph:nx.Graph):
     """
@@ -17,19 +17,15 @@ def graph2neo4j(graph:nx.Graph):
     确保节点的属性和关系的属性全部同步过去,节点的属性和关系的属性schema是未知的;
     如果和 neo4j 中现有的 node 和 relation 有冲突，则要融合进现有的节点。
     """
-    # 连接到 Neo4j 数据库
-    uri = "bolt://localhost:7687"  # Neo4j 的 URI
-    username = "neo4j"               # 用户名
-    password = "bitzero123"       # 密码
-
-    driver = GraphDatabase.driver(uri, auth=(username, password))
-
     with driver.session() as session:
         # 创建或融合节点
         for node, attrs in graph.nodes(data=True):
+            entity_type = attrs.pop("entity_type")
+            if not entity_type:
+                continue
             node_properties = {**attrs, 'id': node}
             session.run(f"""
-                MERGE (n:Node {{id: $id}})
+                MERGE (n:{entity_type} {{id: $id}})
                 ON CREATE SET n += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
                 ON MATCH SET n += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
             """, **node_properties)
@@ -43,9 +39,6 @@ def graph2neo4j(graph:nx.Graph):
                 ON CREATE SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
                 ON MATCH SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
             """, **edge_properties)
-
-    # 关闭连接
-    driver.close()
 
 
 
@@ -95,13 +88,14 @@ def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
     assert graph.has_edge('细小病毒','胃肠炎')
 
 
-
 if __name__ == "__main__":
-    import json
-    with open('/home/admin/python_projects/ragflow/graphrag/xiaodongwubook.json', 'r', encoding='utf-8') as f:
-        json_data = json.load(f)
-        graph = nx.node_link_graph(json_data)
-        graph2neo4j(graph)
+    
+    pass
+    # import json
+    # with open('/home/admin/python_projects/ragflow/graphrag/xiaodongwubook.json', 'r', encoding='utf-8') as f:
+    #     json_data = json.load(f)
+    #     graph = nx.node_link_graph(json_data)
+    #     graph2neo4j(graph)
     
     
-    # test_extractor_file()
+    test_extractor_file()
