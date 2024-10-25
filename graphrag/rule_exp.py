@@ -176,7 +176,8 @@ def evaluate_rule_file(file_path:str):
                     log.error(f"{rule_file} 中不存在 rules 节点")
                     continue
                 rules = data['rules']
-                evaluate_rule(rules)
+                result = evaluate_rule(rules)
+                log.info(f"策略：{rule_file} 执行完成，成功:{sum(result.values())}条，失败:{len(result)-sum(result.values())}条，成功率:{sum(result.values())/len(result):.2%}。")
         except Exception as ex:
             log.error(f"execute {rule_file} failed,",ex)
                 
