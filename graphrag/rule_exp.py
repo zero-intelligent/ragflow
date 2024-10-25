@@ -1,7 +1,11 @@
-
+import sys
+import yaml
+import glob
+from pathlib import Path
+from loguru import logger as log
 from lark import Lark, Transformer, v_args, Token, Tree
 from graphrag.db.neo4j import driver
-from loguru import logger as log
+
 
 grammar = r"""
     start: exp | not_exp
@@ -150,10 +154,41 @@ def evaluate_rule(rules:str|list[str]):
             
     return batch_result
 
-if __name__ == "__main__":
+def evaluate_rule_file(file_path:str):
+    path = Path(file_path)
+    if not path.exists():
+        log.error(f"{file_path} do not exists!")
+        return
+    
+    rule_files = []
+    if path.is_file():
+        rule_files = [file_path]
+    elif path.is_dir():
+        rule_files = glob.glob(f"{file_path}/**/*.yaml", recursive=True)
+        rule_files += glob.glob(f"{file_path}/**/*.yml", recursive=True)
+    
+    for rule_file in rule_files:
+        log.info(f"正则扫描策略文件:{rule_file}")
+        try:
+            with open(rule_file, 'r') as file:
+                data = yaml.safe_load(file)
+                if not data.get('rules'):
+                    log.error(f"{rule_file} 中不存在 rules 节点")
+                    continue
+                rules = data['rules']
+                evaluate_rule(rules)
+        except Exception as ex:
+            log.error(f"execute {rule_file} failed,",ex)
+                
 
-    evaluate_rule(["症状.描述=发烧"])
-    evaluate_rule("疾病=胃肠炎")
-    evaluate_rule("not 症状.描述=发烧")
-    evaluate_rule("'症状'='流鼻涕' and '疾病'='肠胃炎' and ('药品'='阿托品' or '药品'='芬必得')")
-    evaluate_rule("'症状'='流鼻涕,发烧'")
+if __name__ == "__main__":
+    
+    if len(sys.argv) > 1:
+        rule_file = sys.argv[1]
+        evaluate_rule_file(rule_file)
+
+    # evaluate_rule(["症状.描述=发烧"])
+    # evaluate_rule("疾病=胃肠炎")
+    # evaluate_rule("not 症状.描述=发烧")
+    # evaluate_rule("'症状'='流鼻涕' and '疾病'='肠胃炎' and ('药品'='阿托品' or '药品'='芬必得')")
+    # evaluate_rule("'症状'='流鼻涕,发烧'")
