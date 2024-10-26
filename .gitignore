@@ -22,7 +22,7 @@ Cargo.lock
 wheels/
 .pytest_cache
 .idea/
-
+*.log
 # Exclude Mac generated files
 .DS_Store
 

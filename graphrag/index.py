@@ -146,7 +146,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
         if batch.status == 'completed':
             chat_results = openai_batch.get_results(batch.id)
             break
-        elif batch.status in['failed','expired','cancelling','cancelled']:
+        elif batch.status in ['failed','expired','cancelling','cancelled']:
             raise ValueError(batch)
 
     idxed_chat_results: dict[int, str] = {}
