@@ -2,7 +2,7 @@ import json
 import os.path
 import queue
 from pathlib import Path
-
+from loguru import logger as log
 from openai import OpenAI
 
 file_path = './res/text'
@@ -16,7 +16,7 @@ client = OpenAI(
 def file_upload(file=file_path) -> str:
     # test.txt 是一个示例文件
     file_object = client.files.create(file=Path(file), purpose="batch")
-    print(file_object.model_dump_json())
+    log.info(f"file created:{file_object.model_dump_json()}")
     return file_object.id
 
 
@@ -26,7 +26,7 @@ def batch_create(file_id) -> str:
         endpoint="/v1/chat/completions",
         completion_window="24h"
     )
-    print(batch)
+    log.info(f"batch created:{batch}")
     return batch.id
 
 
@@ -59,7 +59,7 @@ def write_file(content, f_name, inputs_dir='./'):
         with open(os.path.join(inputs_dir, f_name), 'w') as file:
             file.write(content)
     except IOError as e:
-        print(f"写入文件时发生错误: {e}")
+        log.error(f"写入文件时发生错误: {e}")
 
 
 task_buf = queue.Queue(maxsize=5)

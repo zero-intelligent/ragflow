@@ -35,16 +35,8 @@ from rag.nlp import rag_tokenizer
 from rag.utils import num_tokens_from_string
 
 import sys
-from loguru import logger as LOGGER
-LOGGER.add(sys.stdout,
-           format="{time} {level} {message}",
-           filter=lambda record: record["level"].no < 40,
-           colorize=True)
+from loguru import logger as log
 
-# 文件输出配置
-LOGGER.add("logs/pdf2txt.log",
-           format="{time} {level} {message}",
-           filter=lambda record: record["level"].no >= 30)
 
 def graph_merge(g1, g2):
     g = g2.copy()
@@ -116,7 +108,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
 
     sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
 
-    LOGGER.info(f"########## sub_texts_2d={sub_texts_2d}")
+    log.info(f"########## sub_texts_2d={sub_texts_2d}")
 
     ccids = []
     lines = []
@@ -130,38 +122,38 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
 
         ccids.append(cids)
 
-    LOGGER.info(f"########## ccids={ccids}")
-    LOGGER.info(f"########## lines={lines}")
+    log.info(f"########## ccids={ccids}")
+    log.info(f"########## lines={lines}")
 
     f_name = str(time.time_ns()) + ".txt"
-    LOGGER.info(f"########## f_name={f_name}")
+    log.info(f"########## f_name={f_name}")
 
     inputs_dir = os.path.join(os.getcwd(), 'inputs')
     os.makedirs(inputs_dir, exist_ok=True)
     openai_batch.write_file("\n".join(lines), f_name, inputs_dir)
 
     fid = openai_batch.file_upload(os.path.join(inputs_dir, f_name))
-    LOGGER.info(f"########## fid={fid}")
+    log.info(f"########## fid={fid}")
 
     bid = openai_batch.batch_create(fid)
-    LOGGER.info(f"########## bid={bid}")
+    log.info(f"########## bid={bid}")
 
     chat_results = []
     while True:
         time.sleep(60)
-        LOGGER.info(f"#### batch query ###### bid={bid}")
         batch = openai_batch.query(bid)
+        log.info(f"#### batch query ###### bid={bid},status:{batch.status}")
         if batch.status == 'completed':
             chat_results = openai_batch.get_results(batch.id)
-            break;
-        elif batch.status == 'failed' or batch.status == 'expired' or batch.status == 'cancelling' or batch.status == 'cancelled':
+            break
+        elif batch.status in['failed','expired','cancelling','cancelled']:
             raise ValueError(batch)
 
     idxed_chat_results: dict[int, str] = {}
     for chat_result in chat_results:
         idxed_chat_results[chat_result['id']] = chat_result['content']
 
-    LOGGER.info(f"########## idxed_chat_results={idxed_chat_results}")
+    log.info(f"########## idxed_chat_results={idxed_chat_results}")
 
     ordered_chat_results = []
     for cids in ccids:
@@ -170,7 +162,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
             tmp[cid] = idxed_chat_results[str(cid)]
         ordered_chat_results.append(tmp)
 
-    LOGGER.info(f"########## ordered_chat_results={ordered_chat_results}")
+    log.info(f"########## ordered_chat_results={ordered_chat_results}")
 
     outputs = [graph_extractor.GraphExtractor.process_results(chat_result,
                                                               prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,
