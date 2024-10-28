@@ -112,7 +112,7 @@ def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
 
     return chunks
     
-def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
+def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], callback,
                                 entity_types=["organization", "person", "location", "event", "time"]):
     _, tenant = TenantService.get_by_id(tenant_id)
     
@@ -125,7 +125,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
     
     prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
     
-    chat_results = openai_batch.batch_qwen_api_call(chunks,prompt_vars,left_token_count)
+    chat_results = openai_batch.batch_qwen_api_call(filename,chunks,prompt_vars,left_token_count)
     
     graph = graph_extractor.GraphExtractor.process_results(
         results = chat_results ,

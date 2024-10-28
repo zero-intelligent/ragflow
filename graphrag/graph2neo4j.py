@@ -37,3 +37,5 @@ def graph2neo4j(graph:nx.Graph,nodeLabel_attr:List[str] = ['entity_type']):
                 ON CREATE SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
                 ON MATCH SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
             """, **edge_properties)
+            
+    log.info(f"{len(graph.nodes(data=True))} nodes, {len(graph.edges(data=True))} edges import to neo4j.")

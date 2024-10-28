@@ -87,19 +87,17 @@ def build_sub_texts_2d(chunks: List[str], left_token_count):
         for b in range(0, len(texts), BATCH_SIZE):
             sub_texts.append(texts[b:b + BATCH_SIZE])
 
+    log.debug(f"########## sub_texts_2d={sub_texts}")
     return sub_texts
 
 
-def chunks2chat_input_lines(chunks: List[str],prompt_vars:dict,left_token_count:int):
+def chunks2chat_input_lines(filename:str, chunks: List[str],prompt_vars:dict,left_token_count:int):
     sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
-
-    log.debug(f"########## sub_texts_2d={sub_texts_2d}")
-
     chat_input_lines = []
     
     for i, sub_text in enumerate(sub_texts_2d):
         lines = [{
-                "custom_id": f"{i}-{j}",
+                "custom_id": f"filename {i}-{j}",
                 "method": "POST",
                 "url": "/v1/chat/completions",
                 "body": {
@@ -113,18 +111,18 @@ def chunks2chat_input_lines(chunks: List[str],prompt_vars:dict,left_token_count:
     
     return chat_input_lines
     
-def batch_qwen_api_call(chunks: List[str],prompt_vars:dict,left_token_count:int):
+def batch_qwen_api_call(filename:str,chunks: List[str],prompt_vars:dict,left_token_count:int):
     '''
     调用 qwen  batch api 返回结果
     '''
-    chat_input_lines = chunks2chat_input_lines(chunks,prompt_vars,left_token_count)
+    chat_input_lines = chunks2chat_input_lines(filename,chunks,prompt_vars,left_token_count)
     file = write_file(chat_input_lines)
     
     fid = file_upload(file)
-    log.info(f"########## fid={fid}")
+    log.info(f"########## {file},fid={fid}")
 
     bid = batch_create(fid)
-    log.info(f"########## bid={bid}")
+    log.info(f"########## {file},bid={bid}")
 
     chat_results = []
     while True:
@@ -143,7 +141,7 @@ def batch_qwen_api_call(chunks: List[str],prompt_vars:dict,left_token_count:int)
     input_ids = [line['custom_id'] for line in chat_input_lines]
     not_back_ids = set(input_ids) - set(chat_results.keys())
     if not_back_ids:
-        log.error(f"以下id未返回：{not_back_ids}")
+        log.error(f"{file} 中的 custom_id in {not_back_ids} not back.")
     return chat_results
         
 
