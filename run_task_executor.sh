@@ -4,6 +4,7 @@
 APP_HOME="$(cd "$(dirname "$0")" && pwd)"
 echo "APP_HOME:$APP_HOME"
 
+cd $APP_HOME
 source .venv/bin/activate
 
 export CUDA_VISIBLE_DEVICES=0 
