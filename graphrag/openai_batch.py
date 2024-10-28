@@ -16,7 +16,7 @@ client = OpenAI(
 def file_upload(file=file_path) -> str:
     # test.txt 是一个示例文件
     file_object = client.files.create(file=Path(file), purpose="batch")
-    log.info(f"file created:{file_object.model_dump_json()}")
+    log.debug(f"file created:{file_object.model_dump_json()}")
     return file_object.id
 
 
@@ -26,7 +26,7 @@ def batch_create(file_id) -> str:
         endpoint="/v1/chat/completions",
         completion_window="24h"
     )
-    log.info(f"batch created:{batch}")
+    log.debug(f"batch created:{batch}")
     return batch.id
 
 
@@ -54,11 +54,14 @@ def get_results(bid):
     return res
 
 
-def write_file(content, f_name, inputs_dir='./'):
+
+
+def write_file(input_items, f_name, inputs_dir='./'):
     try:
         with open(os.path.join(inputs_dir, f_name), 'w') as file:
-            file.write(content)
-    except IOError as e:
+            for data in input_items:
+                file.write(json.dumps(data, ensure_ascii=False) + "\n")
+    except Exception as e:
         log.error(f"写入文件时发生错误: {e}")
 
 

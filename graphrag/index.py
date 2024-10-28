@@ -82,8 +82,8 @@ def build_sub_texts_2d(chunks: List[str], left_token_count):
     return sub_texts
 
 
-def build_line(custom_id, content, prompt_vars):
-    data = {
+def build_batch_input_block(custom_id, content, prompt_vars) -> json: 
+    return {
         "custom_id": custom_id,
         "method": "POST",
         "url": "/v1/chat/completions",
@@ -92,9 +92,6 @@ def build_line(custom_id, content, prompt_vars):
             "messages": prompt_messages.process(content, prompt_vars)
         }
     }
-
-    return json.dumps(data, ensure_ascii=False)
-
 
 def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
                                 entity_types=["organization", "person", "location", "event", "time"]):
@@ -108,29 +105,23 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
 
     sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
 
-    log.info(f"########## sub_texts_2d={sub_texts_2d}")
+    log.debug(f"########## sub_texts_2d={sub_texts_2d}")
 
-    ccids = []
-    lines = []
+    chat_input_lines = []
     prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
     for i, sub_text in enumerate(sub_texts_2d):
-        cids = []
-        for j, line in enumerate(sub_text):
-            cid = (i * 1000) + j  # i + "-" + j
-            cids.append(cid)
-            lines.append(build_line(cid, line, prompt_vars))
+        line = [build_batch_input_block(f"{i}-{j}", line, prompt_vars)
+                for j, line in enumerate(sub_text)]
+        chat_input_lines.append(line)
 
-        ccids.append(cids)
-
-    log.info(f"########## ccids={ccids}")
-    log.info(f"########## lines={lines}")
+    log.debug(f"########## lines={chat_input_lines}")
 
     f_name = str(time.time_ns()) + ".txt"
     log.info(f"########## f_name={f_name}")
 
     inputs_dir = os.path.join(os.getcwd(), 'inputs')
     os.makedirs(inputs_dir, exist_ok=True)
-    openai_batch.write_file("\n".join(lines), f_name, inputs_dir)
+    openai_batch.write_file(chat_input_lines, f_name, inputs_dir)
 
     fid = openai_batch.file_upload(os.path.join(inputs_dir, f_name))
     log.info(f"########## fid={fid}")
@@ -149,28 +140,22 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
         elif batch.status in ['failed','expired','cancelling','cancelled']:
             raise ValueError(batch)
 
-    idxed_chat_results: dict[int, str] = {}
-    for chat_result in chat_results:
-        idxed_chat_results[chat_result['id']] = chat_result['content']
+    chat_results = {c['id']:c['content'] for c in chat_results}
+    
+    # 校验是否有丢失的数据没有返回来
+    input_ids = [line['custom_id'] for line in chat_input_lines]
+    not_back_ids = set(input_ids) - set(chat_results.keys())
+    if not_back_ids:
+        log.error(f"以下id未返回：{not_back_ids}")
+    
 
-    log.info(f"########## idxed_chat_results={idxed_chat_results}")
-
-    ordered_chat_results = []
-    for cids in ccids:
-        tmp = {}
-        for cid in cids:
-            tmp[cid] = idxed_chat_results[str(cid)]
-        ordered_chat_results.append(tmp)
-
-    log.info(f"########## ordered_chat_results={ordered_chat_results}")
-
-    outputs = [graph_extractor.GraphExtractor.process_results(chat_result,
-                                                              prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,
+    outputs = [graph_extractor.GraphExtractor.process_results(results = chat_results ,
+                                                              tuple_delimiter = prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,
                                                                               DEFAULT_TUPLE_DELIMITER),
-                                                              prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,
+                                                              record_delimiter = prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,
                                                                               DEFAULT_RECORD_DELIMITER)
                                                               )
-               for chat_result in ordered_chat_results]
+               ]
 
     callback(0.5, "Extracting entities.")
     graphs = []
