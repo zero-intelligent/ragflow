@@ -1,5 +1,4 @@
 import json
-import os.path
 import queue
 from pathlib import Path
 import time
@@ -69,10 +68,9 @@ def build_batch_input_block(custom_id, content, prompt_vars) -> json:
         }
     }
     
-
 def build_sub_texts_2d(chunks: List[str], left_token_count):
     BATCH_SIZE = 4
-    texts, sub_texts, graphs = [], [], []
+    texts, sub_texts = [], []
     cnt = 0
 
     for i in range(len(chunks)):
@@ -100,19 +98,26 @@ def chunks2chat_input_lines(chunks: List[str],prompt_vars:dict,left_token_count:
     chat_input_lines = []
     
     for i, sub_text in enumerate(sub_texts_2d):
-        line = [build_batch_input_block(f"{i}-{j}", line, prompt_vars)
-                for j, line in enumerate(sub_text)]
-        chat_input_lines.append(line)
+        lines = [{
+                "custom_id": f"{i}-{j}",
+                "method": "POST",
+                "url": "/v1/chat/completions",
+                "body": {
+                    "model": "qwen-plus",
+                    "messages": prompt_messages.process(text, prompt_vars)
+                }
+            } for j, text in enumerate(sub_text)]
+        chat_input_lines += lines
 
     log.debug(f"########## lines={chat_input_lines}")
     
     return chat_input_lines
     
-def batch_qwen_api_call(chunks: List[str]):
+def batch_qwen_api_call(chunks: List[str],prompt_vars:dict,left_token_count:int):
     '''
     调用 qwen  batch api 返回结果
     '''
-    chat_input_lines = chunks2chat_input_lines(chunks)
+    chat_input_lines = chunks2chat_input_lines(chunks,prompt_vars,left_token_count)
     file = write_file(chat_input_lines)
     
     fid = file_upload(file)
@@ -142,17 +147,18 @@ def batch_qwen_api_call(chunks: List[str]):
     return chat_results
         
 
-def write_file(input_items, inputs_dir):
+def write_file(input_items, inputs_dir:str="./inputs"):
     try:
         f_name = str(time.time_ns()) + ".jsonl"
         file = Path(inputs_dir) / f_name
+        Path(inputs_dir).mkdir(exist_ok=True)
         log.info(f"########## file={file}")
         with open(file, 'w') as f:
             for data in input_items:
                 f.write(json.dumps(data, ensure_ascii=False) + "\n")
         return file
     except Exception as e:
-        log.error(f"写入文件时发生错误: {e}")
+        log.error("写入文件时发生错误" + str(e))
         exit(1)
         
 
