@@ -18,43 +18,6 @@ log = logging.getLogger(__name__)
 def graphExtractor():
     return GraphExtractor()
 
-def graph2neo4j(graph:nx.Graph):
-    """
-    将当前的 python 里的 nx.Graph 里的数据同步到 neo4j ;
-    确保节点的属性和关系的属性全部同步过去,节点的属性和关系的属性schema是未知的;
-    如果和 neo4j 中现有的 node 和 relation 有冲突，则要融合进现有的节点。
-    """
-    # 连接到 Neo4j 数据库
-    uri = "bolt://localhost:7687"  # Neo4j 的 URI
-    username = "neo4j"               # 用户名
-    password = "bitzero123"       # 密码
-
-    driver = GraphDatabase.driver(uri, auth=(username, password))
-
-    with driver.session() as session:
-        # 创建或融合节点
-        for node, attrs in graph.nodes(data=True):
-            node_properties = {**attrs, 'id': node}
-            session.run(f"""
-                MERGE (n:Node {{id: $id}})
-                ON CREATE SET n += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
-                ON MATCH SET n += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
-            """, **node_properties)
-
-        # 创建或融合边
-        for source, target, attrs in graph.edges(data=True):
-            edge_properties = {**attrs, 'source': source, 'target': target}
-            session.run(f"""
-                MATCH (a:Node {{id: $source}}), (b:Node {{id: $target}})
-                MERGE (a)-[r:CONNECTED_TO]->(b)
-                ON CREATE SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
-                ON MATCH SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
-            """, **edge_properties)
-
-    # 关闭连接
-    driver.close()
-
-
 
 def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
                         llm_id = "qwen-plus",

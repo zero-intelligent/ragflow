@@ -27,14 +27,13 @@ from api.db.services.user_service import TenantService
 from graphrag import openai_batch, prompt_messages, graph_extractor
 from graphrag.community_reports_extractor import CommunityReportsExtractor
 from graphrag.entity_resolution import EntityResolution
+from graphrag.graph2neo4j import graph2neo4j
 from graphrag.graph_extractor import GraphExtractor
 from graphrag.mind_map_extractor import MindMapExtractor
 from graphrag.prompt_messages import DEFAULT_TUPLE_DELIMITER, DEFAULT_RECORD_DELIMITER, DEFAULT_TUPLE_DELIMITER_KEY, \
     DEFAULT_RECORD_DELIMITER_KEY
 from rag.nlp import rag_tokenizer
 from rag.utils import num_tokens_from_string
-
-import sys
 from loguru import logger as log
 
 
@@ -92,80 +91,8 @@ def build_batch_input_block(custom_id, content, prompt_vars) -> json:
             "messages": prompt_messages.process(content, prompt_vars)
         }
     }
-
-def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
-                                entity_types=["organization", "person", "location", "event", "time"]):
-    _, tenant = TenantService.get_by_id(tenant_id)
-    llm_bdl = LLMBundle(tenant_id, LLMType.CHAT, tenant.llm_id)
-    ext = GraphExtractor(llm_bdl)
-    left_token_count = llm_bdl.max_length - ext.prompt_token_count - 1024
-    left_token_count = max(llm_bdl.max_length * 0.6, left_token_count)
-
-    assert left_token_count > 0, f"The LLM context length({llm_bdl.max_length}) is smaller than prompt({ext.prompt_token_count})"
-
-    sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
-
-    log.debug(f"########## sub_texts_2d={sub_texts_2d}")
-
-    chat_input_lines = []
-    prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
-    for i, sub_text in enumerate(sub_texts_2d):
-        line = [build_batch_input_block(f"{i}-{j}", line, prompt_vars)
-                for j, line in enumerate(sub_text)]
-        chat_input_lines.append(line)
-
-    log.debug(f"########## lines={chat_input_lines}")
-
-    f_name = str(time.time_ns()) + ".txt"
-    log.info(f"########## f_name={f_name}")
-
-    inputs_dir = os.path.join(os.getcwd(), 'inputs')
-    os.makedirs(inputs_dir, exist_ok=True)
-    openai_batch.write_file(chat_input_lines, f_name, inputs_dir)
-
-    fid = openai_batch.file_upload(os.path.join(inputs_dir, f_name))
-    log.info(f"########## fid={fid}")
-
-    bid = openai_batch.batch_create(fid)
-    log.info(f"########## bid={bid}")
-
-    chat_results = []
-    while True:
-        time.sleep(60)
-        batch = openai_batch.query(bid)
-        log.info(f"#### batch query ###### bid={bid},status:{batch.status}")
-        if batch.status == 'completed':
-            chat_results = openai_batch.get_results(batch.id)
-            break
-        elif batch.status in ['failed','expired','cancelling','cancelled']:
-            raise ValueError(batch)
-
-    chat_results = {c['id']:c['content'] for c in chat_results}
     
-    # 校验是否有丢失的数据没有返回来
-    input_ids = [line['custom_id'] for line in chat_input_lines]
-    not_back_ids = set(input_ids) - set(chat_results.keys())
-    if not_back_ids:
-        log.error(f"以下id未返回：{not_back_ids}")
-    
-
-    outputs = [graph_extractor.GraphExtractor.process_results(results = chat_results ,
-                                                              tuple_delimiter = prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,
-                                                                              DEFAULT_TUPLE_DELIMITER),
-                                                              record_delimiter = prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,
-                                                                              DEFAULT_RECORD_DELIMITER)
-                                                              )
-               ]
-
-    callback(0.5, "Extracting entities.")
-    graphs = []
-    for i, output in enumerate(outputs):
-        graphs.append(output)
-
-    graph = reduce(graph_merge, graphs) if graphs else nx.Graph()
-    er = EntityResolution(llm_bdl)
-    graph = er(graph).output
-
+def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
     _chunks = chunks
     chunks = []
     for n, attr in graph.nodes(data=True):
@@ -220,3 +147,88 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
         })
 
     return chunks
+
+
+def batch_qwen_api_call(chunks: List[str],prompt_vars:dict,left_token_count:int):
+    '''
+    调用 qwen  batch api 返回结果
+    '''
+    
+    sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
+
+    log.debug(f"########## sub_texts_2d={sub_texts_2d}")
+
+    chat_input_lines = []
+    
+    for i, sub_text in enumerate(sub_texts_2d):
+        line = [build_batch_input_block(f"{i}-{j}", line, prompt_vars)
+                for j, line in enumerate(sub_text)]
+        chat_input_lines.append(line)
+
+    log.debug(f"########## lines={chat_input_lines}")
+
+    f_name = str(time.time_ns()) + ".jsonl"
+    log.info(f"########## f_name={f_name}")
+
+    inputs_dir = os.path.join(os.getcwd(), 'inputs')
+    os.makedirs(inputs_dir, exist_ok=True)
+    openai_batch.write_file(chat_input_lines, f_name, inputs_dir)
+
+    fid = openai_batch.file_upload(os.path.join(inputs_dir, f_name))
+    log.info(f"########## fid={fid}")
+
+    bid = openai_batch.batch_create(fid)
+    log.info(f"########## bid={bid}")
+
+    chat_results = []
+    while True:
+        time.sleep(60)
+        batch = openai_batch.query(bid)
+        log.info(f"#### batch query ###### bid={bid},status:{batch.status}")
+        if batch.status == 'completed':
+            chat_results = openai_batch.get_results(batch.id)
+            break
+        elif batch.status in ['failed','expired','cancelling','cancelled']:
+            raise ValueError(batch)
+
+    chat_results = {c['id']:c['content'] for c in chat_results}
+    
+    # 校验是否有丢失的数据没有返回来
+    input_ids = [line['custom_id'] for line in chat_input_lines]
+    not_back_ids = set(input_ids) - set(chat_results.keys())
+    if not_back_ids:
+        log.error(f"以下id未返回：{not_back_ids}")
+    return chat_results
+        
+    
+def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
+                                entity_types=["organization", "person", "location", "event", "time"]):
+    _, tenant = TenantService.get_by_id(tenant_id)
+    
+    llm_bdl = LLMBundle(tenant_id, LLMType.CHAT, tenant.llm_id)
+    ext = GraphExtractor(llm_bdl)
+    left_token_count = llm_bdl.max_length - ext.prompt_token_count - 1024
+    left_token_count = max(llm_bdl.max_length * 0.6, left_token_count)
+
+    assert left_token_count > 0, f"The LLM context length({llm_bdl.max_length}) is smaller than prompt({ext.prompt_token_count})"
+    
+    prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
+    
+    chat_results = batch_qwen_api_call(chunks,prompt_vars,left_token_count)
+    
+    graph = graph_extractor.GraphExtractor.process_results(
+        results = chat_results ,
+        tuple_delimiter = prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,DEFAULT_TUPLE_DELIMITER),
+        record_delimiter = prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,DEFAULT_RECORD_DELIMITER)
+    )
+
+    callback(0.5, "Extracting entities.")
+    er = EntityResolution(llm_bdl)
+    graph = er(graph).output
+    
+    #将图导入neo4j
+    graph2neo4j(graph,modelLabel_attr=['entity_type'])
+    
+    return graph2chunks(graph,chunks,llm_bdl,callback)
+
+    
