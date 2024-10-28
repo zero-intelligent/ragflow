@@ -1,14 +1,18 @@
 
 from functools import reduce
+import json
 import networkx as nx
 from api.db import LLMType
 from api.db.services.llm_service import LLMBundle
 from graphrag.entity_resolution import EntityResolution
+from graphrag.graph2neo4j import graph2neo4j
 from graphrag.graph_extractor import GraphExtractor
 from graphrag.index import graph_merge
 from rag.app import naive
 from rag.utils import num_tokens_from_string
 from loguru import logger as log
+
+from rag.utils.es_conn import ELASTICSEARCH
 
 def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
                         llm_id = "moonshot-v1-128k",
@@ -56,16 +60,36 @@ def test_extractor_file(tenant_id = "7d19a176807611efb0f80242ac120006",
     assert graph.has_edge('细小病毒','胃肠炎')
 
 
-def validte_json_files():
-    import json
+def batch_update_neo4j(index:str="ragflow_7d19a176807611efb0f80242ac120006",
+                       doc_id:str=None):
+    
+    if doc_id:
+        query = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"knowledge_graph_kwd": "graph"}},
+                        {"term": {"doc_id": "aa610bd08c8111ef804c0242ac120003"}}
+                    ]
+                }
+            }
+        }
+    else:
+        query = {
+            "query": {
+                "match": {"knowledge_graph_kwd": "graph"}
+            }
+        }
+    ELASTICSEARCH.idxnm = index
+    for hits in ELASTICSEARCH.scrollIter(q=query):
+        for hit in hits:
+            graph_json = hit['_source']['content_with_weight']
+            node_link_data = json.loads(graph_json)
+            graph = nx.node_link_graph(node_link_data)
+            graph2neo4j(graph)
 
-    with open('/home/admin/python_projects/ragflow/inputs/1730103237434198216.txt', 'r') as f:
-        for line in f:
-            try:
-                json.loads(line)
-            except json.JSONDecodeError:
-                print(f'Invalid JSON: {line.strip()}')
             
 if __name__ == "__main__":
     
-    validte_json_files()
+    # batch_update_neo4j(doc_id="aa610bd08c8111ef804c0242ac120003")    
+    batch_update_neo4j()

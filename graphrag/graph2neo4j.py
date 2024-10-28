@@ -19,23 +19,27 @@ def graph2neo4j(graph:nx.Graph,nodeLabel_attr:List[str] = ['entity_type']):
     with driver.session() as session:
         # 创建或融合节点
         for node, attrs in graph.nodes(data=True):
-            labels = [":" + attrs.pop(attr) for attr in nodeLabel_attr]
+            labels = [f':`{attrs[attr]}`' for attr in nodeLabel_attr if attrs.get(attr)]
             label_str = "".join(labels) if labels else ''
             node_properties = {**attrs, 'id': node}
-            session.run(f"""
+            cyber_query = f"""
                 MERGE (n{label_str} {{id: $id}})
                 ON CREATE SET n += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
                 ON MATCH SET n += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
-            """, **node_properties)
+            """
+            log.debug(cyber_query)
+            session.run(cyber_query, **node_properties)
 
         # 创建或融合边
         for source, target, attrs in graph.edges(data=True):
             edge_properties = {**attrs, 'source': source, 'target': target}
-            session.run(f"""
+            cyber_query = f"""
                 MATCH (a:Node {{id: $source}}), (b:Node {{id: $target}})
                 MERGE (a)-[r:CONNECTED_TO]->(b)
                 ON CREATE SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
                 ON MATCH SET r += {{{', '.join(f'{k}: ${k}' for k in attrs.keys())}}}
-            """, **edge_properties)
+            """
+            log.debug(cyber_query)
+            session.run(cyber_query, **edge_properties)
             
     log.info(f"{len(graph.nodes(data=True))} nodes, {len(graph.edges(data=True))} edges import to neo4j.")
