@@ -33,9 +33,6 @@ from graphrag.mind_map_extractor import MindMapExtractor
 from graphrag.prompt_messages import DEFAULT_TUPLE_DELIMITER, DEFAULT_RECORD_DELIMITER, DEFAULT_TUPLE_DELIMITER_KEY, \
     DEFAULT_RECORD_DELIMITER_KEY
 from rag.nlp import rag_tokenizer
-from rag.utils import num_tokens_from_string
-from loguru import logger as log
-
 
 def graph_merge(g1, g2):
     g = g2.copy()
@@ -58,39 +55,6 @@ def graph_merge(g1, g2):
         g.nodes[str(node_degree[0])]["rank"] = int(node_degree[1])
     return g
 
-
-def build_sub_texts_2d(chunks: List[str], left_token_count):
-    BATCH_SIZE = 4
-    texts, sub_texts, graphs = [], [], []
-    cnt = 0
-
-    for i in range(len(chunks)):
-        tkn_cnt = num_tokens_from_string(chunks[i])
-        if cnt + tkn_cnt >= left_token_count and texts:
-            for b in range(0, len(texts), BATCH_SIZE):
-                sub_texts.append(texts[b:b + BATCH_SIZE])
-
-            texts = []
-            cnt = 0
-        texts.append(chunks[i])
-        cnt += tkn_cnt
-    if texts:
-        for b in range(0, len(texts), BATCH_SIZE):
-            sub_texts.append(texts[b:b + BATCH_SIZE])
-
-    return sub_texts
-
-
-def build_batch_input_block(custom_id, content, prompt_vars) -> json: 
-    return {
-        "custom_id": custom_id,
-        "method": "POST",
-        "url": "/v1/chat/completions",
-        "body": {
-            "model": "qwen-plus",
-            "messages": prompt_messages.process(content, prompt_vars)
-        }
-    }
     
 def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
     _chunks = chunks
@@ -147,59 +111,6 @@ def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
         })
 
     return chunks
-
-
-def batch_qwen_api_call(chunks: List[str],prompt_vars:dict,left_token_count:int):
-    '''
-    调用 qwen  batch api 返回结果
-    '''
-    
-    sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
-
-    log.debug(f"########## sub_texts_2d={sub_texts_2d}")
-
-    chat_input_lines = []
-    
-    for i, sub_text in enumerate(sub_texts_2d):
-        line = [build_batch_input_block(f"{i}-{j}", line, prompt_vars)
-                for j, line in enumerate(sub_text)]
-        chat_input_lines.append(line)
-
-    log.debug(f"########## lines={chat_input_lines}")
-
-    f_name = str(time.time_ns()) + ".jsonl"
-    log.info(f"########## f_name={f_name}")
-
-    inputs_dir = os.path.join(os.getcwd(), 'inputs')
-    os.makedirs(inputs_dir, exist_ok=True)
-    openai_batch.write_file(chat_input_lines, f_name, inputs_dir)
-
-    fid = openai_batch.file_upload(os.path.join(inputs_dir, f_name))
-    log.info(f"########## fid={fid}")
-
-    bid = openai_batch.batch_create(fid)
-    log.info(f"########## bid={bid}")
-
-    chat_results = []
-    while True:
-        time.sleep(60)
-        batch = openai_batch.query(bid)
-        log.info(f"#### batch query ###### bid={bid},status:{batch.status}")
-        if batch.status == 'completed':
-            chat_results = openai_batch.get_results(batch.id)
-            break
-        elif batch.status in ['failed','expired','cancelling','cancelled']:
-            raise ValueError(batch)
-
-    chat_results = {c['id']:c['content'] for c in chat_results}
-    
-    # 校验是否有丢失的数据没有返回来
-    input_ids = [line['custom_id'] for line in chat_input_lines]
-    not_back_ids = set(input_ids) - set(chat_results.keys())
-    if not_back_ids:
-        log.error(f"以下id未返回：{not_back_ids}")
-    return chat_results
-        
     
 def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
                                 entity_types=["organization", "person", "location", "event", "time"]):
@@ -214,7 +125,7 @@ def build_knowlege_graph_chunks(tenant_id: str, chunks: List[str], callback,
     
     prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
     
-    chat_results = batch_qwen_api_call(chunks,prompt_vars,left_token_count)
+    chat_results = openai_batch.batch_qwen_api_call(chunks,prompt_vars,left_token_count)
     
     graph = graph_extractor.GraphExtractor.process_results(
         results = chat_results ,

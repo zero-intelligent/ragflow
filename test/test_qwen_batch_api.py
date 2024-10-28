@@ -1,7 +1,7 @@
 
 import pytest
 
-from graphrag.index import batch_qwen_api_call
+from graphrag.openai_batch import batch_qwen_api_call
 
 def test_qwen_batch_api(chunks = [],
                         left_token_count = 10000,
