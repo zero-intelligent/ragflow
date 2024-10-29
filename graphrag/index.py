@@ -138,7 +138,7 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     graph = er(graph).output
     
     #将图导入neo4j
-    graph2neo4j(graph,modelLabel_attr=['entity_type'])
+    graph2neo4j(graph)
     
     return graph2chunks(graph,chunks,llm_bdl,callback)
 
