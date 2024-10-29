@@ -56,17 +56,6 @@ def get_results(bid):
 
     return res
 
-
-def build_batch_input_block(custom_id, content, prompt_vars) -> json: 
-    return {
-        "custom_id": custom_id,
-        "method": "POST",
-        "url": "/v1/chat/completions",
-        "body": {
-            "model": "qwen-plus",
-            "messages": prompt_messages.process(content, prompt_vars)
-        }
-    }
     
 def build_sub_texts_2d(chunks: List[str], left_token_count):
     BATCH_SIZE = 4
@@ -97,7 +86,7 @@ def chunks2chat_input_lines(filename:str, chunks: List[str],prompt_vars:dict,lef
     
     for i, sub_text in enumerate(sub_texts_2d):
         lines = [{
-                "custom_id": f"filename {i}-{j}",
+                "custom_id": f"{filename} {i}-{j}",
                 "method": "POST",
                 "url": "/v1/chat/completions",
                 "body": {
