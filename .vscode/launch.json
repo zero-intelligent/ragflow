@@ -8,7 +8,7 @@
             "type": "debugpy",
             "request": "launch",
             "name": "rul_expr",
-            "program": "${workspaceFolder}/graphrag/rule_exp.py",
+            "program": "${workspaceFolder}/graphrag/policy/rule_runner.py",
             "env": {"PYTHONPATH": "${workspaceFolder}"},
             "cwd":"${workspaceFolder}",
             "justMyCode": false 

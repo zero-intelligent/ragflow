@@ -320,7 +320,7 @@ class GraphExtractor:
 
 
     def process_results(
-            results: dict[int, str],
+            results: dict[str, str],
             tuple_delimiter: str,
             record_delimiter: str,
     ) -> nx.Graph:
