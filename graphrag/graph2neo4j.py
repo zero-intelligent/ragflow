@@ -1,4 +1,5 @@
 from typing import List
+import time
 from graphrag.db.neo4j import driver
 import networkx as nx
 from loguru import logger as log
@@ -17,7 +18,7 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         return
     
     max_node_name_length = 30
-    
+    start = time.time()
     with driver.session() as session:
         # 批量创建或融合节点
         node_queries = []
@@ -38,10 +39,10 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         edge_queries = []
         for source, target, attrs in graph.edges(data=True):
             if len(source) > max_node_name_length:
-                log.warning(f"node name '{node}' too long, connect edge in neo4j")
+                log.warning(f"source node id:'{node}' too long to connect edge in neo4j")
                 continue
             if len(target) > max_node_name_length:
-                log.warning(f"node name '{target}' too long, connect edge in neo4j")
+                log.warning(f"target node id:'{target}' too long to connect edge in neo4j")
                 continue
             
             edge_properties = ', '.join([f"{k}: '{v}'" for k, v in attrs.items()])
@@ -55,11 +56,13 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         # 执行节点的批量查询
         if node_queries:
             node_query_string = "CALL() { " + " UNION ALL ".join(node_queries) + " } RETURN 1"
+            log.info(f"importing {len(node_queries)} nodes to neo4j")
             session.run(node_query_string)
 
         # 执行边的批量查询
         if edge_queries:
             edge_query_string = "CALL() { " + " UNION ALL ".join(edge_queries) + " } RETURN 1"
+            log.info(f"importing {len(edge_queries)} edges to neo4j")
             session.run(edge_query_string)
-
-    log.info(f"{len(graph.nodes(data=True))} nodes, {len(graph.edges(data=True))} edges imported to neo4j.")
+            
+        log.info(f"{len(node_queries)} nodes, {len(edge_queries)} edges imported to neo4j, last:{time.time()-start:.2f}s")
