@@ -1,5 +1,6 @@
 name: '质量规则约束1'
 source: global # 不写，默认是全局
+disable: true
 rules:
     - ‘症状'=‘流鼻涕，发烧'
     - ‘疾病'=‘肠胃炎'

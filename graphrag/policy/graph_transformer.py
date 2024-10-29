@@ -60,15 +60,16 @@ class NetWorkGraphTree(Transformer):
         attr = str(attr).strip("'")
         value = str(value).strip("'")
         
-        for n in self.graph.nodes:
-            if not n.get('entity_type') == entity_type:
+        for node,attr_dict in self.graph.nodes(data=True):
+            if not attr_dict.get('entity_type') == entity_type:
                 continue
+            v = node if attr=='id' else attr_dict.get(attr)
             match(op):
-                case "=" if n.get(attr) == value:
+                case "=" if v == value:
                     return True
-                case "~" if value in n.get(attr):
+                case "~" if value in v:
                     return True
-                case "=~" if re.match(value,n.get(attr)):
+                case "=~" if re.match(value,v):
                     return True
         return False
         

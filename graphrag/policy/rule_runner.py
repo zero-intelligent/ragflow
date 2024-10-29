@@ -27,6 +27,8 @@ def evaluate_rule_file(file_path:str):
         try:
             with open(rule_file, 'r') as file:
                 data = yaml.safe_load(file)
+                if data.get('disable'):
+                    continue
                 name = data['name']
                 source = data.get('source','global')
                 if not data.get('rules'):
@@ -41,7 +43,7 @@ def evaluate_rule_file(file_path:str):
                     result = evaluate_rule_on_network_graph(rules,doc=source)
                 log.info(f"策略：{rule_file} 执行完成，成功:{sum(result.values())}条，失败:{len(result)-sum(result.values())}条，成功率:{sum(result.values())/len(result):.2%}。")
         except Exception as ex:
-            log.error(f"execute {rule_file} failed,{str(ex)}")
+            log.error(f"execute {rule_file} failed,{str(ex)}",exc_info=True)
                 
 
 if __name__ == "__main__":
