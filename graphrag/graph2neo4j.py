@@ -67,7 +67,7 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
                 ON MATCH SET r += {{{edge_properties}}}
             """)
 
-        BATCH_SIZE = 50
+        BATCH_SIZE = 32
         start = time.time()
         # 执行节点的批量
         if node_queries:
@@ -93,44 +93,47 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         log.info(f"{len(edge_queries)} edges imported to neo4j, last:{time.time()-start:.2f}s")
 
 def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
-                       doc:str=None):
-    if doc:
-        query = {
+         kb_id:str="2932270687c211efaa6b0242ac120006",
+         doc:str=None):
+    
+    query = {
         "query": {
             "bool": {
-            "filter": [
-                {
-                "term": {
-                    "knowledge_graph_kwd": "graph"
-                }
+            "filter": [{
+                    "term": {
+                        "knowledge_graph_kwd": "graph"
+                    }
                 },
                 {
-                "bool": {
-                    "should": [
-                    {
-                        "term": {
-                        "doc_id": doc
-                        }
-                    },
-                    {
-                        "term": {
-                        "docnm_kwd": doc
-                        }
+                    "term": {
+                        "kb_id": kb_id
                     }
-                    ]
-                }
                 }
             ]
             }
         }
     }
-    else:
-        query = {
-            "query": {
-                "match": {"knowledge_graph_kwd": "graph"}
+    
+    if doc:
+        query['query']['bool']['filter'] += [{
+                "bool": {
+                    "should": [
+                    {
+                        "term": {
+                            "doc_id": doc
+                        }
+                    },
+                    {
+                        "term": {
+                            "docnm_kwd": doc
+                        }
+                    }
+                ]
             }
-        }
+        }]
+        
     ELASTICSEARCH.idxnm = index
+    
     for hits in ELASTICSEARCH.scrollIter(q=query):
         for hit in hits:
             log.info(f"processing graph of doc:{hit['_source']["docnm_kwd"]}")
