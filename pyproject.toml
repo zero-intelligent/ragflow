@@ -118,6 +118,7 @@ pypdf2 = "^3.0.1"
 graspologic = "^3.4.1"
 pymysql = "^1.1.1"
 mini-racer = "^0.12.4"
+fire = "0.7.0"
 
 [[tool.poetry.source]]
 name = "tsinghua"
