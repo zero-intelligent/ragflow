@@ -40,9 +40,9 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         for node, attrs in graph.nodes(data=True):
             labels = [f':`{escape(attrs[attr])}`' for attr in nodeLabel_attr if attrs.get(attr)]
             label_str = "".join(labels) if labels else ''
-            if len(node) > MAX_NODE_NAME_LENGTH:
-                log.warning(f"node {label_str} id: '{node}' too long, abandon importing to neo4j")
-                continue
+            # if len(node) > MAX_NODE_NAME_LENGTH:
+            #     log.warning(f"node {label_str} id: '{node}' too long, abandon importing to neo4j")
+            #     continue
             node_properties = ', '.join([f"{k}: {"'" + escape(v) + "'"  if isinstance(v, str) else v}" for k, v in attrs.items()])
             node_queries.append(f"""
                 MERGE (n{label_str} {{id: '{escape(node)}'}})
@@ -53,12 +53,12 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         # 批量创建或融合边
         edge_queries = []
         for source, target, attrs in graph.edges(data=True):
-            if len(source) > MAX_NODE_NAME_LENGTH:
-                log.warning(f"source node id:'{source}' too long to connect edge in neo4j")
-                continue
-            if len(target) > MAX_NODE_NAME_LENGTH:
-                log.warning(f"target node id:'{target}' too long to connect edge in neo4j")
-                continue
+            # if len(source) > MAX_NODE_NAME_LENGTH:
+            #     log.warning(f"source node id:'{source}' too long to connect edge in neo4j")
+            #     continue
+            # if len(target) > MAX_NODE_NAME_LENGTH:
+            #     log.warning(f"target node id:'{target}' too long to connect edge in neo4j")
+            #     continue
             
             edge_properties = ', '.join([f"{k}: '{escape(v)}'" for k, v in attrs.items()])
             edge_queries.append(f"""
