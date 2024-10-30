@@ -33,7 +33,6 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         return
     
     MAX_NODE_NAME_LENGTH = 128
-    start = time.time()
     with driver.session() as session:
         # 批量创建或融合节点
         node_queries = []
@@ -69,6 +68,7 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
             """)
 
         BATCH_SIZE = 50
+        start = time.time()
         # 执行节点的批量
         if node_queries:
             log.info(f"importing {len(node_queries)} nodes to neo4j")
@@ -76,7 +76,11 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
             for batch in batchs:
                 node_query_string = "CALL() { " + " UNION ALL ".join(batch) + " } RETURN 1"
                 session.run(node_query_string)
+                log.info(f"{len(batch)} nodes imported.")
 
+        log.info(f"{len(node_queries)} nodes imported to neo4j, last:{time.time()-start:.2f}s")
+        
+        start = time.time()
         # 执行边的批量
         if edge_queries:
             log.info(f"importing {len(edge_queries)} edges to neo4j")
@@ -84,8 +88,9 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
             for batch in batchs:
                 edge_query_string = "CALL() { " + " UNION ALL ".join(batch) + " } RETURN 1"
                 session.run(edge_query_string)
+                log.info(f"{len(batch)} edges imported.")
             
-        log.info(f"{len(node_queries)} nodes, {len(edge_queries)} edges imported to neo4j, last:{time.time()-start:.2f}s")
+        log.info(f"{len(edge_queries)} edges imported to neo4j, last:{time.time()-start:.2f}s")
 
 def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
                        doc:str=None):
