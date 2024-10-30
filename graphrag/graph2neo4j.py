@@ -136,4 +136,4 @@ def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
 
             
 if __name__ == "__main__":
-    fire.Fire()
+    fire.Fire() # 自动加载模块方法，作为命令行参数
