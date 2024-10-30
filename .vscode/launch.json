@@ -16,6 +16,16 @@
         {
             "type": "debugpy",
             "request": "launch",
+            "name": "graph2neo4j",
+            "program": "${workspaceFolder}/graphrag/graph2neo4j.py",
+            "args": ["sync"],
+            "env": {"PYTHONPATH": "${workspaceFolder}"},
+            "cwd":"${workspaceFolder}",
+            "justMyCode": false 
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
             "name": "pdf2txt_high",
             "program": "${workspaceFolder}/deepdoc/pdf2txt_high.py",
             "env": {"PYTHONPATH": "${workspaceFolder}",

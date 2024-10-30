@@ -1,8 +1,14 @@
+import json
+import sys
 from typing import List
 import time
+
+import fire
 from graphrag.db.neo4j import driver
 import networkx as nx
 from loguru import logger as log
+
+from rag.utils.es_conn import ELASTICSEARCH
 
 def escape(input_string):
     if not isinstance(input_string,str):
@@ -80,3 +86,54 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
                 session.run(edge_query_string)
             
         log.info(f"{len(node_queries)} nodes, {len(edge_queries)} edges imported to neo4j, last:{time.time()-start:.2f}s")
+
+def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
+                       doc:str=None):
+    if doc:
+        query = {
+        "query": {
+            "bool": {
+            "filter": [
+                {
+                "term": {
+                    "knowledge_graph_kwd": "graph"
+                }
+                },
+                {
+                "bool": {
+                    "should": [
+                    {
+                        "term": {
+                        "doc_id": doc
+                        }
+                    },
+                    {
+                        "term": {
+                        "docnm_kwd": doc
+                        }
+                    }
+                    ]
+                }
+                }
+            ]
+            }
+        }
+    }
+    else:
+        query = {
+            "query": {
+                "match": {"knowledge_graph_kwd": "graph"}
+            }
+        }
+    ELASTICSEARCH.idxnm = index
+    for hits in ELASTICSEARCH.scrollIter(q=query):
+        for hit in hits:
+            log.info(f"processing graph of doc:{hit['_source']["docnm_kwd"]}")
+            graph_json = hit['_source']['content_with_weight']
+            node_link_data = json.loads(graph_json)
+            graph = nx.node_link_graph(node_link_data)
+            graph2neo4j(graph)
+
+            
+if __name__ == "__main__":
+    fire.Fire()
