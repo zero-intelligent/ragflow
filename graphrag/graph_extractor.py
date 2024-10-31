@@ -171,30 +171,33 @@ class GraphExtractor:
         }
         token_count = 0
         text = perform_variable_replacements(self._extraction_prompt, variables=variables)
-        gen_conf = {"temperature": 0.3}
+        gen_conf = {
+            "temperature": 0.3,
+            "max_tokens": 40960
+        }
         response = self._llm.chat(text, [{"role": "user", "content": "Output:"}], gen_conf)
         if response.find("**ERROR**") >=0: raise Exception(response)
         token_count = num_tokens_from_string(text + response)
 
         results = response or ""
-        history = [{"role": "system", "content": text}, {"role": "assistant", "content": response}]
+        # history = [{"role": "system", "content": text}, {"role": "assistant", "content": response}]
 
         # Repeat to ensure we maximize entity count
-        for i in range(self._max_gleanings):
-            text = perform_variable_replacements(CONTINUE_PROMPT, history=history, variables=variables)
-            history.append({"role": "user", "content": text})
-            response = self._llm.chat("", history, gen_conf)
-            if response.find("**ERROR**") >=0: raise Exception(response)
-            results += response or ""
+        # for i in range(self._max_gleanings):
+        #     text = perform_variable_replacements(CONTINUE_PROMPT, history=history, variables=variables)
+        #     history.append({"role": "user", "content": text})
+        #     response = self._llm.chat("", history, gen_conf)
+        #     if response.find("**ERROR**") >=0: raise Exception(response)
+        #     results += response or ""
 
-            # if this is the final glean, don't bother updating the continuation flag
-            if i >= self._max_gleanings - 1:
-                break
-            history.append({"role": "assistant", "content": response})
-            history.append({"role": "user", "content": LOOP_PROMPT})
-            continuation = self._llm.chat("", history, self._loop_args)
-            if continuation != "YES":
-                break
+        #     # if this is the final glean, don't bother updating the continuation flag
+        #     if i >= self._max_gleanings - 1:
+        #         break
+        #     history.append({"role": "assistant", "content": response})
+        #     history.append({"role": "user", "content": LOOP_PROMPT})
+        #     continuation = self._llm.chat("", history, self._loop_args)
+        #     if continuation != "YES":
+        #         break
 
         return results, token_count
 

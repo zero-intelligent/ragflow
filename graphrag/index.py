@@ -129,25 +129,28 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     
     if tenant.llm_id == "qwen_plus":
         chat_results = openai_batch.batch_qwen_api_call(filename,chunks,prompt_vars,left_token_count)
+        graph = graph_extractor.GraphExtractor.process_results(
+            results = chat_results ,
+            tuple_delimiter = prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,DEFAULT_TUPLE_DELIMITER),
+            record_delimiter = prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,DEFAULT_RECORD_DELIMITER)
+        )
     else:
         BATCH_SIZE=4
         texts = []
+        graphs = []
         cnt = 0
         for i in range(len(chunks)):
             tkn_cnt = num_tokens_from_string(chunks[i])
             if texts and (cnt+tkn_cnt >= left_token_count or i == len(chunks)-1):
                 for b in range(0, len(texts), BATCH_SIZE):
-                    ext(["\n".join(texts[b:b+BATCH_SIZE])], {"entity_types": entity_types}, callback)
+                    graph = ext(["\n".join(texts[b:b+BATCH_SIZE])], {"entity_types": entity_types}, callback)
+                    graphs.append(graph.output)
                 texts = []
                 cnt = 0
             texts.append(chunks[i])
             cnt += tkn_cnt
-    
-    graph = graph_extractor.GraphExtractor.process_results(
-        results = chat_results ,
-        tuple_delimiter = prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,DEFAULT_TUPLE_DELIMITER),
-        record_delimiter = prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,DEFAULT_RECORD_DELIMITER)
-    )
+            
+        graph = reduce(graph_merge, graphs) if graphs else nx.Graph()
 
     callback(0.5, "Extracting entities.")
     er = EntityResolution(llm_bdl)
