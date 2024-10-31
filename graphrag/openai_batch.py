@@ -1,4 +1,5 @@
 import json
+import os
 import queue
 from pathlib import Path
 import time
@@ -110,14 +111,14 @@ def batch_qwen_api_call(filename:str,chunks: List[str],prompt_vars:dict,left_tok
     file = write_file(chat_input_lines)
     
     fid = file_upload(file)
-    log.info(f"########## {file},fid={fid}")
+    log.info(f"########## {filename} uploaded to {file},fid={fid}")
 
     bid = batch_create(fid)
     log.info(f"########## {file},bid={bid}")
 
     chat_results = []
     while True:
-        time.sleep(60)
+        time.sleep(int(os.environ.get('BATCH_QUERY_INTERVAL',60)))
         batch = query(bid)
         log.info(f"#### batch query ###### bid={bid},status:{batch.status}")
         if batch.status == 'completed':
