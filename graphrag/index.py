@@ -33,6 +33,7 @@ from graphrag.mind_map_extractor import MindMapExtractor
 from graphrag.prompt_messages import DEFAULT_TUPLE_DELIMITER, DEFAULT_RECORD_DELIMITER, DEFAULT_TUPLE_DELIMITER_KEY, \
     DEFAULT_RECORD_DELIMITER_KEY
 from rag.nlp import rag_tokenizer
+from rag.utils import num_tokens_from_string
 
 def graph_merge(g1, g2):
     g = g2.copy()
@@ -112,6 +113,7 @@ def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
 
     return chunks
     
+            
 def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], callback,
                                 entity_types=["organization", "person", "location", "event", "time"]):
     _, tenant = TenantService.get_by_id(tenant_id)
@@ -125,7 +127,21 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     
     prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
     
-    chat_results = openai_batch.batch_qwen_api_call(filename,chunks,prompt_vars,left_token_count)
+    if tenant.llm_id == "qwen_plus":
+        chat_results = openai_batch.batch_qwen_api_call(filename,chunks,prompt_vars,left_token_count)
+    else:
+        BATCH_SIZE=4
+        texts = []
+        cnt = 0
+        for i in range(len(chunks)):
+            tkn_cnt = num_tokens_from_string(chunks[i])
+            if texts and (cnt+tkn_cnt >= left_token_count or i == len(chunks)-1):
+                for b in range(0, len(texts), BATCH_SIZE):
+                    ext(["\n".join(texts[b:b+BATCH_SIZE])], {"entity_types": entity_types}, callback)
+                texts = []
+                cnt = 0
+            texts.append(chunks[i])
+            cnt += tkn_cnt
     
     graph = graph_extractor.GraphExtractor.process_results(
         results = chat_results ,
