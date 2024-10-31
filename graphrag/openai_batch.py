@@ -84,9 +84,11 @@ def chunks2chat_input_lines(filename:str, chunks: List[str],prompt_vars:dict,lef
     sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
     chat_input_lines = []
     
+    # 注意 阿里云通义千问 qwen-plus batch 模式 custom_id  只支持数字 custom_id， 他们答应2024.12 月前修复此问题
+    # 需要做id映射
     for i, sub_text in enumerate(sub_texts_2d):
         lines = [{
-                "custom_id": f"{filename} {i}-{j}",
+                "custom_id": f"{i*1000+j}",
                 "method": "POST",
                 "url": "/v1/chat/completions",
                 "body": {
@@ -131,7 +133,7 @@ def batch_qwen_api_call(filename:str,chunks: List[str],prompt_vars:dict,left_tok
     not_back_ids = set(input_ids) - set(chat_results.keys())
     if not_back_ids:
         log.error(f"{file} 中的 custom_id in {not_back_ids} not back.")
-    return chat_results
+    return {f"{filename}-{k}":v for k,v in chat_results.items()}
         
 
 def write_file(input_items, inputs_dir:str="./inputs"):
