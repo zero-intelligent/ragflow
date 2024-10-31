@@ -127,7 +127,7 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     
     prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
     
-    if tenant.llm_id == "qwen_plus":
+    if tenant.llm_id.startswith("qwen-plus"):
         chat_results = openai_batch.batch_qwen_api_call(filename,chunks,prompt_vars,left_token_count)
         graph = graph_extractor.GraphExtractor.process_results(
             results = chat_results ,
