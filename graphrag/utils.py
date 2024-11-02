@@ -34,6 +34,13 @@ def perform_variable_replacements(
 
     return result
 
+english_and_digits__pattern = re.compile(r'[A-Za-z0-9]+')
+
+def english_and_digits_of(text:str):
+    # 使用正则表达式提取英文字符和数字
+    matches = english_and_digits__pattern.findall(text)
+    # 将匹配结果合并成一个字符串
+    return ''.join(matches)
 
 def clean_str(input: Any) -> str:
     """Clean an input string by removing HTML escapes, control characters, and other unwanted characters."""
@@ -59,3 +66,11 @@ def dict_has_keys_with_types(
             return False
     return True
 
+def escape(input_string):
+    if not isinstance(input_string,str):
+        return input_string
+    # 使用 str.replace 方法转义特殊字符
+    escaped_string = input_string.replace('\\', '\\\\')  # 先转义反斜杠
+    escaped_string = escaped_string.replace("'", "\\'")  # 转义单引号
+    escaped_string = escaped_string.replace('"', '\\"')   # 转义双引号
+    return escaped_string

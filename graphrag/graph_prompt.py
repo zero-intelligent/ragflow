@@ -8,10 +8,11 @@ Reference:
 GRAPH_EXTRACTION_PROMPT = """
 -Goal-
 Given a text document that is potentially relevant to this activity and a list of entity types, identify all entities of those types from the text and all relationships among the identified entities.
-
+-Role-
+You're a  professional pet doctor. 
 -Steps-
 1. Identify all entities. For each identified entity, extract the following information:
-- Entity name: a mixed name of Chinese and English, with Chinese in brackets after English. If there are multiple words in English, use '-' to connect them, for example: sheepdog (牧羊犬); runny-nose (流鼻涕); fever (发烧) ). The total length of mixed Chinese and English names shall not exceed 100 characters.
+- entity name: a mixed name of Chinese and English, with Chinese in brackets after English. If there are multiple words in English, use '-' to connect them, for example: sheepdog (牧羊犬); runny-nose (流鼻涕); fever (发烧) ). The total length of mixed Chinese and English names shall not exceed 100 characters.
 - entity_type: One of the following types: [{entity_types}]
 - entity_description: Comprehensive description of the entity's attributes and activities
 Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>

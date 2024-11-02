@@ -21,7 +21,7 @@ import logging
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, List
 
 from graphrag.mind_map_prompt import MIND_MAP_EXTRACTION_PROMPT
 from graphrag.utils import ErrorHandlerFn, perform_variable_replacements
@@ -77,6 +77,55 @@ class MindMapExtractor:
                 "children": self._be_children(v, keyset)
             })
         return arr
+    
+    def to_messages(self,texts:List[str],prompt_variables: dict[str, Any] | None = {}):
+        text = perform_variable_replacements(self._mind_map_prompt, variables={
+                    **prompt_variables,
+                    self._input_text_key: "".join(texts),
+                })
+                                              
+        return [{"role":"system","content":"".join(text)},{"role":"user","content":"Output:"}]
+
+    def build_chat_messages(self,sections: list[str], prompt_variables: dict[str, Any] | None = {}) -> dict:
+        token_count = max(self._llm.max_length * 0.8, self._llm.max_length-512)
+        texts = []
+        result = {}
+        cnt = 0
+        for i in range(len(sections)):
+            section_cnt = num_tokens_from_string(sections[i])
+            if texts and cnt + section_cnt >= token_count:
+                result[f"mind_{i}"] = self.to_messages(texts,prompt_variables)
+                texts = []
+                cnt = 0
+                
+            texts.append(sections[i])
+            cnt += section_cnt
+            
+        if texts:
+            result[f"mind_{i}"] = self.to_messages(texts,prompt_variables)
+            
+        return result
+    
+    def responses2result(self,response_dict):
+        if not response_dict:
+            return MindMapResult(output={"id": "root", "children": []})
+        merge_json = {}
+        for k,response in response_dict.items():
+            response = re.sub(r"```[^\n]*", "", response)
+            response = self._todict(markdown_to_json.dictify(response))
+            merge_json = self._merge(response,merge_json)
+        
+        if len(merge_json.keys()) > 1:
+            keyset = set(
+                [re.sub(r"\*+", "", k) for k, v in merge_json.items() if isinstance(v, dict) and re.sub(r"\*+", "", k)])
+            merge_json = {"id": "root",
+                        "children": [{"id": self._key(k), "children": self._be_children(v, keyset)} for k, v in
+                                    merge_json.items() if isinstance(v, dict) and self._key(k)]}
+        else:
+            k = self._key(list(merge_json.keys())[0])
+            merge_json = {"id": k, "children": self._be_children(list(merge_json.items())[0][1], set([k]))}
+        
+        return MindMapResult(output=merge_json)
 
     def __call__(
             self, sections: list[str], prompt_variables: dict[str, Any] | None = None

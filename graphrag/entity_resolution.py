@@ -15,17 +15,20 @@
 #
 
 import logging
+import os
 import re
 import traceback
 from dataclasses import dataclass
 from typing import Any
 
 import networkx as nx
+from rag.llm.batch_model import BatchModel
 from rag.nlp import is_english
 import editdistance
 from graphrag.entity_resolution_prompt import ENTITY_RESOLUTION_PROMPT
 from rag.llm.chat_model import Base as CompletionLLM
-from graphrag.utils import ErrorHandlerFn, perform_variable_replacements
+from graphrag.utils import ErrorHandlerFn, english_and_digits_of, perform_variable_replacements
+from loguru import logger as log
 
 DEFAULT_RECORD_DELIMITER = "##"
 DEFAULT_ENTITY_INDEX_DELIMITER = "<|>"
@@ -69,6 +72,35 @@ class EntityResolution:
         self._resolution_result_delimiter_key = resolution_result_delimiter_key or "resolution_result_delimiter"
         self._input_text_key = input_text_key or "input_text"
 
+    def build_chat_messages(self,candidate_resolution:dict,prompt_variables: dict[str, Any] | None = None):
+        chat_messages = {}
+        for candidate_resolution_i in candidate_resolution.items():
+            if candidate_resolution_i[1]:
+                try:
+                    pair_txt = [
+                        f'When determining whether two {candidate_resolution_i[0]}s are the same, you should only focus on critical properties and overlook noisy factors.\n']
+                    for index, candidate in enumerate(candidate_resolution_i[1]):
+                        pair_txt.append(
+                            f'Question {index + 1}: name of{candidate_resolution_i[0]} A is {candidate[0]} ,name of{candidate_resolution_i[0]} B is {candidate[1]}')
+                    sent = 'question above' if len(pair_txt) == 1 else f'above {len(pair_txt)} questions'
+                    pair_txt.append(
+                        f'\nUse domain knowledge of {candidate_resolution_i[0]}s to help understand the text and answer the {sent} in the format: For Question i, Yes, {candidate_resolution_i[0]} A and {candidate_resolution_i[0]} B are the same {candidate_resolution_i[0]}./No, {candidate_resolution_i[0]} A and {candidate_resolution_i[0]} B are different {candidate_resolution_i[0]}s. For Question i+1, (repeat the above procedures)')
+                    pair_prompt = '\n'.join(pair_txt)
+
+                    variables = {
+                        **prompt_variables,
+                        self._input_text_key: pair_prompt
+                    }
+                    
+                    text = perform_variable_replacements(self._resolution_prompt, variables=variables)
+                    key = english_and_digits_of(candidate_resolution_i[0])
+                    chat_messages[key] = (candidate_resolution_i[1],text)
+                except Exception as e:
+                    logging.exception("error entity resolution")
+                    self._on_error(e, traceback.format_exc(), None)
+        return chat_messages
+                    
+                    
     def __call__(self, graph: nx.Graph, prompt_variables: dict[str, Any] | None = None) -> EntityResolutionResult:
         """Call method definition."""
         if prompt_variables is None:
@@ -106,39 +138,36 @@ class EntityResolution:
 
         gen_conf = {"temperature": 0.5}
         resolution_result = set()
-        for candidate_resolution_i in candidate_resolution.items():
-            if candidate_resolution_i[1]:
+        chat_id_messages = self.build_chat_messages(candidate_resolution,prompt_variables)
+        
+        if os.environ.get('BatchMode',"").lower() == "online":
+            for key,(nodes,text) in chat_id_messages.items():
                 try:
-                    pair_txt = [
-                        f'When determining whether two {candidate_resolution_i[0]}s are the same, you should only focus on critical properties and overlook noisy factors.\n']
-                    for index, candidate in enumerate(candidate_resolution_i[1]):
-                        pair_txt.append(
-                            f'Question {index + 1}: name of{candidate_resolution_i[0]} A is {candidate[0]} ,name of{candidate_resolution_i[0]} B is {candidate[1]}')
-                    sent = 'question above' if len(pair_txt) == 1 else f'above {len(pair_txt)} questions'
-                    pair_txt.append(
-                        f'\nUse domain knowledge of {candidate_resolution_i[0]}s to help understand the text and answer the {sent} in the format: For Question i, Yes, {candidate_resolution_i[0]} A and {candidate_resolution_i[0]} B are the same {candidate_resolution_i[0]}./No, {candidate_resolution_i[0]} A and {candidate_resolution_i[0]} B are different {candidate_resolution_i[0]}s. For Question i+1, (repeat the above procedures)')
-                    pair_prompt = '\n'.join(pair_txt)
-
-                    variables = {
-                        **prompt_variables,
-                        self._input_text_key: pair_prompt
-                    }
-                    text = perform_variable_replacements(self._resolution_prompt, variables=variables)
-
                     response = self._llm.chat(text, [{"role": "user", "content": "Output:"}], gen_conf)
-                    result = self._process_results(len(candidate_resolution_i[1]), response,
-                                                   prompt_variables.get(self._record_delimiter_key,
-                                                                        DEFAULT_RECORD_DELIMITER),
-                                                   prompt_variables.get(self._entity_index_dilimiter_key,
-                                                                        DEFAULT_ENTITY_INDEX_DELIMITER),
-                                                   prompt_variables.get(self._resolution_result_delimiter_key,
-                                                                        DEFAULT_RESOLUTION_RESULT_DELIMITER))
+                    result = self._process_results(len(nodes), response,
+                                                prompt_variables.get(self._record_delimiter_key,DEFAULT_RECORD_DELIMITER),
+                                                prompt_variables.get(self._entity_index_dilimiter_key,DEFAULT_ENTITY_INDEX_DELIMITER),
+                                                prompt_variables.get(self._resolution_result_delimiter_key,DEFAULT_RESOLUTION_RESULT_DELIMITER))
                     for result_i in result:
-                        resolution_result.add(candidate_resolution_i[1][result_i[0] - 1])
+                        resolution_result.add(nodes[result_i[0] - 1])
                 except Exception as e:
                     logging.exception("error entity resolution")
                     self._on_error(e, traceback.format_exc(), None)
-
+        else:
+            batch_llm = BatchModel(model_instance = self._llm.mdl)
+            id_messages = {key:[{"role":"system","content":text},{"role":"user","content":"Output:"}] for key,(_,text) in chat_id_messages.items()}
+            log.info(f"batching entity resolution,id_messages cnt:{len(id_messages)}")
+            chat_results = batch_llm.batch_api_call(id_messages)
+            resolution_result = set()
+            for key,response in chat_results.items():
+                nodes = chat_id_messages[key][0]
+                result = self._process_results(len(nodes), response,
+                                                prompt_variables.get(self._record_delimiter_key,DEFAULT_RECORD_DELIMITER),
+                                                prompt_variables.get(self._entity_index_dilimiter_key,DEFAULT_ENTITY_INDEX_DELIMITER),
+                                                prompt_variables.get(self._resolution_result_delimiter_key,DEFAULT_RESOLUTION_RESULT_DELIMITER))
+                for result_i in result:
+                    resolution_result.add(nodes[result_i[0] - 1])
+            
         connect_graph = nx.Graph()
         connect_graph.add_edges_from(resolution_result)
         for sub_connect_graph in nx.connected_components(connect_graph):

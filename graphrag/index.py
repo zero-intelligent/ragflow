@@ -15,7 +15,6 @@
 #
 import json
 import os
-import time
 from functools import reduce
 from typing import List
 
@@ -24,16 +23,18 @@ import networkx as nx
 from api.db import LLMType
 from api.db.services.llm_service import LLMBundle
 from api.db.services.user_service import TenantService
-from graphrag import openai_batch, prompt_messages, graph_extractor
+from graphrag import prompt_messages, graph_extractor
 from graphrag.community_reports_extractor import CommunityReportsExtractor
 from graphrag.entity_resolution import EntityResolution
 from graphrag.graph2neo4j import graph2neo4j
 from graphrag.graph_extractor import GraphExtractor
 from graphrag.mind_map_extractor import MindMapExtractor
-from graphrag.prompt_messages import DEFAULT_TUPLE_DELIMITER, DEFAULT_RECORD_DELIMITER, DEFAULT_TUPLE_DELIMITER_KEY, \
-    DEFAULT_RECORD_DELIMITER_KEY
+from graphrag.prompt_messages import DEFAULT_TUPLE_DELIMITER, DEFAULT_RECORD_DELIMITER, DEFAULT_TUPLE_DELIMITER_KEY, DEFAULT_RECORD_DELIMITER_KEY
+from rag.llm.batch_model import BatchModel
 from rag.nlp import rag_tokenizer
-from rag.utils import num_tokens_from_string
+from rag.utils import build_sub_texts_2d
+from loguru import logger as log
+
 
 def graph_merge(g1, g2):
     g = g2.copy()
@@ -58,7 +59,6 @@ def graph_merge(g1, g2):
 
     
 def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
-    _chunks = chunks
     chunks = []
     for n, attr in graph.nodes(data=True):
         if attr.get("rank", 0) == 0:
@@ -98,59 +98,52 @@ def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
             "content_with_weight": json.dumps(nx.node_link_data(graph), ensure_ascii=False, indent=2),
             "knowledge_graph_kwd": "graph"
         })
-
-    callback(0.75, "Extracting mind graph.")
-    mindmap = MindMapExtractor(llm_bdl)
-    mg = mindmap(_chunks).output
-    if not len(mg.keys()): return chunks
-
-    print(json.dumps(mg, ensure_ascii=False, indent=2))
-    chunks.append(
-        {
-            "content_with_weight": json.dumps(mg, ensure_ascii=False, indent=2),
-            "knowledge_graph_kwd": "mind_map"
-        })
-
     return chunks
     
-            
+def mind_map2chunk(mind_map: dict):
+    return [{
+            "content_with_weight": json.dumps(mind_map, ensure_ascii=False, indent=2),
+            "knowledge_graph_kwd": "mind_map"
+    }]
+
+    
 def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], callback,
                                 entity_types=["organization", "person", "location", "event", "time"]):
     _, tenant = TenantService.get_by_id(tenant_id)
-    
     llm_bdl = LLMBundle(tenant_id, LLMType.CHAT, tenant.llm_id)
-    ext = GraphExtractor(llm_bdl)
-    left_token_count = llm_bdl.max_length - ext.prompt_token_count - 1024
-    left_token_count = max(llm_bdl.max_length * 0.6, left_token_count)
+    graph_ext = GraphExtractor(llm_bdl)
+    mind_map_ext = MindMapExtractor(llm_bdl)
+    
+    if os.environ.get('BatchMode',"").lower() == "online":
+        left_token_count = llm_bdl.max_length - graph_ext.prompt_token_count - 1024
+        left_token_count = max(llm_bdl.max_length * 0.6, left_token_count)
 
-    assert left_token_count > 0, f"The LLM context length({llm_bdl.max_length}) is smaller than prompt({ext.prompt_token_count})"
-    
-    prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
-    
-    if tenant.llm_id.startswith("qwen-plus"):
-        chat_results = openai_batch.batch_qwen_api_call(filename,chunks,prompt_vars,left_token_count)
+        assert left_token_count > 0, f"The LLM context length({llm_bdl.max_length}) is smaller than prompt({graph_ext.prompt_token_count})"
+        
+        sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
+        graphs = [graph_ext(["\n".join(texts)], {"entity_types": entity_types}, callback).output for texts in sub_texts_2d]
+        graph = reduce(graph_merge, graphs) if graphs else nx.Graph()
+        mind_map_result = mind_map_ext(chunks).output
+    else:
+        log.info(f"batching {filename} on {llm_bdl.llm_name}")
+        chat_id_messages = graph_ext.build_chat_messages(chunks,entity_types)
+        chat_id_messages |= mind_map_ext.build_chat_messages(chunks)
+        
+        batch_llm = BatchModel(model_instance = llm_bdl.mdl)
+        chat_results = batch_llm.batch_api_call(chat_id_messages)
+        # with open('data.json', 'r') as json_file:
+        #     chat_results = json.load(json_file)
+        graph_chat_results = {f"{filename}-{k}":v for k,v in chat_results.items() if k.startswith('graph_')}
+
+        prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
         graph = graph_extractor.GraphExtractor.process_results(
-            results = chat_results ,
+            results = graph_chat_results ,
             tuple_delimiter = prompt_vars.get(DEFAULT_TUPLE_DELIMITER_KEY,DEFAULT_TUPLE_DELIMITER),
             record_delimiter = prompt_vars.get(DEFAULT_RECORD_DELIMITER_KEY,DEFAULT_RECORD_DELIMITER)
         )
-    else:
-        BATCH_SIZE=4
-        texts = []
-        graphs = []
-        cnt = 0
-        for i in range(len(chunks)):
-            tkn_cnt = num_tokens_from_string(chunks[i])
-            if texts and (cnt+tkn_cnt >= left_token_count or i == len(chunks)-1):
-                for b in range(0, len(texts), BATCH_SIZE):
-                    graph = ext(["\n".join(texts[b:b+BATCH_SIZE])], {"entity_types": entity_types}, callback)
-                    graphs.append(graph.output)
-                texts = []
-                cnt = 0
-            texts.append(chunks[i])
-            cnt += tkn_cnt
-            
-        graph = reduce(graph_merge, graphs) if graphs else nx.Graph()
+        
+        mind_map_chat_results = {f"{filename}-{k}":v for k,v in chat_results.items() if k.startswith('mind_')}
+        mind_map_result = mind_map_ext.responses2result(mind_map_chat_results).output
 
     callback(0.5, "Extracting entities.")
     er = EntityResolution(llm_bdl)
@@ -159,6 +152,9 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     #将图导入neo4j
     graph2neo4j(graph)
     
-    return graph2chunks(graph,chunks,llm_bdl,callback)
+    graph_chunks = graph2chunks(graph,chunks,llm_bdl,callback)
+    mind_map_chunks = mind_map2chunk(mind_map_result)
+    
+    return graph_chunks + mind_map_chunks
 
     

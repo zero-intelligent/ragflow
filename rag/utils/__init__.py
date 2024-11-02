@@ -14,10 +14,14 @@
 #  limitations under the License.
 #
 
+import functools
+import inspect
 import os
 import re
+import time
+from typing import List
 import tiktoken
-
+from loguru import logger as log
 
 def singleton(cls, *args, **kw):
     instances = {}
@@ -84,7 +88,67 @@ def num_tokens_from_string(string: str) -> int:
         pass
     return 0
 
+def build_sub_texts_2d(chunks: List[str], left_token_count):
+    BATCH_SIZE = 4
+    texts, sub_texts = [], []
+    cnt = 0
+    for i in range(len(chunks)):
+        tkn_cnt = num_tokens_from_string(chunks[i])
+        if texts and cnt + tkn_cnt >= left_token_count:
+            for b in range(0, len(texts), BATCH_SIZE):
+                sub_texts.append(texts[b:b + BATCH_SIZE])
+            texts = []
+            cnt = 0
+        texts.append(chunks[i])
+        cnt += tkn_cnt
+    if texts:
+        for b in range(0, len(texts), BATCH_SIZE):
+            sub_texts.append(texts[b:b + BATCH_SIZE])
+    return sub_texts
+
 
 def truncate(string: str, max_len: int) -> str:
     """Returns truncated text if the length of text exceed max_len."""
     return encoder.decode(encoder.encode(string)[:max_len])
+
+
+def args_to_str(args,kwargs,max_len=128):
+    s1 = [str(r)[:max_len] for r in args]
+    s2 = [f"{k}={str(w)[:max_len]}" for k,w in kwargs]
+    return f"[{s1},{s2}]"
+
+unsecuring_words = ["台湾","taiwan","台灣"]
+
+def assure_security(input:str):
+    if not isinstance(input,str):
+        return input
+    output = input
+    for w in unsecuring_words:
+        output = output.replace(w,"")
+    return output
+
+def tries(max_try_cnt:int=3,interval:int=10):
+    """
+     重试次数装饰器
+     被装饰的函数将最多尝试执行N(默认=3) 次，直到成功。
+     如果连续N次都失败了,则返回最后一次异常信息。
+     为确保稳定性，每次间隔期间，都会 sleep interval(默认为10)秒。
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(max_try_cnt):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if i < max_try_cnt:
+                        calframe = inspect.getouterframes(inspect.currentframe(), 2)
+                        log.error(f"Error {calframe[1][3]} {i+1}rd call function '{func.__name__}',args:'{args_to_str(args,kwargs)}': {e}")
+                        time.sleep(interval)
+                    else: # 最后一次还是抛异常，重新抛出异常
+                        raise
+        return wrapper
+    return decorator
+
+    
+

@@ -22,7 +22,7 @@ import openai
 from ollama import Client
 from volcengine.maas.v2 import MaasService
 from rag.nlp import is_english
-from rag.utils import num_tokens_from_string
+from rag.utils import num_tokens_from_string, tries
 from groq import Groq
 import os 
 import json
@@ -34,6 +34,7 @@ class Base(ABC):
         self.client = OpenAI(api_key=key, base_url=base_url)
         self.model_name = model_name
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -49,7 +50,8 @@ class Base(ABC):
             return ans, response.usage.total_tokens
         except openai.APIError as e:
             return "**ERROR**: " + str(e), 0
-
+        
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -132,6 +134,7 @@ class BaiChuanChat(Base):
             "top_p": params.get("top_p", 0.85),
         }
 
+    @tries
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -157,6 +160,7 @@ class BaiChuanChat(Base):
         except openai.APIError as e:
             return "**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -203,10 +207,13 @@ class BaiChuanChat(Base):
 
 class QWenChat(Base):
     def __init__(self, key, model_name=Generation.Models.qwen_turbo, **kwargs):
+        base_url = kwargs['base_url'] if kwargs.get('base_url') else "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        super().__init__(key,model_name,base_url)
         import dashscope
         dashscope.api_key = key
         self.model_name = model_name
-
+        
+    @tries(max_try_cnt=4,interval=20)
     def chat(self, system, history, gen_conf):
         from http import HTTPStatus
         if system:
@@ -229,6 +236,7 @@ class QWenChat(Base):
 
         return "**ERROR**: " + response.message, tk_count
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         from http import HTTPStatus
         if system:
@@ -264,6 +272,7 @@ class ZhipuChat(Base):
         self.client = ZhipuAI(api_key=key)
         self.model_name = model_name
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -283,6 +292,7 @@ class ZhipuChat(Base):
         except Exception as e:
             return "**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -318,6 +328,7 @@ class OllamaChat(Base):
         self.client = Client(host=kwargs["base_url"])
         self.model_name = model_name
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -339,6 +350,7 @@ class OllamaChat(Base):
         except Exception as e:
             return "**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -436,6 +448,7 @@ class LocalLLM(Base):
             yield answer + "\n**ERROR**: " + str(e)
         yield num_tokens_from_string(answer)
 
+    @tries()
     def chat(self, system, history, gen_conf):
         prompt = self._prepare_prompt(system, history, gen_conf)
         chat_gen = self._stream_response("/chat", prompt)
@@ -443,6 +456,7 @@ class LocalLLM(Base):
         total_tokens = next(chat_gen)
         return ans, total_tokens
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         prompt = self._prepare_prompt(system, history, gen_conf)
         return self._stream_response("/stream", prompt)
@@ -474,6 +488,7 @@ class MiniMaxChat(Base):
         self.model_name = model_name
         self.api_key = key
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -500,6 +515,7 @@ class MiniMaxChat(Base):
         except Exception as e:
             return "**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -550,6 +566,7 @@ class MistralChat(Base):
         self.client = MistralClient(api_key=key)
         self.model_name = model_name
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -569,6 +586,7 @@ class MistralChat(Base):
         except openai.APIError as e:
             return "**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -608,6 +626,7 @@ class BedrockChat(Base):
         self.client = boto3.client(service_name='bedrock-runtime', region_name=self.bedrock_region,
                                    aws_access_key_id=self.bedrock_ak, aws_secret_access_key=self.bedrock_sk)
 
+    @tries()
     def chat(self, system, history, gen_conf):
         from botocore.exceptions import ClientError
         for k in list(gen_conf.keys()):
@@ -640,6 +659,7 @@ class BedrockChat(Base):
         except (ClientError, Exception) as e:
             return f"ERROR: Can't invoke '{self.model_name}'. Reason: {e}", 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         from botocore.exceptions import ClientError
         for k in list(gen_conf.keys()):
@@ -701,7 +721,7 @@ class GeminiChat(Base):
         self.model = GenerativeModel(model_name=self.model_name)
         self.model._client = _client
         
-        
+    @tries()
     def chat(self,system,history,gen_conf):
         from google.generativeai.types import content_types
         
@@ -728,6 +748,7 @@ class GeminiChat(Base):
         except Exception as e:
             return "**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         from google.generativeai.types import content_types
         
@@ -763,6 +784,7 @@ class GroqChat:
         self.client = Groq(api_key=key)
         self.model_name = model_name
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -784,6 +806,7 @@ class GroqChat:
         except Exception as e:
             return ans + "\n**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -864,6 +887,7 @@ class CoHereChat(Base):
         self.client = Client(api_key=key)
         self.model_name = model_name
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -898,6 +922,7 @@ class CoHereChat(Base):
         except Exception as e:
             return ans + "\n**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             history.insert(0, {"role": "system", "content": system})
@@ -995,6 +1020,7 @@ class ReplicateChat(Base):
         self.client = Client(api_token=key)
         self.system = ""
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if "max_tokens" in gen_conf:
             gen_conf["max_new_tokens"] = gen_conf.pop("max_tokens")
@@ -1014,6 +1040,7 @@ class ReplicateChat(Base):
         except Exception as e:
             return ans + "\n**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if "max_tokens" in gen_conf:
             gen_conf["max_new_tokens"] = gen_conf.pop("max_tokens")
@@ -1050,6 +1077,7 @@ class HunyuanChat(Base):
         self.model_name = model_name
         self.client = hunyuan_client.HunyuanClient(cred, "")
 
+    @tries()
     def chat(self, system, history, gen_conf):
         from tencentcloud.hunyuan.v20230901 import models
         from tencentcloud.common.exception.tencent_cloud_sdk_exception import (
@@ -1076,6 +1104,7 @@ class HunyuanChat(Base):
         except TencentCloudSDKException as e:
             return ans + "\n**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         from tencentcloud.hunyuan.v20230901 import models
         from tencentcloud.common.exception.tencent_cloud_sdk_exception import (
@@ -1146,6 +1175,7 @@ class BaiduYiyanChat(Base):
         self.model_name = model_name.lower()
         self.system = ""
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             self.system = system
@@ -1169,6 +1199,7 @@ class BaiduYiyanChat(Base):
         except Exception as e:
             return ans + "\n**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             self.system = system
@@ -1209,6 +1240,7 @@ class AnthropicChat(Base):
         self.model_name = model_name
         self.system = ""
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             self.system = system
@@ -1237,6 +1269,7 @@ class AnthropicChat(Base):
         except Exception as e:
             return ans + "\n**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             self.system = system
@@ -1312,6 +1345,7 @@ class GoogleChat(Base):
                 aiplatform.init(project=project_id, location=region)
             self.client = glm.GenerativeModel(model_name=self.model_name)
 
+    @tries()
     def chat(self, system, history, gen_conf):
         if system:
             self.system = system
@@ -1362,6 +1396,7 @@ class GoogleChat(Base):
             except Exception as e:
                 return "**ERROR**: " + str(e), 0
 
+    @tries()
     def chat_streamly(self, system, history, gen_conf):
         if system:
             self.system = system

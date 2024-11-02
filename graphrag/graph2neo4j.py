@@ -1,23 +1,12 @@
 import json
-import sys
 from typing import List
 import time
-
 import fire
 from graphrag.db.neo4j import driver
 import networkx as nx
 from loguru import logger as log
-
 from rag.utils.es_conn import ELASTICSEARCH
-
-def escape(input_string):
-    if not isinstance(input_string,str):
-        return input_string
-    # 使用 str.replace 方法转义特殊字符
-    escaped_string = input_string.replace('\\', '\\\\')  # 先转义反斜杠
-    escaped_string = escaped_string.replace("'", "\\'")  # 转义单引号
-    escaped_string = escaped_string.replace('"', '\\"')   # 转义双引号
-    return escaped_string
+from graphrag.utils import escape
 
 def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
     """
@@ -91,6 +80,9 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
                 log.info(f"{len(batch)} edges imported.")
             
         log.info(f"{len(edge_queries)} edges imported to neo4j, last:{time.time()-start:.2f}s")
+        
+        # session 不会主动关闭，需要手动关闭
+        driver.close()
 
 def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
          kb_id:str="2932270687c211efaa6b0242ac120006",

@@ -14,12 +14,14 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Mapping, Callable
 import tiktoken
+from graphrag import prompt_messages
 from graphrag.graph_prompt import GRAPH_EXTRACTION_PROMPT, CONTINUE_PROMPT, LOOP_PROMPT
 from graphrag.utils import ErrorHandlerFn, perform_variable_replacements, clean_str
 from rag.llm.chat_model import Base as CompletionLLM
 import networkx as nx
-from rag.utils import num_tokens_from_string
+from rag.utils import build_sub_texts_2d, num_tokens_from_string
 from timeit import default_timer as timer
+from loguru import logger as log
 
 DEFAULT_TUPLE_DELIMITER = "<|>"
 DEFAULT_RECORD_DELIMITER = "##"
@@ -94,6 +96,22 @@ class GraphExtractor:
         no = encoding.encode("NO")
         self._loop_args = {"logit_bias": {yes[0]: 100, no[0]: 100}, "max_tokens": 1}
 
+    def build_chat_messages(self,chunks: list[str], entity_types: list[str]) -> dict:
+        left_token_count = self._llm.max_length - self.prompt_token_count - 1024
+        left_token_count = max(self._llm.max_length * 0.6, left_token_count)
+
+        assert left_token_count > 0, f"The LLM context length({self._llm.max_length}) is smaller than prompt({self.prompt_token_count})"
+        
+        prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
+        sub_texts_2d = build_sub_texts_2d(chunks, left_token_count)
+        
+        chat_id_messages = {}
+        # 注意 阿里云通义千问 qwen-plus batch 模式 custom_id  只支持数字 custom_id， 他们答应2024.12 月前修复此问题
+        for i, sub_text in enumerate(sub_texts_2d):
+            chat_id_messages |= {f"graph_{i*1000+j}": prompt_messages.process(text, prompt_vars) for j, text in enumerate(sub_text)}
+        return chat_id_messages
+            
+    
     def __call__(
         self, texts: list[str],
             prompt_variables: dict[str, Any] | None = None,
