@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -64,7 +65,7 @@ class BatchModel:
         调用 batch api 返回结果, 添加文件缓存，防止重复调用，浪费成本
         '''
         assert isinstance(id_messages,dict) and len(id_messages) > 0, "id_messages is invalid!"
-        assert all(isinstance(v,list) for v in id_messages.values()), "message must be list and element format :{'role':'system/user','content':'text'} "
+        assert all(id and isinstance(messages,list) for id,messages in id_messages.items()), "id not empty and message must be list and element format :{'role':'system/user','content':'text'} "
         
         chat_input_lines = [{
                     "custom_id": id,
@@ -77,6 +78,11 @@ class BatchModel:
                 } for id, msg in id_messages.items()]
         
         file = self.write_file(chat_input_lines)
+        output_file = file.with_suffix('.out.json')
+        if output_file.exists():
+            with open(output_file, 'r') as file:
+                return json.load(file)
+        
         
         fid = self.file_upload(file)
         log.info(f"##########  uploaded {file},fid={fid}")
@@ -97,19 +103,40 @@ class BatchModel:
         input_ids = [line['custom_id'] for line in chat_input_lines]
         not_back_ids = set(input_ids) - set(chat_results.keys())
         if not_back_ids:
-            log.error(f"{file} 中的 custom_id in {not_back_ids} not back.")
+            log.error(f"{file} 中的 custom_id in {not_back_ids} not back, may be secure blocked by server.")
+        
+        
+        log.info(f"##########  chat_results dumps to {output_file}")
+        with open(output_file, 'w') as file:
+            json.dump(chat_results, file, ensure_ascii=False,indent=4)
+    
         return chat_results
           
 
+    def hash(self,content:str):
+        hash_object = hashlib.md5()
+        # 更新哈希对象
+        hash_object.update(content.encode('utf-8'))
+        # 获取哈希值
+        hash_value = hash_object.hexdigest()
+        return hash_value
+            
+            
     def write_file(self,input_items, inputs_dir:str="./inputs"):
+        """
+         input_items 的 hash key 将作为缓存的 key ,确保不需要反复调用 LLM
+        """
+        
         try:
-            f_name = str(time.time_ns()) + ".jsonl"
+            content = "\n".join([json.dumps(line, ensure_ascii=False) for line in input_items])
+            f_name = self.hash(content) + ".jsonl"
             file = Path(inputs_dir) / f_name
             Path(inputs_dir).mkdir(exist_ok=True)
             log.info(f"########## file={file}")
-            with open(file, 'w') as f:
-                for data in input_items:
-                    f.write(json.dumps(data, ensure_ascii=False) + "\n")
+            
+            if not file.exists():
+                with open(file, 'w') as f:
+                    f.write(content)
             return file
         except Exception as e:
             log.error("写入文件时发生错误" + str(e))
