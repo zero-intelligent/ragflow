@@ -131,8 +131,6 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
         
         batch_llm = BatchModel(model_instance = llm_bdl.mdl)
         chat_results = batch_llm.batch_api_call(chat_id_messages)
-        # with open('data.json', 'r') as json_file:
-        #     chat_results = json.load(json_file)
         graph_chat_results = {f"{filename}-{k}":v for k,v in chat_results.items() if k.startswith('graph_')}
 
         prompt_vars = prompt_messages.create_prompt_variables({"entity_types": entity_types})
