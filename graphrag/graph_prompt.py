@@ -12,7 +12,7 @@ Given a text document that is potentially relevant to this activity and a list o
 You're a  professional pet doctor. 
 -Steps-
 1. Identify all entities. For each identified entity, extract the following information:
-- entity name: a mixed name of Chinese and English, with Chinese in brackets after English. If there are multiple words in English, use '-' to connect them, for example: sheepdog (牧羊犬); runny-nose (流鼻涕); fever (发烧) ). The total length of mixed Chinese and English names shall not exceed 100 characters.
+- entity name: a mixed name of Chinese and English, with Chinese in brackets after English. If there are multiple words in English, use '-' to connect them, for example: sheepdog(牧羊犬); runny-nose(流鼻涕); fever(发烧) ). The total length of mixed Chinese and English names shall not exceed 100 characters.
 - entity_type: One of the following types: [{entity_types}]
 - entity_description: Comprehensive description of the entity's attributes and activities
 Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>
@@ -36,7 +36,7 @@ For each pair of related entities, extract the following information:
 ######################
 Example 1:
 
-Entity_types: [pet-species (宠物种类), breed (品种) living-environment (居住环境), parasite (寄生虫), restraint-method (保定法), examination-method (检查方法)]
+Entity_types: [pet-species(宠物种类), breed(品种) living-environment(居住环境), parasite(寄生虫), restraint-method(保定法), examination-method(检查方法)]
 Text:
 In the process of diagnosing and treating small animals, methods used to restrain the animals with human force, instruments, or medications are referred to as restraint methods. The purpose of restraint is to facilitate the diagnosis and treatment of animal diseases while ensuring the safety of both humans and animals. There are various restraint methods, which can be chosen based on the species, size, behavior of the animal, and the purpose of the treatment. Small animals often have a strong attachment to their owners, and having the owner present during restraint can make the process smoother.
 
@@ -54,24 +54,24 @@ Elizabethan Collar Restraint The Elizabethan collar, also known as a neck collar
 Body Brace Restraint A body brace is a method used to prevent self-injury. Based on the dog's neck circumference and body length, take an aluminum rod, bending it into one and a half loops. Wrap the loops with bandages and place them around the neck, with the two aluminum rods lying flat against the chest. Then, use adhesive bandages to wrap around the chest and abdomen to secure the brace. This method prevents the dog from turning its head to lick or bite areas above the trunk, anus, and hock joint, especially with the ends of the aluminum rods fixed to the tail.
 ################
 Output:
-("entity"{tuple_delimiter}restraint-method (保定法){tuple_delimiter}restraint-method (保定法){tuple_delimiter}用于小动物诊疗过程中，通过人力、器械或药物等制动动物的方法，以方便诊疗和确保安全。){record_delimiter}
-("entity"{tuple_delimiter}dog (犬){tuple_delimiter}pet-species (宠物种类){tuple_delimiter}一种常见的宠物种类，本文中讨论了其多种保定方法。){record_delimiter}
-("entity"{tuple_delimiter}muzzle-restraint (口套和扎口保定法){tuple_delimiter}restraint-method (保定法){tuple_delimiter}为防止人被咬伤而对犬使用的保定方法之一，包括使用市场上销售的各种材料制成的口套或用绷带/细绳扎住嘴部。){record_delimiter}
-("entity"{tuple_delimiter}standing-restraint (站立保定法){tuple_delimiter}restraint-method (保定法){tuple_delimiter}适用于大型犬的保定方式，其中保定者需要蹲下并用手抓住犬的脖圈及牵引带来控制它；对于中小型犬，则可以在诊疗台上进行。){record_delimiter}
-("entity"{tuple_delimiter}lateral-recumbency-restraint (侧卧保定法){tuple_delimiter}restraint-method (保定法){tuple_delimiter}将犬置于诊疗台上按倒，并由保定者站在犬背侧通过抓住前肢和后肢来固定犬只的一种保定技术。){record_delimiter}
-("entity"{tuple_delimiter}elizabethan-collar (颈圈保定法){tuple_delimiter}restraint-method (保定法){tuple_delimiter}利用圆锥形或圆盘形状的硬质塑料装置防止犬舔咬伤口或抓挠头部的一种保定措施。){record_delimiter}
-("entity"{tuple_delimiter}body-brace (体架保定法){tuple_delimiter}restraint-method (保定法){tuple_delimiter}通过特制的铝棒结构限制犬的动作，特别是防止它们转身舔咬身体其他部位。){record_delimiter}
-("relationship"{tuple_delimiter}dog (犬){tuple_delimiter}muzzle-restraint (口套和扎口保定法){tuple_delimiter}这种保定方法专门设计用来防止人在给犬做检查或者治疗时被咬伤。{tuple_delimiter}5){record_delimiter}
-("relationship"{tuple_delimiter}dog (犬){tuple_delimiter}standing-restraint (站立保定法){tuple_delimiter}站立保定法是一种根据犬体型大小调整的具体保定技巧，有助于更有效地完成体检或治疗。{tuple_delimiter}4){record_delimiter}
-("relationship"{tuple_delimiter}dog (犬){tuple_delimiter}lateral-recumbency-restraint (侧卧保定法){tuple_delimiter}侧卧保定法是针对需要在诊疗台上接受进一步检查或处理的小型至中型犬所采取的安全固定措施。{tuple_delimiter}3){record_delimiter}
-("relationship"{tuple_delimiter}dog (犬){tuple_delimiter}elizabethan-collar (颈圈保定法){tuple_delimiter}颈圈保定法提供了一种有效的方式，可以阻止犬因自我损伤行为而导致伤口恶化。{tuple_delimiter}4){record_delimiter}
-("relationship"{tuple_delimiter}dog (犬){tuple_delimiter}body-brace (体架保定法){tuple_delimiter}体架保定法特别适合那些有自残倾向的犬，能够很好地限制它们做出可能对自己造成伤害的行为。{tuple_delimiter}4){record_delimiter}
+("entity"{tuple_delimiter}restraint-method(保定法){tuple_delimiter}restraint-method(保定法){tuple_delimiter}用于小动物诊疗过程中，通过人力、器械或药物等制动动物的方法，以方便诊疗和确保安全。){record_delimiter}
+("entity"{tuple_delimiter}dog(犬){tuple_delimiter}pet-species(宠物种类){tuple_delimiter}一种常见的宠物种类，本文中讨论了其多种保定方法。){record_delimiter}
+("entity"{tuple_delimiter}muzzle-restraint(口套和扎口保定法){tuple_delimiter}restraint-method(保定法){tuple_delimiter}为防止人被咬伤而对犬使用的保定方法之一，包括使用市场上销售的各种材料制成的口套或用绷带/细绳扎住嘴部。){record_delimiter}
+("entity"{tuple_delimiter}standing-restraint(站立保定法){tuple_delimiter}restraint-method(保定法){tuple_delimiter}适用于大型犬的保定方式，其中保定者需要蹲下并用手抓住犬的脖圈及牵引带来控制它；对于中小型犬，则可以在诊疗台上进行。){record_delimiter}
+("entity"{tuple_delimiter}lateral-recumbency-restraint(侧卧保定法){tuple_delimiter}restraint-method(保定法){tuple_delimiter}将犬置于诊疗台上按倒，并由保定者站在犬背侧通过抓住前肢和后肢来固定犬只的一种保定技术。){record_delimiter}
+("entity"{tuple_delimiter}elizabethan-collar(颈圈保定法){tuple_delimiter}restraint-method(保定法){tuple_delimiter}利用圆锥形或圆盘形状的硬质塑料装置防止犬舔咬伤口或抓挠头部的一种保定措施。){record_delimiter}
+("entity"{tuple_delimiter}body-brace(体架保定法){tuple_delimiter}restraint-method(保定法){tuple_delimiter}通过特制的铝棒结构限制犬的动作，特别是防止它们转身舔咬身体其他部位。){record_delimiter}
+("relationship"{tuple_delimiter}dog(犬){tuple_delimiter}muzzle-restraint(口套和扎口保定法){tuple_delimiter}这种保定方法专门设计用来防止人在给犬做检查或者治疗时被咬伤。{tuple_delimiter}5){record_delimiter}
+("relationship"{tuple_delimiter}dog(犬){tuple_delimiter}standing-restraint(站立保定法){tuple_delimiter}站立保定法是一种根据犬体型大小调整的具体保定技巧，有助于更有效地完成体检或治疗。{tuple_delimiter}4){record_delimiter}
+("relationship"{tuple_delimiter}dog(犬){tuple_delimiter}lateral-recumbency-restraint(侧卧保定法){tuple_delimiter}侧卧保定法是针对需要在诊疗台上接受进一步检查或处理的小型至中型犬所采取的安全固定措施。{tuple_delimiter}3){record_delimiter}
+("relationship"{tuple_delimiter}dog(犬){tuple_delimiter}elizabethan-collar(颈圈保定法){tuple_delimiter}颈圈保定法提供了一种有效的方式，可以阻止犬因自我损伤行为而导致伤口恶化。{tuple_delimiter}4){record_delimiter}
+("relationship"{tuple_delimiter}dog(犬){tuple_delimiter}body-brace(体架保定法){tuple_delimiter}体架保定法特别适合那些有自残倾向的犬，能够很好地限制它们做出可能对自己造成伤害的行为。{tuple_delimiter}4){record_delimiter}
 {completion_delimiter}
 #############################
 
 Example 2:
 
-Entity_types: [pet-species (宠物种类), breed (品种), restraint-method (保定法), examination-method (检查方法)]
+Entity_types: [pet-species(宠物种类), breed(品种), restraint-method(保定法), examination-method(检查方法)]
 Text:
 临床检查基本方法包括问诊、视诊、触诊、叩诊和听诊。方法简便、易行，对任何动物、在 任何场所均可实施。
 一、问诊
@@ -102,17 +102,17 @@ Text:
 
 ################
 Output:
-("entity"{tuple_delimiter}问诊 (inquiry){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过询问动物主人了解动物的发病情况、病史、既往史及饲养管理状况等的方法。){record_delimiter}
-("entity"{tuple_delimiter}视诊 (visual-examination){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过肉眼观察或利用诊断器具来检查动物整体状态及病变部位的一种方法。){record_delimiter}
-("entity"{tuple_delimiter}触诊 (palpation){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过手的感觉来诊断动物体表及内脏器官的状态。){record_delimiter}
-("entity"{tuple_delimiter}叩诊 (percussion){tuple_delimiter}examination-method(检查方法){tuple_delimiter}根据叩打动物体表产生的声音性质推断内部器官病理状态的方法。){record_delimiter}
-("entity"{tuple_delimiter}听诊 (auscultation){tuple_delimiter}examination-method(检查方法){tuple_delimiter}使用听诊器听取体内深部器官发出的声音以判断其健康状况的技术。){record_delimiter}
-("entity"{tuple_delimiter}嗅诊 (olfaction-examination){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过嗅闻辨别动物呼出气体、分泌物、排泄物及病理产物气味的方法。){completion_delimiter}
+("entity"{tuple_delimiter}inquiry(问诊){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过询问动物主人了解动物的发病情况、病史、既往史及饲养管理状况等的方法。){record_delimiter}
+("entity"{tuple_delimiter}visual-examination(视诊){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过肉眼观察或利用诊断器具来检查动物整体状态及病变部位的一种方法。){record_delimiter}
+("entity"{tuple_delimiter}palpation(触诊){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过手的感觉来诊断动物体表及内脏器官的状态。){record_delimiter}
+("entity"{tuple_delimiter}percussion(叩诊){tuple_delimiter}examination-method(检查方法){tuple_delimiter}根据叩打动物体表产生的声音性质推断内部器官病理状态的方法。){record_delimiter}
+("entity"{tuple_delimiter}auscultation(听诊){tuple_delimiter}examination-method(检查方法){tuple_delimiter}使用听诊器听取体内深部器官发出的声音以判断其健康状况的技术。){record_delimiter}
+("entity"{tuple_delimiter}olfaction-examination(嗅诊){tuple_delimiter}examination-method(检查方法){tuple_delimiter}通过嗅闻辨别动物呼出气体、分泌物、排泄物及病理产物气味的方法。){completion_delimiter}
 #############################
 
 Example 3:
 
-Entity_types:[pet-species (宠物种类), breed (品种), age (年龄), gender (性别), weight (体重), temperature (体温), disease (疾病), symptom (症状), medication (药物), treatment-method (治疗方法), diagnostic-test (诊断测试), sign (体征), organ-or-system (器官或系统), vaccine (疫苗), animal-behavior (动物行为), allergen (过敏源), prognosis (预后), environmental-factors (环境因素), nutrition (营养), food (食物), water-intake (饮水情况), lifestyle (生活习惯), allergic-reaction (过敏反应), living-environment (居住环境), parasite (寄生虫), restraint-method (保定法), examination-method (检查方法),epidemiology (流行病学), lesion (病变),prevention(预防方法),virus(病毒),bacteria(细菌)]
+Entity_types:[pet-species(宠物种类), breed(品种), age(年龄), gender(性别), weight(体重), temperature(体温), disease(疾病), symptom(症状), medication(药物), treatment-method(治疗方法), diagnostic-test(诊断测试), sign(体征), organ-or-system(器官或系统), vaccine(疫苗), animal-behavior(动物行为), allergen(过敏源), prognosis(预后), environmental-factors(环境因素), nutrition(营养), food(食物), water-intake(饮水情况), lifestyle(生活习惯), allergic-reaction(过敏反应), living-environment(居住环境), parasite(寄生虫), restraint-method(保定法), examination-method(检查方法),epidemiology(流行病学), lesion(病变),prevention(预防方法),virus(病毒),bacteria(细菌)]
 Text: 
 犬轮状病毒病感染( )是由犬轮状病毒( canine rotavirus infection)是由犬轮状病毒( canine rotavirus)引起的犬的一种急性胃肠道传染病，临床上以腹泻为特征。
 病原 犬轮状病毒属于呼肠孤病毒科( Reoviridae）轮状病毒属( Rotavirus)。病毒粒子呈 圆形，直径 65-75nm，有双层衣壳，内层衣壳呈圆柱状，向外呈辐射状排列，外层由厚约 的光滑薄膜构成外衣壳，系由内质网膜上芽生时获得，内外衣壳一起状如车轮，故名轮状病毒。 轮状病毒由11个分节段的双链RNA组成， 5’端在轮状病毒中较为保守。病毒粒子表面有 2种主要蛋白(VP2 和 VP3)，抗原包括群抗原(共同抗原)、中和性抗原和血凝素抗原。犬的轮状病毒 可能有 个亚型( G3和P5A)。
@@ -125,37 +125,37 @@ Text:
 目前尚无有效的犬轮状病毒疫苗。因此，应对犬加强饲养管理，提高犬体的抗病能力，认真执行综合性防疫措施，彻底消毒，消除病原。
 ################
 Output:
-("entity"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}disease(疾病){tuple_delimiter}由犬轮状病毒引起的犬急性胃肠道传染病，主要特征为腹泻。){record_delimiter}
-("entity"{tuple_delimiter}canine-rotavirus (犬轮状病毒){tuple_delimiter}virus(病毒){tuple_delimiter}属于呼肠孤病毒科轮状病毒属的一种病毒，具有双层衣壳结构，能引起犬的急性胃肠炎。){record_delimiter}
-("entity"{tuple_delimiter}diarrhea (腹泻){tuple_delimiter}symptom(症状){tuple_delimiter}本病的主要临床表现之一，表现为粪便呈黄色或褐色，有恶臭或呈无色水样便。){record_delimiter}
-("entity"{tuple_delimiter}depression (精神沉郁){tuple_delimiter}symptom(症状){tuple_delimiter}患病犬只表现出的精神状态不佳的症状。){record_delimiter}
-("entity"{tuple_delimiter}anorexia (食欲减退){tuple_delimiter}symptom(症状){tuple_delimiter}患病犬只不愿意进食的表现。){record_delimiter}
-("entity"{tuple_delimiter}dehydration (脱水)(体征){tuple_delimiter}sign(体征){tuple_delimiter}严重情况下，由于频繁呕吐和腹泻导致体液丢失过多的现象。){record_delimiter}
-("entity"{tuple_delimiter}small-intestine (小肠){tuple_delimiter}organ-or-system (器官或系统){tuple_delimiter}该病毒感染后的主要病变部位。){record_delimiter}
-("entity"{tuple_delimiter}ELISA (酶联免疫吸附测定法){tuple_delimiter}diagnostic-test(诊断测试){tuple_delimiter}一种用于检测大量粪便样本中轮状病毒存在的实验室检查方法，具有简便、精确、特异性强的特点。){record_delimiter}
-("entity"{tuple_delimiter}oral-rehydration (经口补液){tuple_delimiter}treatment-method (治疗方法){tuple_delimiter}针对轻度至中度脱水患者采用的一种治疗方法，通过让其自由饮用特定液体来补充流失的水分和电解质。){record_delimiter}
-("entity"{tuple_delimiter}glucose-amino-acid-solution (葡萄糖氨基酸液){tuple_delimiter}medication(药物){tuple_delimiter}用于治疗犬轮状病毒感染时的口服补液溶液之一，有助于恢复体力与维持水电解质平衡。){record_delimiter}
-("entity"{tuple_delimiter}glucose-glycine-solution (葡萄糖甘氨酸溶液){tuple_delimiter}medication(药物){tuple_delimiter}另一种推荐给病犬使用的口服补液配方，含有多种成分以支持身体机能。){record_delimiter}
-("entity"{tuple_delimiter}sodium-bicarbonate-solution (碳酸氢钠溶液){tuple_delimiter}medication(药物){tuple_delimiter}当犬只出现严重呕吐症状时，可通过静脉注射此溶液来纠正酸碱失衡。){record_delimiter}
-("entity"{tuple_delimiter}antibiotics (抗生素类药物){tuple_delimiter}medication(药物){tuple_delimiter}在发生继发性细菌感染的情况下给予使用，帮助控制并发感染。){record_delimiter}
-("entity"{tuple_delimiter}cold-season (晚冬至早春){tuple_delimiter}environmental-factors{tuple_delimiter}本病高发时期，环境温度较低可能影响疾病传播率。){record_delimiter}
-("entity"{tuple_delimiter}young-dogs (幼犬){tuple_delimiter}age(年龄){tuple_delimiter}更易受到犬轮状病毒感染的影响群体。){record_delimiter}
-("entity"{tuple_delimiter}poor-hygiene (卫生条件不良){tuple_delimiter}living-environment (居住环境){tuple_delimiter}可加剧病情并提高死亡率的因素之一。){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus (犬轮状病毒){tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}犬轮状病毒是导致犬轮状病毒病感染的原因。{tuple_delimiter}5){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}diarrhea (腹泻){tuple_delimiter}腹泻是犬轮状病毒病感染最常见的临床症状。{tuple_delimiter}5){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}depression (精神沉郁){tuple_delimiter}精神沉郁是犬轮状病毒病感染期间观察到的一个典型症状。{tuple_delimiter}4){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}anorexia (食欲减退){tuple_delimiter}食欲减退也是犬轮状病毒病感染过程中常见的现象。{tuple_delimiter}4){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}dehydration (脱水){tuple_delimiter}严重的脱水可能导致犬轮状病毒病感染的致命后果。{tuple_delimiter}5){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}small-intestine (小肠){tuple_delimiter}犬轮状病毒病感染主要影响小肠区域。{tuple_delimiter}4){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}ELISA (酶联免疫吸附测定法){tuple_delimiter}ELISA是一种有效的诊断工具，用于确认是否患有犬轮状病毒病感染。{tuple_delimiter}3){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}oral-rehydration (经口补液){tuple_delimiter}对于轻度至中度脱水的犬轮状病毒病感染病例，经口补液是一个重要的治疗手段。{tuple_delimiter}4){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}glucose-amino-acid-solution (葡萄糖氨基酸液){tuple_delimiter}这种液体被推荐作为犬轮状病毒病感染患者的口服补液选项之一。{tuple_delimiter}3){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}glucose-glycine-solution (葡萄糖甘氨酸溶液){tuple_delimiter}这是一种特别配制的口服补液方案，适用于犬轮状病毒病感染治疗。{tuple_delimiter}3){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}sodium-bicarbonate-solution (碳酸氢钠溶液){tuple_delimiter}当犬轮状病毒病感染伴随严重呕吐时，可以考虑静脉输注碳酸氢钠溶液。{tuple_delimiter}2){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}antibiotics (抗生素类药物){tuple_delimiter}如果犬轮状病毒病感染并发了细菌性感染，则需要使用抗生素治疗。{tuple_delimiter}2){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}cold-season (晚冬至早春){tuple_delimiter}犬轮状病毒病感染更倾向于在寒冷季节爆发。{tuple_delimiter}3){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}young-dogs (幼犬){tuple_delimiter}幼犬比成年犬更容易患上犬轮状病毒病感染。{tuple_delimiter}4){record_delimiter}
-("relationship"{tuple_delimiter}canine-rotavirus-infection (犬轮状病毒病感染){tuple_delimiter}poor-hygiene (卫生条件不良){tuple_delimiter}不良的生活环境卫生状况会加重犬轮状病毒病感染的症状。{tuple_delimiter}4){completion_delimiter}
+("entity"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}disease(疾病){tuple_delimiter}由犬轮状病毒引起的犬急性胃肠道传染病，主要特征为腹泻。){record_delimiter}
+("entity"{tuple_delimiter}canine-rotavirus(犬轮状病毒){tuple_delimiter}virus(病毒){tuple_delimiter}属于呼肠孤病毒科轮状病毒属的一种病毒，具有双层衣壳结构，能引起犬的急性胃肠炎。){record_delimiter}
+("entity"{tuple_delimiter}diarrhea(腹泻){tuple_delimiter}symptom(症状){tuple_delimiter}本病的主要临床表现之一，表现为粪便呈黄色或褐色，有恶臭或呈无色水样便。){record_delimiter}
+("entity"{tuple_delimiter}depression(精神沉郁){tuple_delimiter}symptom(症状){tuple_delimiter}患病犬只表现出的精神状态不佳的症状。){record_delimiter}
+("entity"{tuple_delimiter}anorexia(食欲减退){tuple_delimiter}symptom(症状){tuple_delimiter}患病犬只不愿意进食的表现。){record_delimiter}
+("entity"{tuple_delimiter}dehydration(脱水){tuple_delimiter}sign(体征){tuple_delimiter}严重情况下，由于频繁呕吐和腹泻导致体液丢失过多的现象。){record_delimiter}
+("entity"{tuple_delimiter}small-intestine(小肠){tuple_delimiter}organ-or-system(器官或系统){tuple_delimiter}该病毒感染后的主要病变部位。){record_delimiter}
+("entity"{tuple_delimiter}ELISA(酶联免疫吸附测定法){tuple_delimiter}diagnostic-test(诊断测试){tuple_delimiter}一种用于检测大量粪便样本中轮状病毒存在的实验室检查方法，具有简便、精确、特异性强的特点。){record_delimiter}
+("entity"{tuple_delimiter}oral-rehydration(经口补液){tuple_delimiter}treatment-method(治疗方法){tuple_delimiter}针对轻度至中度脱水患者采用的一种治疗方法，通过让其自由饮用特定液体来补充流失的水分和电解质。){record_delimiter}
+("entity"{tuple_delimiter}glucose-amino-acid-solution(葡萄糖氨基酸液){tuple_delimiter}medication(药物){tuple_delimiter}用于治疗犬轮状病毒感染时的口服补液溶液之一，有助于恢复体力与维持水电解质平衡。){record_delimiter}
+("entity"{tuple_delimiter}glucose-glycine-solution(葡萄糖甘氨酸溶液){tuple_delimiter}medication(药物){tuple_delimiter}另一种推荐给病犬使用的口服补液配方，含有多种成分以支持身体机能。){record_delimiter}
+("entity"{tuple_delimiter}sodium-bicarbonate-solution(碳酸氢钠溶液){tuple_delimiter}medication(药物){tuple_delimiter}当犬只出现严重呕吐症状时，可通过静脉注射此溶液来纠正酸碱失衡。){record_delimiter}
+("entity"{tuple_delimiter}antibiotics(抗生素类药物){tuple_delimiter}medication(药物){tuple_delimiter}在发生继发性细菌感染的情况下给予使用，帮助控制并发感染。){record_delimiter}
+("entity"{tuple_delimiter}cold-season(晚冬至早春){tuple_delimiter}environmental-factors{tuple_delimiter}本病高发时期，环境温度较低可能影响疾病传播率。){record_delimiter}
+("entity"{tuple_delimiter}young-dogs(幼犬){tuple_delimiter}age(年龄){tuple_delimiter}更易受到犬轮状病毒感染的影响群体。){record_delimiter}
+("entity"{tuple_delimiter}poor-hygiene(卫生条件不良){tuple_delimiter}living-environment(居住环境){tuple_delimiter}可加剧病情并提高死亡率的因素之一。){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus(犬轮状病毒){tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}犬轮状病毒是导致犬轮状病毒病感染的原因。{tuple_delimiter}5){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}diarrhea(腹泻){tuple_delimiter}腹泻是犬轮状病毒病感染最常见的临床症状。{tuple_delimiter}5){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}depression(精神沉郁){tuple_delimiter}精神沉郁是犬轮状病毒病感染期间观察到的一个典型症状。{tuple_delimiter}4){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}anorexia(食欲减退){tuple_delimiter}食欲减退也是犬轮状病毒病感染过程中常见的现象。{tuple_delimiter}4){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}dehydration(脱水){tuple_delimiter}严重的脱水可能导致犬轮状病毒病感染的致命后果。{tuple_delimiter}5){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}small-intestine(小肠){tuple_delimiter}犬轮状病毒病感染主要影响小肠区域。{tuple_delimiter}4){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}ELISA(酶联免疫吸附测定法){tuple_delimiter}ELISA是一种有效的诊断工具，用于确认是否患有犬轮状病毒病感染。{tuple_delimiter}3){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}oral-rehydration(经口补液){tuple_delimiter}对于轻度至中度脱水的犬轮状病毒病感染病例，经口补液是一个重要的治疗手段。{tuple_delimiter}4){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}glucose-amino-acid-solution(葡萄糖氨基酸液){tuple_delimiter}这种液体被推荐作为犬轮状病毒病感染患者的口服补液选项之一。{tuple_delimiter}3){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}glucose-glycine-solution(葡萄糖甘氨酸溶液){tuple_delimiter}这是一种特别配制的口服补液方案，适用于犬轮状病毒病感染治疗。{tuple_delimiter}3){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}sodium-bicarbonate-solution(碳酸氢钠溶液){tuple_delimiter}当犬轮状病毒病感染伴随严重呕吐时，可以考虑静脉输注碳酸氢钠溶液。{tuple_delimiter}2){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}antibiotics(抗生素类药物){tuple_delimiter}如果犬轮状病毒病感染并发了细菌性感染，则需要使用抗生素治疗。{tuple_delimiter}2){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}cold-season(晚冬至早春){tuple_delimiter}犬轮状病毒病感染更倾向于在寒冷季节爆发。{tuple_delimiter}3){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}young-dogs(幼犬){tuple_delimiter}幼犬比成年犬更容易患上犬轮状病毒病感染。{tuple_delimiter}4){record_delimiter}
+("relationship"{tuple_delimiter}canine-rotavirus-infection(犬轮状病毒病感染){tuple_delimiter}poor-hygiene(卫生条件不良){tuple_delimiter}不良的生活环境卫生状况会加重犬轮状病毒病感染的症状。{tuple_delimiter}4){completion_delimiter}
 
 #############################
 
