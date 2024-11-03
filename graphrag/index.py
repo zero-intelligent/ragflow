@@ -153,6 +153,7 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     graph_chunks = graph2chunks(graph,chunks,llm_bdl,callback)
     mind_map_chunks = mind_map2chunk(mind_map_result)
     
+    log.info(f"{filename} build_knowlege_graph_chunks completed.")
     return graph_chunks + mind_map_chunks
 
     

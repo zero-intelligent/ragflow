@@ -3,6 +3,7 @@ import re
 from graphrag.index import build_knowlege_graph_chunks
 from rag.app import naive
 from rag.nlp import rag_tokenizer, tokenize_chunks
+from loguru import logger as log
 
 
 def chunk(filename, binary, tenant_id, from_page=0, to_page=100000,
@@ -15,6 +16,8 @@ def chunk(filename, binary, tenant_id, from_page=0, to_page=100000,
     parser_config["layout_recognize"] = False
     sections = naive.chunk(filename, binary, from_page=from_page, to_page=to_page, section_only=True,
                            parser_config=parser_config, callback=callback)
+    
+    log.info(f"{filename},size:{len(binary)/1024:.2f}kb,sections count:{len(sections)}")
     chunks = build_knowlege_graph_chunks(tenant_id,
                                          filename,
                                          sections,

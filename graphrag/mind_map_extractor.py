@@ -200,7 +200,7 @@ class MindMapExtractor:
             elif isinstance(value, list):
                 new_value = {}
                 for i in range(len(value)):
-                    if isinstance(value[i], list):
+                    if isinstance(value[i], list) and len(value[i]) > 0:
                         new_value[value[i - 1]] = value[i][0]
                 data[key] = new_value
             else:

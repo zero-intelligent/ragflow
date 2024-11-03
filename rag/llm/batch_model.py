@@ -80,6 +80,7 @@ class BatchModel:
         file = self.write_file(chat_input_lines)
         output_file = file.with_suffix('.out.json')
         if output_file.exists():
+            log.info(f"{output_file} exists, skip api_call")
             with open(output_file, 'r') as file:
                 return json.load(file)
         
@@ -126,17 +127,18 @@ class BatchModel:
         """
          input_items 的 hash key 将作为缓存的 key ,确保不需要反复调用 LLM
         """
-        
         try:
             content = "\n".join([json.dumps(line, ensure_ascii=False) for line in input_items])
             f_name = self.hash(content) + ".jsonl"
             file = Path(inputs_dir) / f_name
             Path(inputs_dir).mkdir(exist_ok=True)
-            log.info(f"########## file={file}")
+            if file.exists():
+                log.info(f"{file} exists, skip writing")
+                return file
             
-            if not file.exists():
-                with open(file, 'w') as f:
-                    f.write(content)
+            with open(file, 'w') as f:
+                log.info(f"########## file={file}")
+                f.write(content)
             return file
         except Exception as e:
             log.error("写入文件时发生错误" + str(e))

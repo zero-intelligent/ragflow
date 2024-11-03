@@ -40,7 +40,7 @@
             "program": "${workspaceFolder}/rag/svr/task_executor.py",
             "env": {"PYTHONPATH": "${workspaceFolder}"},
             "cwd":"${workspaceFolder}",
-            "args": ["11"],
+            "args": ["31"],
             "justMyCode": false 
         },
         {
