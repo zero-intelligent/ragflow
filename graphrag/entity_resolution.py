@@ -74,30 +74,35 @@ class EntityResolution:
 
     def build_chat_messages(self,candidate_resolution:dict,prompt_variables: dict[str, Any] | None = None):
         chat_messages = {}
-        for candidate_resolution_i in candidate_resolution.items():
-            if candidate_resolution_i[1]:
-                try:
-                    pair_txt = [
-                        f'When determining whether two {candidate_resolution_i[0]}s are the same, you should only focus on critical properties and overlook noisy factors.\n']
-                    for index, candidate in enumerate(candidate_resolution_i[1]):
-                        pair_txt.append(
-                            f'Question {index + 1}: name of{candidate_resolution_i[0]} A is {candidate[0]} ,name of{candidate_resolution_i[0]} B is {candidate[1]}')
-                    sent = 'question above' if len(pair_txt) == 1 else f'above {len(pair_txt)} questions'
+        
+        def entities2messages(entity_name,sub_entities,seq,prompt_variables):
+            try:
+                pair_txt = [f'When determining whether two {entity_name}s are the same, you should only focus on critical properties and overlook noisy factors.\n']
+                for index, candidate in enumerate(sub_entities):
                     pair_txt.append(
-                        f'\nUse domain knowledge of {candidate_resolution_i[0]}s to help understand the text and answer the {sent} in the format: For Question i, Yes, {candidate_resolution_i[0]} A and {candidate_resolution_i[0]} B are the same {candidate_resolution_i[0]}./No, {candidate_resolution_i[0]} A and {candidate_resolution_i[0]} B are different {candidate_resolution_i[0]}s. For Question i+1, (repeat the above procedures)')
-                    pair_prompt = '\n'.join(pair_txt)
+                        f'Question {index + 1}: name of {entity_name} A is {candidate[0]} ,name of {entity_name} B is {candidate[1]}')
+                sent = 'question above' if len(pair_txt) == 1 else f'above {len(pair_txt)} questions'
+                pair_txt.append(
+                    f'\nUse domain knowledge of {entity_name}s to help understand the text and answer the {sent} in the format: For Question i, Yes, {entity_name} A and {entity_name} B are the same {entity_name}./No, {entity_name} A and {entity_name} B are different {entity_name}s. For Question i+1, (repeat the above procedures)')
+                pair_prompt = '\n'.join(pair_txt)
 
-                    variables = {
-                        **prompt_variables,
-                        self._input_text_key: pair_prompt
-                    }
-                    
-                    text = perform_variable_replacements(self._resolution_prompt, variables=variables)
-                    key = english_and_digits_of(candidate_resolution_i[0])
-                    chat_messages[key] = (candidate_resolution_i[1],text)
-                except Exception as e:
-                    logging.exception("error entity resolution")
-                    self._on_error(e, traceback.format_exc(), None)
+                variables = {
+                    **prompt_variables,
+                    self._input_text_key: pair_prompt
+                }
+                
+                text = perform_variable_replacements(self._resolution_prompt, variables=variables)
+                key = english_and_digits_of(entity_name) + str(seq)
+                chat_messages[key] = (sub_entities,text)
+            except Exception as e:
+                logging.exception("error entity resolution")
+                self._on_error(e, traceback.format_exc(), None)
+        
+        BATCH_SIZE = 30
+        for entity_name,entities in candidate_resolution.items():
+            if entities:
+                for i in range(0,len(entities),BATCH_SIZE):
+                    entities2messages(entity_name,entities[i:i+BATCH_SIZE],i,prompt_variables)
         return chat_messages
                     
                     
@@ -118,11 +123,12 @@ class EntityResolution:
         }
 
         nodes = graph.nodes
-        entity_types = list(set(graph.nodes[node]['entity_type'] for node in nodes))
-        node_clusters = {entity_type: [] for entity_type in entity_types}
-
-        for node in nodes:
-            node_clusters[graph.nodes[node]['entity_type']].append(node)
+        entity_types = list(set(graph.nodes[node]['entity_type'] for node in nodes if graph.nodes[node]['entity_type']))
+        node_clusters = {entity_type: [node 
+                                       for node in nodes 
+                                        if graph.nodes[node]['entity_type'] == entity_type ] 
+                                            for entity_type in entity_types
+        }
 
         candidate_resolution = {entity_type: [] for entity_type in entity_types}
         for node_cluster in node_clusters.items():
