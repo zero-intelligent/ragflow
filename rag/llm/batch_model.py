@@ -106,26 +106,29 @@ class BatchModel:
             task.batch_status = batch.status
             
         if not task.server_output_file_id:
-            chat_results = self.get_results(batch.output_file_id)
             task.server_output_file_id = batch.output_file_id
-                
-        # 校验是否有丢失的数据没有返回来
-        input_ids = [line['custom_id'] for line in chat_input_lines]
-        not_back_ids = set(input_ids) - set(chat_results.keys())
-        if not_back_ids:
-            log.error(f"{task.local_input_file} 中的 custom_id in {not_back_ids} not back, may be secure blocked by server.")
+            
+        chat_results = self.get_results(task.server_output_file_id)
+        save_tasks()
         
         if not task.local_output_file \
         or not Path(task.local_output_file).exists():
             filepath = Path(task.local_input_file).with_suffix('.out.json')
             with open(filepath, 'w') as file:
                 json.dump(chat_results, file, ensure_ascii=False,indent=4)
-            log.info(f"##########  chat_results dumps to {file}")
+            log.info(f"##########  chat_results dumps to {filepath}")
             task.local_output_file = str(file)
+            save_tasks()
         else:
             with open(task.local_output_file, 'r') as file:
-                return json.load(file)
+                chat_results = json.load(file)
             log.info(f"{task.local_output_file} exists, skip api_call")
+            
+        # 校验是否有丢失的数据没有返回来
+        input_ids = [line['custom_id'] for line in chat_input_lines]
+        not_back_ids = set(input_ids) - set(chat_results.keys())
+        if not_back_ids:
+            log.error(f"{task.local_input_file} 中的 custom_id in {not_back_ids} not back, may be secure blocked by server.")
     
         return chat_results
           

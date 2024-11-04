@@ -106,6 +106,8 @@ class CommunityReportsExtractor:
         for id,response in chat_results.items():
             response = re.sub(r"^[^\{]*", "", response)
             response = re.sub(r"[^\}]*$", "", response)
+            if not response:
+                continue
             response = json.loads(response)
             if not dict_has_keys_with_types(response, [
                         ("title", str),

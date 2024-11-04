@@ -123,7 +123,9 @@ class EntityResolution:
         }
 
         nodes = graph.nodes
+        nodes = sorted(list(nodes))
         entity_types = list(set(graph.nodes[node]['entity_type'] for node in nodes if graph.nodes[node]['entity_type']))
+        entity_types.sort()
         node_clusters = {entity_type: [node 
                                        for node in nodes 
                                         if graph.nodes[node]['entity_type'] == entity_type ] 
