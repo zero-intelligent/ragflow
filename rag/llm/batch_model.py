@@ -98,7 +98,7 @@ class BatchModel:
             task.batch_id = self.batch_create(task.server_input_file_id)
         
         # 一般情况，任务在等待过程中中断，因此期望在此临时保存下任务。
-        save_task(task)
+        save_tasks()
 
         while task.batch_status != 'completed':
             time.sleep(int(os.environ.get('BATCH_QUERY_INTERVAL',60)))
@@ -184,23 +184,16 @@ def load_tasks():
     batch_tasks = {}
     if Path(tasks_file).exists():
         with open(tasks_file, 'r') as file:
-            for line in file:
-                json_dict = json.loads(line)
-                task_info = BatchTaskInfo(**json_dict)
-                batch_tasks[task_info.id] = task_info
-            log.info(f"{len(batch_tasks)} tasks load from {tasks_file}")
+            dict_tasks = json.load(file)
+        for task in dict_tasks:
+            batch_tasks[task['id']] = BatchTaskInfo(**task)
+        log.info(f"{len(batch_tasks)} tasks load from {tasks_file}")
     return batch_tasks
 
-def save_task(task:BatchTaskInfo):
-    batch_tasks[task.id] = task
-    with open(tasks_file, 'a', encoding='utf-8') as file:
-        file.write(json.dumps(asdict(task), indent=4) + "\n")
-    log.info(f"{asdict(task)} saved to {tasks_file}")
-
-def save_all_task():
+def save_tasks():
+    dict_tasks = [asdict(task) for task in batch_tasks.values()]
     with open(tasks_file, 'w', encoding='utf-8') as file:
-        for task in batch_tasks:
-            file.write(json.dumps(asdict(task), indent=4) + "\n")
+        file.write(json.dumps(dict_tasks, indent=4))
     log.info(f"{len(batch_tasks)} tasks saved to {tasks_file}")
     
 # 存储进度信息
@@ -210,4 +203,4 @@ tasks_file:str = ".tasks.json"
 batch_tasks = load_tasks()
 
 # 退出时，确保所有任务进度保存
-atexit.register(save_all_task)
+atexit.register(save_tasks)
