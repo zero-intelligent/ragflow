@@ -368,13 +368,12 @@ class GraphExtractor:
                     entity_type = clean_str(record_attributes[2].upper())
                     entity_description = clean_str(record_attributes[3])
                     
-                    if entity_name == entity_type: continue
-                    if not entity_name \
+                    if entity_name == entity_type \
+                        or not entity_name \
                         or not entity_type \
-                        or entity_name == entity_type:
-                        # or not re.match('.+\(.+\)',entity_name) \
-                        # or not re.match('.+\(.+\)',entity_type):
-                        # log.info(f"'{entity_type}' or '{entity_name}' invalid (非空，不相等，满足英文名称（中文名称）格式) in '{record}', so out of graph")
+                        or not re.match(r'[\w\-]+\(([^)]+)\)',entity_name) \
+                        or not re.match(r'[\w\-]+\(([^)]+)\)',entity_type):
+                        log.info(f"'{entity_type}' or '{entity_name}' invalid (空，相等，不满足英文名称（中文名称）格式) in '{record}', so out of graph")
                         continue
 
                     if entity_name in graph.nodes():

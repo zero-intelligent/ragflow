@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import itertools
 import logging
 import os
 import re
@@ -132,17 +133,11 @@ class EntityResolution:
                                             for entity_type in entity_types
         }
 
-        candidate_resolution = {entity_type: [] for entity_type in entity_types}
-        for node_cluster in node_clusters.items():
-            candidate_resolution_tmp = []
-            for a in node_cluster[1]:
-                for b in node_cluster[1]:
-                    if a == b:
-                        continue
-                    if self.is_similarity(a, b) and (b, a) not in candidate_resolution_tmp:
-                        candidate_resolution_tmp.append((a, b))
-            if candidate_resolution_tmp:
-                candidate_resolution[node_cluster[0]] = candidate_resolution_tmp
+        candidate_resolution = {}
+        for entity_type,nodes in node_clusters.items():
+            similar_pairs = [(a,b) for a,b in itertools.combinations(nodes, 2) if self.is_similarity(a, b)]
+            if similar_pairs:
+                candidate_resolution[entity_type] = similar_pairs
 
         gen_conf = {"temperature": 0.5}
         resolution_result = set()
@@ -240,11 +235,15 @@ class EntityResolution:
         return ans_list
 
     def is_similarity(self, a, b):
-        if is_english(a) and is_english(b):
-            if editdistance.eval(a, b) <= min(len(a), len(b)) // 2:
-                return True
-
-        if len(set(a) & set(b)) > 0:
+        pattern = r'(\w+)\s*\(([^)]+)\)'
+        
+        a_en_name,a_cn_name = re.findall(pattern, a)
+        b_en_name,b_cn_name = re.findall(pattern, b)
+        
+        if editdistance.eval(a_en_name,b_en_name) <= min(len(a_en_name), len(b_en_name)) // 2:
             return True
 
+        if editdistance.eval(a_cn_name,b_cn_name) <= min(len(a_cn_name), len(b_cn_name)) // 2:
+            return True
+              
         return False
