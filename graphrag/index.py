@@ -62,7 +62,7 @@ def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
     chunks = []
     for n, attr in graph.nodes(data=True):
         if attr.get("rank", 0) == 0:
-            print(f"Ignore entity: {n}")
+            print(f"graph2chunks ignore rank==0 entity : {n}")
             continue
         chunk = {
             "name_kwd": n,

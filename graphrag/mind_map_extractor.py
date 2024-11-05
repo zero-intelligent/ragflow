@@ -199,9 +199,12 @@ class MindMapExtractor:
                 self._list_to_kv(value)
             elif isinstance(value, list):
                 new_value = {}
-                for i in range(len(value)):
+                for i in range(1,len(value)):
                     if isinstance(value[i], list) and len(value[i]) > 0:
-                        new_value[value[i - 1]] = value[i][0]
+                        if not isinstance(value[i-1], list):
+                            new_value[str(value[i - 1])] = value[i][0]
+                        elif len(value[i - 1]) > 0:
+                            new_value[str(value[i - 1][0])] = value[i][0]
                 data[key] = new_value
             else:
                 continue

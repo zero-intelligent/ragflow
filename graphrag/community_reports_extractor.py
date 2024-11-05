@@ -69,7 +69,7 @@ class CommunityReportsExtractor:
                     "entity_df": ent_df.to_csv(index_label="id"),
                     "relation_df": rela_df.to_csv(index_label="id")
                 }
-                id = f"{level}-{cm_id}"
+                id = f"community-{level}-{cm_id}"
                 text = perform_variable_replacements(self._extraction_prompt, variables=prompt_variables)
                 result[id] = (text,gents)
                 
@@ -91,13 +91,13 @@ class CommunityReportsExtractor:
                     self._on_error(e, traceback.format_exc(), None)
                     return None
             st = timer()
-            chat_results = {id: online_chat(text) for id,(text,ents) in chat_inputs.items()}
+            chat_results = {id: online_chat(text) for id,(text,_) in chat_inputs.items()}
         else:
             log.info(f"batching community report.id_message cnt:{len(chat_inputs)}")
             batch_llm = BatchModel(model_instance = self._llm.mdl)
             chat_results = batch_llm.batch_api_call({id:[{"role":"system","content":text},
                                                          {"role":"user","content":"Output:"}]
-                                                     for id,(text,ents) in chat_inputs.items()})
+                                                     for id,(text,_) in chat_inputs.items()})
             
         if callback: 
                 callback(msg=f"batch_mode: {os.environ.get('BatchModel',True)} Communities: {len(chat_inputs)}, elapsed: {timer() - st}s, used tokens: {token_count}")
@@ -106,6 +106,8 @@ class CommunityReportsExtractor:
         for id,response in chat_results.items():
             response = re.sub(r"^[^\{]*", "", response)
             response = re.sub(r"[^\}]*$", "", response)
+            response = re.sub(r'(?<!")\n(?!")','',response)
+            response = response.replace("\\'", "'")
             if not response:
                 continue
             response = json.loads(response)
