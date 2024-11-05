@@ -53,6 +53,22 @@ def clean_str(input: Any) -> str:
     return re.sub(r"[\"\x00-\x1f\x7f-\x9f]", "", result)
 
 
+def full_to_half(s):
+    """
+    全角字符转半角
+    """
+    n = []
+    for char in s:
+        num = ord(char)
+        if num == 0x3000:  # 全角空格直接转换
+            num = 32
+        elif 0xFF01 <= num <= 0xFF5E:  # 全角字符（除空格）根据关系转化
+            num -= 0xfee0
+        num = chr(num)
+        n.append(num)
+    return ''.join(n)
+
+
 def dict_has_keys_with_types(
     data: dict, expected_fields: list[tuple[str, type]]
 ) -> bool:
