@@ -16,7 +16,7 @@ from typing import Any, Mapping, Callable
 import tiktoken
 from graphrag import prompt_messages
 from graphrag.graph_prompt import GRAPH_EXTRACTION_PROMPT, CONTINUE_PROMPT, LOOP_PROMPT
-from graphrag.utils import ErrorHandlerFn, perform_variable_replacements, clean_str
+from graphrag.utils import ErrorHandlerFn, full_to_half, perform_variable_replacements, clean_str
 from rag.llm.chat_model import Base as CompletionLLM
 import networkx as nx
 from rag.utils import build_sub_texts_2d, num_tokens_from_string
@@ -365,14 +365,18 @@ class GraphExtractor:
                 if record_attributes[0] == '"entity"' and len(record_attributes) >= 4:
                     # add this record as a node in the G
                     entity_name = clean_str(record_attributes[1].upper())
+                    entity_name = full_to_half(entity_name)
+                    
                     entity_type = clean_str(record_attributes[2].upper())
+                    entity_type = full_to_half(entity_type)
                     entity_description = clean_str(record_attributes[3])
                     
-                    if entity_name == entity_type \
-                        or not entity_name \
+                    if entity_name == entity_type:
+                        continue
+                    if not entity_name \
                         or not entity_type \
-                        or not re.match(r'[\w\-]+\(([^)]+)\)',entity_name) \
-                        or not re.match(r'[\w\-]+\(([^)]+)\)',entity_type):
+                        or not re.match(r'[^)\s]+(?:\s*\(([^)]+)\))',entity_name) \
+                        or not re.match(r'[^)\s]+(?:\s*\(([^)]+)\))',entity_type):
                         log.info(f"'{entity_type}' or '{entity_name}' invalid (空，相等，不满足英文名称（中文名称）格式) in '{record}', so out of graph")
                         continue
 
