@@ -110,19 +110,26 @@ class CommunityReportsExtractor:
             response = response.replace("\\'", "'")
             if not response:
                 continue
-            response = json.loads(response)
+            try:
+                response = json.loads(response)
+            except Exception as ex:
+                log.warning(f"json resolve fail {str(ex)},json:{response}")
+                continue
+                
             if not dict_has_keys_with_types(response, [
-                        ("title", str),
-                        ("summary", str),
-                        ("findings", list),
-                        ("rating", float),
-                        ("rating_explanation", str),
-                    ]): continue
+                            ("title", str),
+                            ("summary", str),
+                            ("findings", list),
+                            ("rating", float),
+                            ("rating_explanation", str),
+                        ]): 
+                continue
             response["weight"] = chat_inputs[id][1]["weight"]
             response["entities"] = chat_inputs[id][1]["nodes"]
             add_community_info2graph(graph, response["entities"], response["title"])
             res_str.append(self._get_text_output(response))
             res_dict.append(response)
+            
             
         return CommunityReportsResult(
             structured_output=res_dict,
