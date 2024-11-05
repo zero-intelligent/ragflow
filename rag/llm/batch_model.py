@@ -71,7 +71,7 @@ class BatchModel:
         对于大的 id_messages,拆分调用api
         """
         all_chat_results = {}
-        items = list(id_messages.items())
+        items = sorted(list(id_messages.items()))  # 为了确保生成的 hash一致，此处需要排序
         for i in range(0, len(items), chunk_size):
             all_chat_results |= self.do_batch_api_call(items[i:i+chunk_size])
         return all_chat_results
@@ -98,7 +98,8 @@ class BatchModel:
         task = get_task(id)
         
         if not task.local_input_file:
-            task.local_input_file = str(self.write_file(file=id,content=content))
+            file = Path(id).with_suffix(".jsonl")
+            task.local_input_file = self.write_file(file,content)
         
         
         if not task.server_input_file_id:
@@ -134,7 +135,7 @@ class BatchModel:
             with open(filepath, 'w') as file:
                 json.dump(chat_results, file, ensure_ascii=False,indent=4)
             log.info(f"##########  chat_results dumps to {filepath}")
-            task.local_output_file = str(file)
+            task.local_output_file = str(filepath)
             save_tasks(task)
         else:
             with open(task.local_output_file, 'r') as file:
@@ -169,7 +170,7 @@ class BatchModel:
             Path(inputs_dir).mkdir(exist_ok=True)
             if file.exists():
                 log.info(f"{file} exists, skip writing")
-                return file
+                return str(file)
             
             with open(file, 'w') as f:
                 log.info(f"########## file={file}")
@@ -207,7 +208,6 @@ def load_tasks():
             dict_tasks = json.load(file)
         for task in dict_tasks:
             batch_tasks[task['id']] = BatchTaskInfo(**task)
-        log.info(f"{len(batch_tasks)} tasks load from {tasks_file}")
     return batch_tasks
 
     
@@ -217,17 +217,18 @@ def save_tasks(current_task=None):
         merged_tasks = batch_tasks | refresh_tasks | {current_task.id:current_task}
     else:
         merged_tasks = batch_tasks | refresh_tasks
-    
+        log.info(f"{len(batch_tasks)} tasks saved to {tasks_file}")
+
     dict_tasks = [asdict(t) for t in merged_tasks.values()]
     with open(tasks_file, 'w', encoding='utf-8') as file:
         file.write(json.dumps(dict_tasks, indent=4))
-    log.info(f"{len(batch_tasks)} tasks saved to {tasks_file}")
     
 # 存储进度信息
 tasks_file:str = ".tasks.json"
 
 # 启动时，装载上次失败的任务
 batch_tasks = load_tasks()
+log.info(f"{len(batch_tasks)} tasks load from {tasks_file}")
 
 # 退出时，确保所有任务进度保存
 atexit.register(save_tasks)
