@@ -4,7 +4,7 @@ import json
 import os
 import time
 import atexit
-from typing import Optional
+from typing import List, Optional, Tuple
 from pathlib import Path
 from loguru import logger as log
 from openai import OpenAI
@@ -65,13 +65,23 @@ class BatchModel:
         return {item['custom_id']: item['response']['body']['choices'][0]['message']['content'] 
                 for item in json_objects}
         
-    
-    def batch_api_call(self,id_messages: dict):
+
+    def batch_api_call(self,id_messages: dict,chunk_size=1000):
+        """
+        对于大的 id_messages,拆分调用api
+        """
+        all_chat_results = {}
+        items = list(id_messages.items())
+        for i in range(0, len(items), chunk_size):
+            all_chat_results |= self.do_batch_api_call(items[i:i+chunk_size])
+        return all_chat_results
+
+    def do_batch_api_call(self,id_messages: List[Tuple]):
         '''
         调用 batch api 返回结果, 添加文件缓存，防止重复调用，浪费成本
         '''
-        assert isinstance(id_messages,dict) and len(id_messages) > 0, "id_messages is invalid!"
-        assert all(id and isinstance(messages,list) for id,messages in id_messages.items()), "id not empty and message must be list and element format :{'role':'system/user','content':'text'} "
+        assert len(id_messages) > 0, "id_messages is invalid!"
+        assert all(id and isinstance(messages,list) for id,messages in id_messages), "id not empty and message must be list and element format :{'role':'system/user','content':'text'} "
         
         chat_input_lines = [{
                     "custom_id": id,
@@ -81,7 +91,7 @@ class BatchModel:
                         "model": self.model,
                         "messages": assure_security(msg)
                     }
-                } for id, msg in id_messages.items()]
+                } for id, msg in id_messages]
         
         content = "\n".join([json.dumps(line, ensure_ascii=False) for line in chat_input_lines])
         id = self.hash(content)
@@ -98,18 +108,25 @@ class BatchModel:
             task.batch_id = self.batch_create(task.server_input_file_id)
         
         # 一般情况，任务在等待过程中中断，因此期望在此临时保存下任务。
-        save_tasks()
-
+        save_tasks(task)
+        
+        interval = int(os.environ.get('BATCH_QUERY_INTERVAL',60))
+        log.info(f"waiting {interval}s to get_batch {task.batch_id} result.")
         while task.batch_status != 'completed':
-            time.sleep(int(os.environ.get('BATCH_QUERY_INTERVAL',60)))
             batch = self.get_batch(task.batch_id)
             task.batch_status = batch.status
+            time.sleep(interval)
             
         if not task.server_output_file_id:
+            batch = self.get_batch(task.batch_id)
+            if not batch.output_file_id:
+                if batch.error_file_id:
+                     errors = self.get_results(batch.error_file_id)
+                     raise Exception(f"get batch result error:{errors}")
             task.server_output_file_id = batch.output_file_id
             
         chat_results = self.get_results(task.server_output_file_id)
-        save_tasks()
+        save_tasks(task)
         
         if not task.local_output_file \
         or not Path(task.local_output_file).exists():
@@ -118,7 +135,7 @@ class BatchModel:
                 json.dump(chat_results, file, ensure_ascii=False,indent=4)
             log.info(f"##########  chat_results dumps to {filepath}")
             task.local_output_file = str(file)
-            save_tasks()
+            save_tasks(task)
         else:
             with open(task.local_output_file, 'r') as file:
                 chat_results = json.load(file)
@@ -193,8 +210,15 @@ def load_tasks():
         log.info(f"{len(batch_tasks)} tasks load from {tasks_file}")
     return batch_tasks
 
-def save_tasks():
-    dict_tasks = [asdict(task) for task in batch_tasks.values()]
+    
+def save_tasks(current_task=None):
+    refresh_tasks = load_tasks()
+    if current_task:
+        merged_tasks = batch_tasks | refresh_tasks | {current_task.id:current_task}
+    else:
+        merged_tasks = batch_tasks | refresh_tasks
+    
+    dict_tasks = [asdict(t) for t in merged_tasks.values()]
     with open(tasks_file, 'w', encoding='utf-8') as file:
         file.write(json.dumps(dict_tasks, indent=4))
     log.info(f"{len(batch_tasks)} tasks saved to {tasks_file}")
