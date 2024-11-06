@@ -108,8 +108,12 @@ nx.Graph.__str__ = custom_str
          
 def file_cache(func):
     """
-     如果不指定文件名称，将会使用函数参数的 md5 hash 作为文件名
-     函数的返回值必须是 list 或者 dict, 否则缓存装载会出错。
+    file_cache 适用于需要长时间执行的函数（例如:超过1分钟,防止失败重试的成本过大，
+    在整个过程中，缓存‘重’函数的执行结果，在失败重启时，可以从上次终端点快速执行。
+    
+    file_cache 完全用参数来判断是否读取缓存信息，对于 class method 和 instance method 会自动忽略 cls 和 self参数。
+    使用函数参数的 md5 hash 作为文件名，也作为是否缓存的依据。
+     
     """
     def decorator(*args, **kwargs):
         assert len(args) > 0
@@ -122,12 +126,13 @@ def file_cache(func):
         filepath = Path('.cache') / cache_file
         
         if filepath.exists() and filepath.stat().st_mtime + 7 * 24 * 3600 > time.time():
-            log.info(f"{func.__module__}{func.__name__} using cache file {filepath}.")
+            log.debug(f"{func.__module__}{func.__name__} using cache file {filepath}.")
             with open(filepath, 'rb') as f:
                 return pickle.load(f)
         else:
             ret = func(*args, **kwargs)
             with open(filepath, 'wb') as f:
                 pickle.dump(ret, f)
+            log.debug(f"{func.__module__}{func.__name__} result dump to file {filepath}.")
             return ret
     return decorator
