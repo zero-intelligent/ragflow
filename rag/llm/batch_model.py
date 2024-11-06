@@ -111,13 +111,15 @@ class BatchModel:
         
         interval = int(os.environ.get('BATCH_QUERY_INTERVAL',60))
         log.info(f"waiting {interval}s to get_batch {task.batch_id} result.")
+        batch = None
         while task.batch_status != 'completed':
             batch = self.get_batch(task.batch_id)
             task.batch_status = batch.status
             time.sleep(interval)
             
         if not task.server_output_file_id:
-            batch = self.get_batch(task.batch_id)
+            if not batch:
+                batch = self.get_batch(task.batch_id)
             if not batch.output_file_id:
                 if batch.error_file_id:
                      errors = self.get_results(batch.error_file_id)
