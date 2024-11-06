@@ -236,9 +236,13 @@ class EntityResolution:
 
     def is_similarity(self, a, b):
         pattern = r'([^)\s]+)\(([^)]+)\)'
+        a_find = re.findall(pattern, a)
+        b_find = re.findall(pattern, b)
+        if not a_find or not b_find:
+            return False
         
-        a_en_name,a_cn_name = re.findall(pattern, a)[0]
-        b_en_name,b_cn_name = re.findall(pattern, b)[0]
+        a_en_name,a_cn_name = a_find[0]
+        b_en_name,b_cn_name = b_find[0]
         
         if editdistance.eval(a_en_name,b_en_name) <= min(len(a_en_name), len(b_en_name)) // 2:
             return True

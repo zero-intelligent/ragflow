@@ -375,8 +375,8 @@ class GraphExtractor:
                         continue
                     if not entity_name \
                         or not entity_type \
-                        or not re.match(r'[^)\s]+(?:\s*\(([^)]+)\))',entity_name) \
-                        or not re.match(r'[^)\s]+(?:\s*\(([^)]+)\))',entity_type):
+                        or not re.match(r'([^\s()]+(?:\s+[^\s()]+)*)(?:\s*\(([^)]+)\))',entity_name) \
+                        or not re.match(r'([^\s()]+(?:\s+[^\s()]+)*)(?:\s*\(([^)]+)\))',entity_type):
                         log.info(f"'{entity_type}' or '{entity_name}' invalid (空，相等，不满足英文名称（中文名称）格式) in '{record}', so out of graph")
                         continue
 
