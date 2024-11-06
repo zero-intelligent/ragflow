@@ -15,6 +15,7 @@
 #
 
 import functools
+import hashlib
 import inspect
 import os
 import re
@@ -127,6 +128,18 @@ def assure_security(input:str):
         output = output.replace(w,"")
     return output
 
+def md5_hash(content:str):
+    assert content, 'content not empty!'
+    hash_object = hashlib.md5()
+    # 更新哈希对象
+    hash_object.update(content.encode('utf-8'))
+    # 获取哈希值
+    hash_value = hash_object.hexdigest()
+    
+    # log.debug(f"hash:{content} to:{hash_value}")
+    return hash_value
+    
+    
 def tries(max_try_cnt:int=3,interval:int=10):
     """
      重试次数装饰器

@@ -1,15 +1,14 @@
 from dataclasses import asdict, dataclass
-import hashlib
 import json
 import os
 import time
-import atexit
 from typing import List, Optional, Tuple
 from pathlib import Path
 from loguru import logger as log
 from openai import OpenAI
 from rag.llm.chat_model import Base
-from rag.utils import assure_security, tries
+from rag.utils import assure_security, md5_hash, tries
+from rag.utils.redis_conn import REDIS_CONN
     
 class BatchModel:
     model:str
@@ -94,7 +93,7 @@ class BatchModel:
                 } for id, msg in id_messages]
         
         content = "\n".join([json.dumps(line, ensure_ascii=False) for line in chat_input_lines])
-        id = self.hash(content)
+        id = md5_hash(content)
         task = get_task(id)
         
         if not task.local_input_file:
@@ -109,7 +108,7 @@ class BatchModel:
             task.batch_id = self.batch_create(task.server_input_file_id)
         
         # 一般情况，任务在等待过程中中断，因此期望在此临时保存下任务。
-        save_tasks(task)
+        save_task(task)
         
         interval = int(os.environ.get('BATCH_QUERY_INTERVAL',60))
         log.info(f"waiting {interval}s to get_batch {task.batch_id} result.")
@@ -127,7 +126,7 @@ class BatchModel:
             task.server_output_file_id = batch.output_file_id
             
         chat_results = self.get_results(task.server_output_file_id)
-        save_tasks(task)
+        save_task(task)
         
         if not task.local_output_file \
         or not Path(task.local_output_file).exists():
@@ -136,7 +135,7 @@ class BatchModel:
                 json.dump(chat_results, file, ensure_ascii=False,indent=4)
             log.info(f"##########  chat_results dumps to {filepath}")
             task.local_output_file = str(filepath)
-            save_tasks(task)
+            save_task(task)
         else:
             with open(task.local_output_file, 'r') as file:
                 chat_results = json.load(file)
@@ -149,18 +148,10 @@ class BatchModel:
             log.error(f"{task.local_input_file} 中的 custom_id in {not_back_ids} not back, may be secure blocked by server.")
     
         return chat_results
-          
 
-    def hash(self,content:str):
-        hash_object = hashlib.md5()
-        # 更新哈希对象
-        hash_object.update(content.encode('utf-8'))
-        # 获取哈希值
-        hash_value = hash_object.hexdigest()
-        return hash_value
             
             
-    def write_file(self,file, content, inputs_dir:str="./inputs"):
+    def write_file(self,file, content, inputs_dir:str="./.cache/batch_llm"):
         """
          input_items 的 hash key 将作为缓存的 key ,确保不需要反复调用 LLM
         """
@@ -181,7 +172,6 @@ class BatchModel:
             exit(1)
             
 
-
 @dataclass
 class BatchTaskInfo:
     """
@@ -197,38 +187,13 @@ class BatchTaskInfo:
         
 
 def get_task(id:str):
-    if id not in batch_tasks:
-        batch_tasks[id] = BatchTaskInfo(id=id)
-    return batch_tasks[id]
+    if not REDIS_CONN.exist(id):
+        return BatchTaskInfo(id=id)
+    task_info = REDIS_CONN.get(id)
+    task_dict = json.loads(task_info)
+    return BatchTaskInfo(**task_dict)
 
-def load_tasks():
-    batch_tasks = {}
-    if Path(tasks_file).exists():
-        with open(tasks_file, 'r') as file:
-            dict_tasks = json.load(file)
-        for task in dict_tasks:
-            batch_tasks[task['id']] = BatchTaskInfo(**task)
-    return batch_tasks
-
+def save_task(task):
+    assert isinstance(task,BatchTaskInfo)
+    REDIS_CONN.set_obj(task.id,asdict(task),exp=3600 * 24 * 7)
     
-def save_tasks(current_task=None):
-    refresh_tasks = load_tasks()
-    if current_task:
-        merged_tasks = batch_tasks | refresh_tasks | {current_task.id:current_task}
-    else:
-        merged_tasks = batch_tasks | refresh_tasks
-        log.info(f"{len(batch_tasks)} tasks saved to {tasks_file}")
-
-    dict_tasks = [asdict(t) for t in merged_tasks.values()]
-    with open(tasks_file, 'w', encoding='utf-8') as file:
-        file.write(json.dumps(dict_tasks, indent=4))
-    
-# 存储进度信息
-tasks_file:str = ".tasks.json"
-
-# 启动时，装载上次失败的任务
-batch_tasks = load_tasks()
-log.info(f"{len(batch_tasks)} tasks load from {tasks_file}")
-
-# 退出时，确保所有任务进度保存
-atexit.register(save_tasks)
