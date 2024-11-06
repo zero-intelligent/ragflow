@@ -106,7 +106,7 @@ class EntityResolution:
                     entities2messages(entity_name,entities[i:i+BATCH_SIZE],i,prompt_variables)
         return chat_messages
                     
-    @file_cache()
+    @file_cache
     def __call__(self, graph: nx.Graph, prompt_variables: dict[str, Any] | None = None) -> EntityResolutionResult:
         """Call method definition."""
         if prompt_variables is None:

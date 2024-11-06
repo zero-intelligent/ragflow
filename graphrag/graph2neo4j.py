@@ -8,7 +8,7 @@ from loguru import logger as log
 from rag.utils.es_conn import ELASTICSEARCH
 from graphrag.utils import escape, file_cache
 
-@file_cache()
+@file_cache
 def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
     """
     将当前的 python 里的 nx.Graph 里的数据同步到 neo4j ;

@@ -75,7 +75,7 @@ class CommunityReportsExtractor:
                 
         return result
         
-    @file_cache()
+    @file_cache
     def __call__(self, graph: nx.Graph, callback: Callable | None = None):
         chat_inputs = self.build_chat_messages(graph)
         token_count = 0

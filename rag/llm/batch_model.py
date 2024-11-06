@@ -64,7 +64,6 @@ class BatchModel:
         return {item['custom_id']: item['response']['body']['choices'][0]['message']['content'] 
                 for item in json_objects}
         
-
     def batch_api_call(self,id_messages: dict,chunk_size=1000):
         """
         对于大的 id_messages,拆分调用api
