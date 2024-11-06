@@ -19,7 +19,7 @@ from graphrag.community_report_prompt import COMMUNITY_REPORT_PROMPT
 from graphrag.leiden import add_community_info2graph
 from rag.llm.batch_model import BatchModel
 from rag.llm.chat_model import Base as CompletionLLM
-from graphrag.utils import ErrorHandlerFn, perform_variable_replacements, dict_has_keys_with_types
+from graphrag.utils import ErrorHandlerFn, perform_variable_replacements, dict_has_keys_with_types,file_cache
 from rag.utils import num_tokens_from_string
 from timeit import default_timer as timer
 
@@ -75,7 +75,7 @@ class CommunityReportsExtractor:
                 
         return result
         
-    
+    @file_cache()
     def __call__(self, graph: nx.Graph, callback: Callable | None = None):
         chat_inputs = self.build_chat_messages(graph)
         token_count = 0

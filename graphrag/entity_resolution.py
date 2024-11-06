@@ -28,7 +28,7 @@ from rag.nlp import is_english
 import editdistance
 from graphrag.entity_resolution_prompt import ENTITY_RESOLUTION_PROMPT
 from rag.llm.chat_model import Base as CompletionLLM
-from graphrag.utils import ErrorHandlerFn, english_and_digits_of, perform_variable_replacements
+from graphrag.utils import ErrorHandlerFn, english_and_digits_of, perform_variable_replacements,file_cache
 from loguru import logger as log
 
 DEFAULT_RECORD_DELIMITER = "##"
@@ -106,7 +106,7 @@ class EntityResolution:
                     entities2messages(entity_name,entities[i:i+BATCH_SIZE],i,prompt_variables)
         return chat_messages
                     
-                    
+    @file_cache()
     def __call__(self, graph: nx.Graph, prompt_variables: dict[str, Any] | None = None) -> EntityResolutionResult:
         """Call method definition."""
         if prompt_variables is None:

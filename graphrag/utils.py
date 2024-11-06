@@ -5,10 +5,17 @@ Reference:
  - [graphrag](https://github.com/microsoft/graphrag)
 """
 
+import functools
 import html
+import time
+from pathlib import Path
 import re
 from collections.abc import Callable
 from typing import Any
+import networkx as nx
+import pickle
+from loguru import logger as log
+from rag.utils import md5_hash
 
 ErrorHandlerFn = Callable[[BaseException | None, str | None, dict | None], None]
 
@@ -90,3 +97,41 @@ def escape(input_string):
     escaped_string = escaped_string.replace("'", "\\'")  # 转义单引号
     escaped_string = escaped_string.replace('"', '\\"')   # 转义双引号
     return escaped_string
+            
+def custom_str(self):
+    if isinstance(self,nx.Graph):
+        return f"nodes:{list(self.nodes())},edges:{list(self.edges())}"
+    return str(self)
+
+# 给Graph定制化__str__函数，这样在使用 file_cache 时，就可以确保每个入参为 nx.Graph 的函数可以分辨出不同的Graph。
+nx.Graph.__str__ = custom_str
+         
+def file_cache(exp:int = 7 * 24 * 3600):
+    """
+     如果不指定文件名称，将会使用函数参数的 md5 hash 作为文件名
+     函数的返回值必须是 list 或者 dict, 否则缓存装载会出错。
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            assert len(args) > 0
+            if isinstance(args[0], type) or isinstance(args[0], object):
+                args_for_hash = args[1:]
+            else:
+                args_for_hash = args
+            args_str = ",".join([str(arg) for arg in args_for_hash])
+            cache_file = md5_hash(f"{func.__module__}.{func.__name__}({args_str},{str(kwargs)})")
+            filepath = Path('.cache') / cache_file
+            
+            if filepath.exists() and filepath.stat().st_mtime + exp > time.time():
+                log.info(f"{func.__module__}{func.__name__} using cache.")
+                with open(filepath, 'rb') as f:
+                    return pickle.load(f)
+            else:
+                ret = func(*args, **kwargs)
+                with open(filepath, 'wb') as f:
+                    pickle.dump(ret, f)
+                return ret
+        return wrapper
+    return decorator
+

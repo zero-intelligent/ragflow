@@ -1,6 +1,10 @@
 
+import json
+import re
 import pytest
 from rag.app import knowledge_graph
+from graphrag.utils import ErrorHandlerFn, perform_variable_replacements, dict_has_keys_with_types
+
 
 def test_qwen_batch_api(tenant_id='7d19a176807611efb0f80242ac120006',
                         kb_id='fb7c4312973b11ef88ed0242ac120006',

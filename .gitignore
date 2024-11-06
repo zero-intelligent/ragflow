@@ -37,4 +37,4 @@ sdk/python/ragflow.egg-info/
 sdk/python/build/
 sdk/python/dist/
 sdk/python/ragflow_sdk.egg-info/
-inputs/
+.cache
