@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 from typing import List
 import time
@@ -19,37 +20,30 @@ def do_graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type'])
     如果和 neo4j 中现有的 node 和 relation 有冲突，则要融合进现有的节点。
     """
     if not nodeLabel_attr:
-        log.error(f"nodeLabel_attr shouldn't be empty")
+        log.error("nodeLabel_attr shouldn't be empty")
         return
     if not graph:
-        log.error(f"graph shouldn't be None")
+        log.error("graph shouldn't be None")
         return
     
     with driver.session() as session:
         # 批量创建或融合节点
         node_queries = []
+        nodes_dict = defaultdict(int)
         for node, attrs in graph.nodes(data=True):
             labels = [f':`{escape(attrs[attr])}`' for attr in nodeLabel_attr if attrs.get(attr)]
             label_str = "".join(labels) if labels else ''
-            # if len(node) > MAX_NODE_NAME_LENGTH:
-            #     log.warning(f"node {label_str} id: '{node}' too long, abandon importing to neo4j")
-            #     continue
+            nodes_dict[label_str] += 1
             node_properties = ', '.join([f"{k}: {"'" + escape(v) + "'"  if isinstance(v, str) else v}" for k, v in attrs.items()])
             node_queries.append(f"""
                 MERGE (n{label_str} {{id: '{escape(node)}'}})
                 ON CREATE SET n += {{{node_properties}}}
                 ON MATCH SET n += {{{node_properties}}}
             """)
-
+        log.info(f"importing nodes {nodes_dict}.")
         # 批量创建或融合边
         edge_queries = []
         for source, target, attrs in graph.edges(data=True):
-            # if len(source) > MAX_NODE_NAME_LENGTH:
-            #     log.warning(f"source node id:'{source}' too long to connect edge in neo4j")
-            #     continue
-            # if len(target) > MAX_NODE_NAME_LENGTH:
-            #     log.warning(f"target node id:'{target}' too long to connect edge in neo4j")
-            #     continue
             
             edge_properties = ', '.join([f"{k}: '{escape(v)}'" for k, v in attrs.items()])
             edge_queries.append(f"""
@@ -67,8 +61,9 @@ def do_graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type'])
             batchs = [node_queries[i:i + BATCH_SIZE] for i in range(0, len(node_queries), BATCH_SIZE)]
             for batch in batchs:
                 node_query_string = "CALL() { " + " UNION ALL ".join(batch) + " } RETURN 1"
-                session.run(node_query_string)
-                log.info(f"{len(batch)} nodes imported.")
+                result = session.run(node_query_string)
+                summary = result.consume()
+                log.info(f"{summary.counters.nodes_created} nodes created,{summary.counters.relationships_created} edges created,{summary.counters.properties_set} properties set,{summary.result_available_after/1000:.2f} s")
 
         log.info(f"{len(node_queries)} nodes imported to neo4j, last:{time.time()-start:.2f}s")
         
@@ -79,8 +74,9 @@ def do_graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type'])
             batchs = [edge_queries[i:i + BATCH_SIZE] for i in range(0, len(edge_queries), BATCH_SIZE)]
             for batch in batchs:
                 edge_query_string = "CALL() { " + " UNION ALL ".join(batch) + " } RETURN 1"
-                session.run(edge_query_string)
-                log.info(f"{len(batch)} edges imported.")
+                result = session.run(edge_query_string)
+                summary = result.consume()
+                log.info(f"{summary.counters.nodes_created} nodes created,{summary.counters.relationships_created} edges created,{summary.counters.properties_set} properties set,{summary.result_available_after/1000:.2f} s")
             
         log.info(f"{len(edge_queries)} edges imported to neo4j, last:{time.time()-start:.2f}s")
         
