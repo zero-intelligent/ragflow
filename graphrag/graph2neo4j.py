@@ -51,8 +51,8 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
             
             edge_properties = ', '.join([f"{k}: '{escape(v)}'" for k, v in attrs.items()])
             edge_queries.append(f"""
-                MATCH (a:Node {{id: '{escape(source)}'}}), (b:Node {{id: '{escape(target)}'}})
-                MERGE (a)-[r:CONNECTED_TO]->(b)
+                MATCH (a {{id: '{escape(source)}'}}), (b {{id: '{escape(target)}'}})
+                MERGE (a)-[r:CONNECTED_TO]-(b)
                 ON CREATE SET r += {{{edge_properties}}}
                 ON MATCH SET r += {{{edge_properties}}}
             """)
