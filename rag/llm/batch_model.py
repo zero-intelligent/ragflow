@@ -54,15 +54,18 @@ class BatchModel:
         return batch.id
 
     @tries()
-    def get_results(self,output_file_id):
+    def get_results(self,output_file_id,is_error=False):
         content = self.client.files.content(output_file_id)
         # 拆分字节串
         json_strings = content.response.content.decode('utf-8').strip().split('\n')
         # 转换为 JSON 对象
         json_objects = [json.loads(json_str) for json_str in json_strings]
 
-        return {item['custom_id']: item['response']['body']['choices'][0]['message']['content'] 
-                for item in json_objects}
+        if not is_error:
+            return {item['custom_id']: item['response']['body']['choices'][0]['message']['content'] 
+                    for item in json_objects}
+        else:
+            return {item['custom_id']: item['error'] for item in json_objects}
         
     def batch_api_call(self,id_messages: dict,chunk_size=1000):
         """
@@ -111,18 +114,16 @@ class BatchModel:
         
         interval = int(os.environ.get('BATCH_QUERY_INTERVAL',60))
         log.info(f"waiting {interval}s to get_batch {task.batch_id} result.")
-        batch = None
-        while task.batch_status != 'completed':
-            batch = self.get_batch(task.batch_id)
+        while (batch := self.get_batch(task.batch_id)).status != 'completed':
             task.batch_status = batch.status
             time.sleep(interval)
-            
+
         if not task.server_output_file_id:
             if not batch:
                 batch = self.get_batch(task.batch_id)
             if not batch.output_file_id:
                 if batch.error_file_id:
-                     errors = self.get_results(batch.error_file_id)
+                     errors = self.get_results(batch.error_file_id,is_error=True)
                      raise Exception(f"get batch result error:{errors}")
             task.server_output_file_id = batch.output_file_id
             

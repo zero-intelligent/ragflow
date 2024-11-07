@@ -156,7 +156,7 @@ def tries(max_try_cnt:int=3,interval:int=10):
                 except Exception as e:
                     if i < max_try_cnt:
                         calframe = inspect.getouterframes(inspect.currentframe(), 2)
-                        log.error(f"Error {calframe[1][3]} {i+1}rd call function '{func.__name__}',args:'{args_to_str(args,kwargs)}': {e}")
+                        log.error(f"Error {calframe[1][3]} {i+1}rd call function '{func.__name__}',args:'{args_to_str(args,kwargs)}': {str(e)}")
                         time.sleep(interval)
                     else: # 最后一次还是抛异常，重新抛出异常
                         raise
