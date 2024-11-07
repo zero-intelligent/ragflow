@@ -10,6 +10,9 @@ from graphrag.utils import escape, file_cache
 
 @file_cache
 def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
+    do_graph2neo4j(graph,nodeLabel_attr)
+    
+def do_graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
     """
     将当前的 python 里的 nx.Graph 里的数据同步到 neo4j ;
     确保节点的属性和关系的属性全部同步过去,节点的属性和关系的属性schema是未知的;
@@ -22,7 +25,6 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         log.error(f"graph shouldn't be None")
         return
     
-    MAX_NODE_NAME_LENGTH = 128
     with driver.session() as session:
         # 批量创建或融合节点
         node_queries = []
@@ -86,8 +88,9 @@ def graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type']):
         driver.close()
 
 def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
-         kb_id:str="2932270687c211efaa6b0242ac120006",
-         doc:str=None):
+         kb_id:str="fb7c4312973b11ef88ed0242ac120006",
+         doc:str=None,
+         uisng_cache:bool = False):
     
     query = {
         "query": {
@@ -133,8 +136,11 @@ def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
             graph_json = hit['_source']['content_with_weight']
             node_link_data = json.loads(graph_json)
             graph = nx.node_link_graph(node_link_data)
-            graph2neo4j(graph)
-
             
+            if uisng_cache:
+                graph2neo4j(graph)
+            else:
+                do_graph2neo4j(graph)
+      
 if __name__ == "__main__":
     fire.Fire() # 自动加载模块方法，作为命令行参数
