@@ -16,6 +16,6 @@ start_idx=${2:-1} # 参数2 初始任务id， 当多次运行此脚本时，需�
 export BATCH_QUERY_INTERVAL=$((16 * (start_idx + task_num)))
 for ((i=start_idx;i<=task_num;i++)); do
     echo "run task_executor $i"
-    nohup python rag/svr/task_executor.py $i > logs/task_executor_$i.log 2>&1 &
+    nohup python rag/svr/task_executor.py $i >> logs/task_executor_$i.log 2>&1 &
     sleep 20
 done
