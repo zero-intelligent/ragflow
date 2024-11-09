@@ -56,8 +56,18 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "test_graph_extractor",
-            "program": "${workspaceFolder}/graphrag/test_graph_extractor.py",
+            "name": "update",
+            "program": "${workspaceFolder}/graphrag/db/update.py",
+            "env": {"PYTHONPATH": "${workspaceFolder}"},
+            "cwd":"${workspaceFolder}",
+            "justMyCode": false 
+        }
+        ,
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "es_graph_update_test",
+            "program": "${workspaceFolder}/graphrag/es_graph_update_test.py",
             "env": {"PYTHONPATH": "${workspaceFolder}"},
             "cwd":"${workspaceFolder}",
             "justMyCode": false 

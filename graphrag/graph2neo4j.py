@@ -3,7 +3,7 @@ import json
 from typing import List
 import time
 import fire
-from graphrag.db.neo4j import driver
+from graphrag.db import driver
 import networkx as nx
 from loguru import logger as log
 from rag.utils.es_conn import ELASTICSEARCH
