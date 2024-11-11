@@ -32,6 +32,7 @@ try:
 except Exception as e:
     REDIS = {}
     pass
+NEO4J=get_base_config("neo4j", {})
 DOC_MAXIMUM_SIZE = int(os.environ.get("MAX_CONTENT_LENGTH", 128 * 1024 * 1024))
 
 # Logger

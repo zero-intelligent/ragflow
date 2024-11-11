@@ -1,12 +1,8 @@
 
 from neo4j import GraphDatabase
+from rag.settings import NEO4J
 
- # 连接到 Neo4j 数据库
-uri = "bolt://localhost:17687"  # Neo4j 的 URI
-username = "neo4j"               # 用户名
-password = "bitzero123"       # 密码
-
-driver = GraphDatabase.driver(uri, auth=(username, password))
+driver = GraphDatabase.driver(uri=NEO4J['uri'], auth=(NEO4J['username'], NEO4J['password']))
 
 def query(query:str):
     with driver.session() as session:
