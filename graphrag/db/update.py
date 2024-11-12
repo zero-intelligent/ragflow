@@ -114,39 +114,65 @@ def update_index():
                 summary = entity_type_index_result.consume()
                 log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
             
+
+def add_trigger():
+    add_trigger_cql = """
+    CALL apoc.trigger.add(
+        'sendAllChangesToApi',  // 触发器名称
+        "
+        CALL apoc.load.jsonParams(
+            'http://8.140.49.13:18080/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006',  // 外部 API 的 URL
+            {method: 'POST'},  // 使用 POST 方法
+            {
+                createdNodes: $createdNodes,
+                deletedNodes: $deletedNodes,
+                createdRelationships: $createdRelationships,
+                deletedRelationships: $deletedRelationships,
+                assignedNodeProperties: $assignedNodeProperties,
+                assignedRelationshipProperties: $assignedRelationshipProperties
+            }
+        ) YIELD value
+        RETURN count(*)
+        ",
+        {phase: 'after'}
+    )
+    """
+    result = query(add_trigger_cql)
+    summary = result.consume()
+    log.info(f"{summary.query},{summary.counters.system_updates} system_updates.")
     
 def remove_unlabled_entity():
-    # 找到所有 entity_type 属性为空的节点，如果存在和此节点id一样的其他节点，并且entity_type 非空，则删除此entity_type 属性为空的节点
+    # 找到所有 entity_type属性为空（label为空）的节点，如果存在和此节点id一样的其他节点，并且entity_type 非空，则删除此entity_type 属性为空的节点
     while True:
         remove_unlabled_entity = """
+            // Step 1: 找出无标签的节点
             MATCH (n1)
-            WHERE (n1.entity_type IS NULL OR n1.entity_type = '')
+            WHERE size(labels(n1))=0
+            limit 100
+
+            // Step 2: 在有标签的节点中匹配同 id 节点
             WITH n1
-            OPTIONAL MATCH (n2 {id: n1.id})
-            WHERE n2 IS NOT NULL AND n2.entity_type IS NOT NULL AND n2.entity_type <> ''
-            WITH n1, n2
-            WHERE n2 IS NOT NULL
-            LIMIT 10
+            MATCH (n2)
+            WHERE n2.id = n1.id AND size(labels(n2))>0
+            LIMIT 100
 
-            // Step 1: Transfer outgoing relationships from n1 to n2, only if m exists
+            // Step 1: Transfer outgoing relationships from n1 , only if m exists
             WITH n1, n2
-            OPTIONAL MATCH (n1)-[r]->(m)
+            MATCH (n1)-[r1]->(m)
             WHERE m IS NOT NULL  // Ensure m exists before proceeding
-            WITH n1, n2, r, m
-            WHERE n2 IS NOT NULL AND m IS NOT NULL  // Double-check n2 and m existence
-            CREATE (n2)-[r2:connected_to]->(m)
-            SET r2 = r
-            DELETE r
+            WITH n1, n2, r1, m
+            CREATE (n2)-[r2:CONNECTED_TO]->(m)
+            SET r2 = r1
+            DELETE r1
 
-            // Step 2: Transfer incoming relationships to n2, only if m exists
+            // Step 2: Transfer incoming relationships to n1, only if m exists
             WITH n1, n2
-            OPTIONAL MATCH (m)-[r]->(n1)
+            MATCH (m)-[r3]->(n1)
             WHERE m IS NOT NULL  // Ensure m exists before proceeding
-            WITH n1, n2, r, m
-            WHERE n2 IS NOT NULL AND m IS NOT NULL  // Double-check n2 and m existence
-            CREATE (m)-[r3:connected_to]->(n2)
-            SET r3 = r
-            DELETE r
+            WITH n1, n2, r3, m
+            CREATE (m)-[r4:CONNECTED_TO]->(n2)
+            SET r4 = r3
+            DELETE r3
 
             // Step 3: Delete n1
             DETACH DELETE n1
@@ -155,6 +181,50 @@ def remove_unlabled_entity():
             RETURN count(n2)
 
         """
+        
+        
+        remove_unlabled_entity_sub_query = """
+        // Step 1: 查找前 100 个无标签的节点
+        MATCH (n1)
+        WHERE size(labels(n1)) = 0
+        WITH n1
+        LIMIT 100
+
+        // Step 2: 使用子查询处理每个无标签节点的关系转移和删除
+        CALL (n1) {
+            // 在有标签的节点中匹配相同 id 的 n2 节点
+            MATCH (n2)
+            WHERE n2.id = n1.id AND size(labels(n2)) > 0
+            LIMIT 1  // 每个 n1 只匹配一个 n2
+            
+            // Step 3: 转移 n1 的出边关系到 n2
+            CALL(n1,n2) {
+                MATCH (n1)-[r1]->(m)
+                WHERE m IS NOT NULL  // 确保目标节点 m 存在
+                CREATE (n2)-[r2:CONNECTED_TO]->(m)
+                SET r2 = r1
+                DELETE r1
+            }
+
+            // Step 4: 转移 n1 的入边关系到 n2
+            CALL(n1,n2) {
+                MATCH (m)-[r3]->(n1)
+                WHERE m IS NOT NULL  // 确保起始节点 m 存在
+                CREATE (m)-[r4:CONNECTED_TO]->(n2)
+                SET r4 = r3
+                DELETE r3
+            }
+
+            // Step 5: 删除 n1 节点
+            DETACH DELETE n1
+
+            RETURN n2.id AS transferred_to_id  // 返回每个 n2 的 id
+        }
+        RETURN count(*) AS nodes_processed
+
+        """
+        
+        # 以上脚本可能会导致 neo4j 异常退出！！！！！，调试好再发布。
         result = query(remove_unlabled_entity)
         summary = result.consume()
         log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
