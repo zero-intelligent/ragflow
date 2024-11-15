@@ -1,3 +1,4 @@
+import re
 from elasticsearch_dsl import Q
 import networkx as nx
 from collections import defaultdict
@@ -16,7 +17,7 @@ default_attach_doc = '21小动物疾病临床症状Clinical_Signs_in_Small_Anima
     
 
 def create_nodes(tenant, kb, nodes):
-    if not all (tenant,kb,nodes):
+    if not all ([tenant,kb,nodes]):
         return
     
     for node in nodes:
@@ -30,7 +31,7 @@ def create_nodes(tenant, kb, nodes):
     
   
 def update_nodes(tenant, kb, nodes):
-    if not all (tenant,kb,nodes):
+    if not all ([tenant,kb,nodes]):
         return
     def update_node(graph:nx.Graph,node):
         node_id = node['id']
@@ -42,7 +43,7 @@ def delete_nodes(tenant, kb, node_names):
     """
     删除节点
     """
-    if not all (tenant,kb,node_names):
+    if not all ([tenant,kb,node_names]):
         return
     def delete_node(graph:nx.Graph,node):
         graph.remove_node(node)  
@@ -51,7 +52,7 @@ def delete_nodes(tenant, kb, node_names):
 
 
 def delete_links(tenant, kb, links):
-    if not all (tenant,kb,links):
+    if not all ([tenant,kb,links]):
         return
     
     def remove_edge(graph:nx.Graph,link):
@@ -63,7 +64,7 @@ def delete_links(tenant, kb, links):
     
 
 def add_links(tenant, kb, links,link_process_fun):
-    if not all (tenant,kb,links,link_process_fun):
+    if not all ([tenant,kb,links,link_process_fun]):
         return
     for link in links:
         if not link.get('source_id'):
@@ -81,7 +82,7 @@ def update_links(tenant, kb, links,link_process_fun):
     """
     更新边
     """
-    if not all (tenant,kb,links,link_process_fun):
+    if not all ([tenant,kb,links,link_process_fun]):
         return
     
     def update_edge(graph:nx.Graph,link):
@@ -98,7 +99,7 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
     """
     grouped_data = defaultdict(list)
     for link in nodes_or_links:
-        doc = get_doc(link.get("source_id"))
+        doc = get_doc(link['properties'].get("source_id"))
         grouped_data[doc].append(link)
     
     for doc, doc_links in grouped_data.items():
@@ -164,13 +165,13 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
     DocumentService.increment_chunk_num(doc.id, kb.id, tk_count, chunk_count, 0)
     
 def get_doc(source_id:str):
-    if not source_id:
-        raise ValueError("source_id  is empty!")
+    match=re.match(r'^(.*?)(?=-graph|-\d)', source_id)
+    if not match:
+        raise ValueError(f"source_id {source_id} 需要'-graph'结尾或者'-数字'结尾!")
     
-    if not (doc_name := source_id.split("-graph")):
-        raise ValueError(f"{source_id} resolve doc_name fail!")
+    doc_name = match.group(0)
+    if not (doc_id := DocumentService.get_doc_id_by_doc_name(doc_name)):
+        raise ValueError(f"document:{doc_name} do not exists!")
     
-    if not (doc := DocumentService.get_doc_id_by_doc_name(doc_name[0])):
-        raise ValueError(f"document:{doc_name[0]} do not exists!")
-    
+    _,doc = DocumentService.get_by_id(doc_id)
     return doc

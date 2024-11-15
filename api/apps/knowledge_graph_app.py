@@ -1,5 +1,3 @@
-from collections import defaultdict
-from functools import reduce
 from itertools import chain
 from flask import request
 from api.settings import RetCode
@@ -73,11 +71,17 @@ def trigger():
         delete_links(tenant,kb,deletedRelationships)
         
     if assignedNodeProperties := req['assignedNodeProperties']:
-        nodes = {n['node'] for n in chain(*assignedNodeProperties.values())}
+        # 获取所有nodes
+        nodes = [n['node'] for n in chain(*assignedNodeProperties.values())]
+        # 按照id去重
+        nodes = list({n['id']:n for n in nodes}.values())
+        
         update_nodes(tenant,kb,nodes)
     
     if assignedRelationshipProperties := req['assignedRelationshipProperties']:
         links = {n['relationship'] for n in chain(*assignedRelationshipProperties.values())}
+        # 去重
+        links = [dict(t) for t in {frozenset(d.items()) for d in links}]
         update_links(tenant,kb,links)
         
     return get_json_result(data=True)

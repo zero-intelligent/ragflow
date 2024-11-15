@@ -70,9 +70,8 @@ def test_update_node_properties(client):
     response = client.post('/v1/knowledge_graph/trigger', 
                            json=data, 
                            query_string=query_params,
-                           headers={
-        'Content-Type': 'application/json'
-    })
+                           headers={'Content-Type': 'application/json'}
+                           )
     
     # 检查响应状态码
     assert response.status_code == 200
