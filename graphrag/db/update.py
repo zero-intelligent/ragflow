@@ -115,25 +115,26 @@ def update_index():
                 log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
             
 
+
 def add_trigger():
     add_trigger_cql = """
-    CALL apoc.trigger.add(
-        'sendAllChangesToApi',  // 触发器名称
-        "
-        CALL apoc.load.jsonParams(
-            'http://8.140.49.13:18080/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006',  // 外部 API 的 URL
+    :use system;
+    CALL apoc.trigger.install(
+        'neo4j',
+        'sendAllChangesToApi',
+        "CALL apoc.load.jsonParams(
+            'http://8.140.49.13:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006',  // 外部 API 的 URL
             {method: 'POST'},  // 使用 POST 方法
-            {
+            apoc.convert.toJson({
                 createdNodes: $createdNodes,
                 deletedNodes: $deletedNodes,
                 createdRelationships: $createdRelationships,
                 deletedRelationships: $deletedRelationships,
                 assignedNodeProperties: $assignedNodeProperties,
                 assignedRelationshipProperties: $assignedRelationshipProperties
-            }
+            })
         ) YIELD value
-        RETURN count(*)
-        ",
+        RETURN value",
         {phase: 'after'}
     )
     """
@@ -233,6 +234,7 @@ def remove_unlabled_entity():
             break
 
 def main():
+    add_trigger()
     update_similary_entity_types()
     update_index()
     # remove_unlabled_entity()

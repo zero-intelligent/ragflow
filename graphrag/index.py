@@ -58,7 +58,7 @@ def graph_merge(g1, g2):
     return g
 
     
-def graph2chunks(graph:nx.Graph,chunks: List[str], llm_bdl:LLMBundle,callback):
+def graph2chunks(graph:nx.Graph, llm_bdl:LLMBundle,callback):
     chunks = []
     for n, attr in graph.nodes(data=True):
         if attr.get("rank", 0) == 0:
@@ -150,7 +150,7 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     #将图导入neo4j
     graph2neo4j(graph)
     
-    graph_chunks = graph2chunks(graph,chunks,llm_bdl,callback)
+    graph_chunks = graph2chunks(graph,llm_bdl,callback)
     mind_map_chunks = mind_map2chunk(mind_map_result)
     
     log.info(f"{filename} build_knowlege_graph_chunks completed.")

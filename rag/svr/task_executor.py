@@ -40,7 +40,7 @@ from multiprocessing.context import TimeoutError
 from api.db.services.task_service import TaskService
 from rag.utils.es_conn import ELASTICSEARCH
 from timeit import default_timer as timer
-from rag.utils import rmSpace, findMaxTm, num_tokens_from_string
+from rag.utils import md5_hash, rmSpace, findMaxTm, num_tokens_from_string
 
 from rag.nlp import search, rag_tokenizer
 from io import BytesIO
@@ -187,21 +187,21 @@ def build(row):
         traceback.print_exc()
         return
 
+    return chuks2docs(row["kb_id"],row["doc_id"],cks,row["name"])
+
+def chuks2docs(kb_id,doc_id,cks,name=""):
     docs = []
-    doc = {
-        "doc_id": row["doc_id"],
-        "kb_id": [str(row["kb_id"])]
-    }
     el = 0
     for ck in cks:
-        d = copy.deepcopy(doc)
-        d.update(ck)
-        md5 = hashlib.md5()
-        md5.update((ck["content_with_weight"] +
-                    str(d["doc_id"])).encode("utf-8"))
-        d["_id"] = md5.hexdigest()
-        d["create_time"] = str(datetime.datetime.now()).replace("T", " ")[:19]
-        d["create_timestamp_flt"] = datetime.datetime.now().timestamp()
+        d = {
+            "_id": md5_hash(ck["content_with_weight"] + str(doc_id)),
+            "doc_id": doc_id,
+            "kb_id": [str(kb_id)],
+            "create_time": str(datetime.datetime.now()).replace("T", " ")[:19],
+            "create_timestamp_flt": datetime.datetime.now().timestamp(),
+            **ck
+        }
+        
         if not d.get("image"):
             docs.append(d)
             continue
@@ -214,20 +214,18 @@ def build(row):
                 d["image"].save(output_buffer, format='JPEG')
 
             st = timer()
-            STORAGE_IMPL.put(row["kb_id"], d["_id"], output_buffer.getvalue())
+            STORAGE_IMPL.put(kb_id, d["_id"], output_buffer.getvalue())
             el += timer() - st
         except Exception as e:
             cron_logger.error(str(e))
             traceback.print_exc()
 
-        d["img_id"] = "{}-{}".format(row["kb_id"], d["_id"])
+        d["img_id"] = "{}-{}".format(kb_id, d["_id"])
         del d["image"]
         docs.append(d)
-    cron_logger.info("MINIO PUT({}):{}".format(row["name"], el))
-
+    cron_logger.info("MINIO PUT({}):{}".format(name, el))
     return docs
-
-
+        
 def init_kb(row):
     idxnm = search.index_name(row["tenant_id"])
     if ELASTICSEARCH.indexExist(idxnm):

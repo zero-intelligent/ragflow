@@ -1,202 +1,176 @@
-import hashlib
-import json
-import uuid
-from datetime import datetime
-
-import networkx as nx
 from elasticsearch_dsl import Q
-
+import networkx as nx
+from collections import defaultdict
 from api.db import LLMType
 from api.db.services.document_service import DocumentService
-from api.db.services.knowledgebase_service import KnowledgebaseService
 from api.db.services.llm_service import LLMBundle
-from api.utils.api_utils import get_data_error_result
-from graphrag.mind_map_extractor import MindMapExtractor
-from rag.nlp import search, rag_tokenizer
+from api.db.services.document_service import DocumentService
+from graphrag.index import graph2chunks
+from rag.nlp import search
 from rag.svr import task_executor
 from rag.utils.es_conn import ELASTICSEARCH
 from loguru import logger as log
 
 # 当新增加的节点找不到附着文档时，则从这个文档开始附着
-default_attach_doc = '21小动物疾病临床症状Clinical_Signs_in_Small_Animal_Medicine.pdf.txt'
+default_attach_doc = '21小动物疾病临床症状Clinical_Signs_in_Small_Animal_Medicine.pdf.txt-graph'
+    
 
-
-def upsert_nodes(tenant_id, kb_id, nodes):
+def create_nodes(tenant, kb, nodes):
+    if not all (tenant,kb,nodes):
+        return
+    
     for node in nodes:
-        update_node(tenant_id, kb_id, node['id'], node)
-        
+        if not node.get('source_id'):
+            node['source_id'] = default_attach_doc
 
-def create_node(tenant_id, kb_id, node_name, node_attrs):
-    node_chunk = build_node_chunk(kb_id, node_name, node_attrs)
-    graph_chunk = build_graph_chunk(None, node_name, node_attrs)
-    chunks = node_chunk + graph_chunk
+    def add_node(graph:nx.Graph,node):
+        graph.add_node(node) 
+        
+    process_graph(tenant,kb,nodes,add_node)
     
   
-# node_attrs: name, description, doc_id rank  weight
-def update_node(tenant_id, kb_id, node_name, node_attrs):
-    if node_attrs.get("rank", 0) == 0:
-        log.warning(f"Ignore entity: {node_name}")
+def update_nodes(tenant, kb, nodes):
+    if not all (tenant,kb,nodes):
         return
+    def update_node(graph:nx.Graph,node):
+        node_id = node['id']
+        graph.nodes[node_id] = node  
+        
+    process_graph(tenant,kb,nodes,update_node)
+        
+def delete_nodes(tenant, kb, node_names):
+    """
+    删除节点
+    """
+    if not all (tenant,kb,node_names):
+        return
+    def delete_node(graph:nx.Graph,node):
+        graph.remove_node(node)  
+        
+    process_graph(tenant,kb,node_names,delete_node)
 
 
-    node_chunk = build_node_chunk(kb_id, node_name, node_attrs)
-    graph_chunk = build_graph_chunk(None, node_name, node_attrs)
-    # TODO mindmap_chunk
+def delete_links(tenant, kb, links):
+    if not all (tenant,kb,links):
+        return
+    
+    def remove_edge(graph:nx.Graph,link):
+        source = link.get("source")
+        target = link.get("target")
+        graph.remove_edge(source,target)  
+        
+    process_graph(tenant,kb,links,remove_edge)
+    
 
-    chunks = node_chunk + graph_chunk
+def add_links(tenant, kb, links,link_process_fun):
+    if not all (tenant,kb,links,link_process_fun):
+        return
+    for link in links:
+        if not link.get('source_id'):
+            link['source_id'] = default_attach_doc
+            
+    def add_edge(graph:nx.Graph,link):
+        source = link.get("source")
+        target = link.get("target")
+        graph.add_edge(source,target)  # 添加边信息
+        
+    process_graph(tenant,kb,links,add_edge)
+  
+  
+def update_links(tenant, kb, links,link_process_fun):
+    """
+    更新边
+    """
+    if not all (tenant,kb,links,link_process_fun):
+        return
+    
+    def remove_edge(graph:nx.Graph,link):
+        source = link.get("source")
+        target = link.get("target")
+        graph[source][target].update(link)  # 更新边信息
+        
+    process_graph(tenant,kb,links,remove_edge)  
 
-    e, kb = KnowledgebaseService.get_by_id(kb_id)
-    if not e:
-        return get_data_error_result(retmsg=f"Can't find knowledgebase {kb_id}!")
-
-    embd_mdl = LLMBundle(tenant_id, LLMType.EMBEDDING, llm_name=kb.embd_id, lang=kb.language)
-    tk_count = task_executor.embedding(chunks, embd_mdl, kb.parser_config)
-
-    query = {
-            "query": {
-                "term": {
-                    "name_kwd": node_name
-                }
-            }
-        }
-    old_entity = ELASTICSEARCH.get_by_query(query, search.index_name(tenant_id))
-    # 实体-更新/新增
-    if old_entity:
-        # 更新，es中 _id不变
-        del node_chunk['_id']
+def process_graph(tenant, kb, nodes_or_links,process_fun):
+    """
+    先按照 doc_id 分组
+    每个 doc_id 内部统处理：增删改查节点和边
+    """
+    grouped_data = defaultdict(list)
+    for link in nodes_or_links:
+        doc = get_doc(link.get("source_id"))
+        grouped_data[doc.id].append(link)
+    
+    for doc_id, doc_links in grouped_data.items():
         query = {
             "query": {
-                "term": {
-                    "name_kwd": node_name
+                "bool": {
+                    "must": [
+                        {"term": {"knowledge_graph_kwd": "graph"}},
+                        {"term": {"kb_id": kb.id}},
+                        {"term": {"doc_id": doc_id}},
+                    ]
                 }
-            }
+            },
+            "_source": ["content_with_weight"],
+            "size": 1
         }
-        r = ELASTICSEARCH.updateByQuery(query, node_chunk)
-        if not r:
-            raise ValueError('更新实体失败！', r)
-
-    else:
-        # 新增
-        es_r = ELASTICSEARCH.bulk([node_chunk], search.index_name(tenant_id))
-        if es_r:
-            ELASTICSEARCH.deleteByQuery(
-                Q("match", name_kwd=node_chunk["name_kwd"]), idxnm=search.index_name(tenant_id))
-        else:
-            DocumentService.increment_chunk_num(
-                node_chunk.get("doc_id"), kb_id, tk_count, 1, 0)
-
-    # graph 更新：
-    del graph_chunk['_id']
-    query = {
-        "query": {
-            "bool": {
-                "must": [
-                    {"term": {"knowledge_graph_kwd": "graph"}},
-                    {"term": {"doc_id": graph_chunk['doc_id']}}
-                ]
-            }
-        }
-    }
-
-    r = ELASTICSEARCH.updateByQuery(query, graph_chunk)
-    if not r:
-        raise ValueError('更新实体失败！', r)
-
-
         
-def delete_nodes(tenant_id, kb_id, node_names, doc_id):
-    ELASTICSEARCH.deleteByQuery({
-        "query": {
-            "term": {
-                "name_kwd": node_names
-            }
-        }
-    }, idxnm=search.index_name(tenant_id))
-
-    ELASTICSEARCH.deleteByQuery({
-        "query": {
-            "bool": {
-                "must": [
-                    {"term": {"knowledge_graph_kwd": "graph"}},
-                    {"term": {"doc_id": doc_id}}
-                ]
-            }
-        }
-    }, idxnm=search.index_name(tenant_id))
-
-
-def upsert_links(tenant_id, kb_id, links):
-    for name,attrs in links.items():
-        upsert_link(tenant_id, kb_id, name, attrs)
+        graph_json = ELASTICSEARCH.search(query,search.index_name(tenant.id))
+        if not (graph_json := ELASTICSEARCH.search(query,search.index_name(tenant.id))):
+            log.error(f"search:{query} fail!")
+            return
+        graph: nx.Graph = nx.node_link_graph(graph_json)
         
-def upsert_link(tenant_id, kb_id, node_name, **node_attrs):
-    pass
+        for link in doc_links:
+            process_fun(graph,link)
+    
+        update_graph(tenant,kb,doc_id,graph)
+        
+def update_graph(tenant,kb,doc,graph:nx.Graph):
+    """
+        当内存图更新时，需要继续更新：
+        1. 图对应的 chunks
+        2. 图对应的 Embedding
+        3. 图对应的 ES document
+        
+    """
+    
+    llm_bdl = LLMBundle(tenant.id, LLMType.CHAT, tenant.llm_id)
+    
+    def callback(*args,**kwargs):  # 空的callback, 以后按需修改
+        pass
+    
+    graph_chunks = graph2chunks(graph,llm_bdl,callback)
+        
+    cks = task_executor.chuks2docs(graph_chunks)
+    
+    embd_mdl = LLMBundle(tenant.id, LLMType.EMBEDDING, tenant.embd_id, kb.language)
+    
+    tk_count = task_executor.embedding(cks, embd_mdl)
 
-def delete_links(tenant_id, kb_id, links):
-    pass
-
-
-def build_mindmap_chunk(llm_bdl, chunks_by_naive):
-    mindmap = MindMapExtractor(llm_bdl)
-    mg = mindmap(chunks_by_naive).output
-    if not len(mg.keys()): return {}
-
-    print(json.dumps(mg, ensure_ascii=False, indent=2))
-
-    return {
-        "content_with_weight": json.dumps(mg, ensure_ascii=False, indent=2),
-        "knowledge_graph_kwd": "mind_map"
-    }
-
-
-def build_node_chunk(kb_id, node_name, node_attrs):
-    chunk = {
-        "name_kwd": node_name,
-        "important_kwd": [node_name],
-        "title_tks": rag_tokenizer.tokenize(node_name),
-        "content_with_weight": json.dumps({"name": node_name, **node_attrs}, ensure_ascii=False),
-        "content_ltks": rag_tokenizer.tokenize(node_attrs["description"]),
-        "knowledge_graph_kwd": "entity",
-        "rank_int": node_attrs["rank"],
-        "weight_int": node_attrs["weight"]
-
-    }
-    chunk["content_sm_ltks"] = rag_tokenizer.fine_grained_tokenize(chunk["content_ltks"])
-
-    expand_chunk(chunk, node_attrs.get('doc_id'), kb_id)
-    return chunk
-
-
-def build_graph_chunk(doc_id, node_name, **node_attrs):
-    query = {
-        "query": {
-            "bool": {
-                "must": [
-                    {"term": {"knowledge_graph_kwd": "graph"}},
-                    {"term": {"doc_id": doc_id}}
-                ]
-            }
-        }
-    }
-
-    graph_json = ELASTICSEARCH.get_by_query(query)
-    graph: nx.Graph = nx.node_link_graph(graph_json)
-    graph.add_node(node_name, node_attrs)  # 新增或修改
-    json.dumps(nx.node_link_data(graph))
-    return {
-        "content_with_weight": json.dumps(nx.node_link_data(graph), ensure_ascii=False, indent=2),
-        "knowledge_graph_kwd": "graph"
-    }
-
-
-def expand_chunk(chunk, doc_id, kb_id):
-    md5 = hashlib.md5()
-    md5.update((chunk["content_with_weight"] +
-                chunk.get('doc_id', str(uuid.uuid1()))).encode("utf-8"))
-    # 每个chunk必须包含的
-    chunk["_id"] = md5.hexdigest()
-    chunk["create_time"] = str(datetime.datetime.now()).replace("T", " ")[:19]
-    chunk["create_timestamp_flt"] = datetime.datetime.now().timestamp()
-    # 每个chunk必须包含的
-    chunk["doc_id"] = doc_id,
-    chunk["kb_id"] = kb_id
+    # TODO : 此处需要探讨下是否删除旧的 entity_chunks 和 graph_chunks? 是否忽略 mindmap (因为mindmap 知识总结了书籍的目录结构)
+    query = Q("term", kb_id=kb.id) & \
+            Q("term", doc_id=doc.id) & \
+            (Q("exists", field="name_kwd") | Q("term", knowledge_graph_kwd="graph"))
+    
+    ELASTICSEARCH.deleteByQuery(query, idxnm=search.index_name(tenant.id))
+    
+    es_r = ELASTICSEARCH.bulk(cks, search.index_name(tenant))  
+    if not es_r:
+        return
+    
+    chunk_count = len(set([c["_id"] for c in cks]))
+    DocumentService.increment_chunk_num(doc.id, kb.id, tk_count, chunk_count, 0)
+    
+def get_doc(source_id:str):
+    if not source_id:
+        raise ValueError("source_id  is empty!")
+    
+    if not (doc_name := source_id.split("-graph")):
+        raise ValueError(f"{source_id} resolve doc_name fail!")
+    
+    if not (doc := DocumentService.get_doc_id_by_doc_name(doc_name[0])):
+        raise ValueError(f"document:{doc_name[0]} do not exists!")
+    
+    return doc
