@@ -64,15 +64,14 @@ def trigger():
         create_nodes(tenant,kb,createdNodes)
     
     if deletedNodes := req.get('deletedNodes'):
-        node_ids = [n['id'] for n in deletedNodes]
+        node_ids = [n['name'] for n in deletedNodes]
         delete_nodes(tenant,kb,node_ids)
         
     if createdRelationships := req.get('createdRelationships'):
         add_links(tenant,kb,createdRelationships)
     
     if deletedRelationships := req.get('deletedRelationships'):
-        relation_ids = [r['id'] for r in deletedRelationships]
-        delete_links(tenant,kb,relation_ids)
+        delete_links(tenant,kb,deletedRelationships)
         
     if assignedNodeProperties := req['assignedNodeProperties']:
         def merge(acc,item):
