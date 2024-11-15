@@ -130,7 +130,7 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
 def update_graph(tenant,kb,doc,graph:nx.Graph):
     """
         当内存图更新时，需要继续更新：
-        1. 图对应的 chunks
+        1. 图对应的 chunks (包含图的节点chunk,图本身chunk,图的小区chunks,图的mindmap chunk)
         2. 图对应的 Embedding
         3. 图对应的 ES document
         
