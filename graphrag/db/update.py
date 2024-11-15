@@ -142,6 +142,7 @@ def add_trigger():
     summary = result.consume()
     log.info(f"{summary.query},{summary.counters.system_updates} system_updates.")
     
+
 def remove_unlabled_entity():
     # 找到所有 entity_type属性为空（label为空）的节点，如果存在和此节点id一样的其他节点，并且entity_type 非空，则删除此entity_type 属性为空的节点
     while True:
@@ -233,7 +234,21 @@ def remove_unlabled_entity():
         if not summary.counters.nodes_deleted:
             break
 
+clean_cqls = [
+    """
+    // 清除实体类型为空 并且 描述为空的字符
+    MATCH (n)
+    where (size(labels(n))=0 or n.entity_type='') and n.description=''
+    DETACH DELETE n
+    """,
+    
+    ""
+]
+def remove_enity_with_empty_entity_type_and_empty_desc():
+   
+    pass
 def main():
+    remove_enity_with_empty_entity_type_and_empty_desc()
     add_trigger()
     update_similary_entity_types()
     update_index()

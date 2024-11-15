@@ -5,7 +5,7 @@ from api.settings import RetCode
 from api.utils.api_utils import get_json_result
 from api.db.services.knowledgebase_service import KnowledgebaseService
 from api.db.services.user_service import TenantService
-from graphrag.es_graph_update import add_links, create_nodes, update_links, update_nodes,delete_nodes,upsert_links,delete_links
+from graphrag.es_graph_update import add_links, create_nodes, update_links, update_nodes,delete_nodes,delete_links
 from loguru import logger as log
 
 
@@ -48,7 +48,7 @@ def trigger():
         
 
     """
-    tenant_id = request.args.get('tenant')
+    tenant_id = request.args.get('tenant_id')
     kb_id = request.args.get('kb_id')
     
     if not (tenant := TenantService.get_or_none(id=tenant_id)):
