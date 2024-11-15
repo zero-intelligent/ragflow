@@ -1,5 +1,6 @@
 from collections import defaultdict
 from functools import reduce
+from itertools import chain
 from flask import request
 from api.settings import RetCode
 from api.utils.api_utils import get_json_result
@@ -30,9 +31,9 @@ def trigger():
                 })
             ) YIELD value
             RETURN value",
-            {phase: 'after'}
+            {phase: 'before'}
         )
-        
+    
         测试脚本如下：
         curl -X POST "http://8.140.49.13:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006" -H 'Content-Type: application/json' -d'
         {
@@ -45,9 +46,9 @@ def trigger():
         }
         '
         实际测试过程中，需要补充具体的修改信息，不能全是空值
-        
-
     """
+    log.debug(f"args:{request.args},payload:{request.json}")
+    
     tenant_id = request.args.get('tenant_id')
     kb_id = request.args.get('kb_id')
     
@@ -56,10 +57,8 @@ def trigger():
     
     if not (kb := KnowledgebaseService.get_or_none(id=kb_id)):
         return get_json_result(data=False, retmsg=f'kb_id:{kb_id} invalid or not exists.',retcode=RetCode.ARGUMENT_ERROR)
-   
-    req = request.json
-    log.debug(request.json)
-    
+
+    req = request.json    
     if createdNodes := req.get('createdNodes'):
         create_nodes(tenant,kb,createdNodes)
     
@@ -74,20 +73,12 @@ def trigger():
         delete_links(tenant,kb,deletedRelationships)
         
     if assignedNodeProperties := req['assignedNodeProperties']:
-        def merge(acc,item):
-            id = item['node']['id']
-            acc[id] |= item['node']['properties']
-            return acc
-        update_nodes_dict = reduce(merge,assignedNodeProperties, defaultdict(dict))
-        update_nodes(tenant,kb,update_nodes_dict)
+        nodes = {n['node'] for n in chain(*assignedNodeProperties.values())}
+        update_nodes(tenant,kb,nodes)
     
     if assignedRelationshipProperties := req['assignedRelationshipProperties']:
-        def merge(acc,item):
-            id = item['relationship']['id']
-            acc[id] |= item['relationship']['properties']
-            return acc
-        update_relations_dict = reduce(merge,assignedRelationshipProperties, defaultdict(dict))
-        update_links(tenant,kb,update_relations_dict)
+        links = {n['relationship'] for n in chain(*assignedRelationshipProperties.values())}
+        update_links(tenant,kb,links)
         
     return get_json_result(data=True)
 

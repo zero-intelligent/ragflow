@@ -55,9 +55,9 @@ def delete_links(tenant, kb, links):
         return
     
     def remove_edge(graph:nx.Graph,link):
-        source = link.get("source")
-        target = link.get("target")
-        graph.remove_edge(source,target)  
+        start = link["start"]['properties']['id']
+        end = link["end"]['properties']['id']
+        graph.remove_edge(start,end)  
         
     process_graph(tenant,kb,links,remove_edge)
     
@@ -70,9 +70,9 @@ def add_links(tenant, kb, links,link_process_fun):
             link['source_id'] = default_attach_doc
             
     def add_edge(graph:nx.Graph,link):
-        source = link.get("source")
-        target = link.get("target")
-        graph.add_edge(source,target)  # 添加边信息
+        start = link["start"]['properties']['id']
+        end = link["end"]['properties']['id']
+        graph.add_edge(start,end)  # 添加边信息
         
     process_graph(tenant,kb,links,add_edge)
   
@@ -85,9 +85,9 @@ def update_links(tenant, kb, links,link_process_fun):
         return
     
     def update_edge(graph:nx.Graph,link):
-        source = link.get("source")
-        target = link.get("target")
-        graph[source][target].update(link)  # 更新边信息
+        start = link["start"]['properties']['id']
+        end = link["end"]['properties']['id']
+        graph[start][end].update(link)  # 更新边信息
         
     process_graph(tenant,kb,links,update_edge)  
 
