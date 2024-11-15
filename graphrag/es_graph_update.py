@@ -84,12 +84,12 @@ def update_links(tenant, kb, links,link_process_fun):
     if not all (tenant,kb,links,link_process_fun):
         return
     
-    def remove_edge(graph:nx.Graph,link):
+    def update_edge(graph:nx.Graph,link):
         source = link.get("source")
         target = link.get("target")
         graph[source][target].update(link)  # 更新边信息
         
-    process_graph(tenant,kb,links,remove_edge)  
+    process_graph(tenant,kb,links,update_edge)  
 
 def process_graph(tenant, kb, nodes_or_links,process_fun):
     """
