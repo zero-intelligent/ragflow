@@ -99,16 +99,16 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
     grouped_data = defaultdict(list)
     for link in nodes_or_links:
         doc = get_doc(link.get("source_id"))
-        grouped_data[doc.id].append(link)
+        grouped_data[doc].append(link)
     
-    for doc_id, doc_links in grouped_data.items():
+    for doc, doc_links in grouped_data.items():
         query = {
             "query": {
                 "bool": {
                     "must": [
                         {"term": {"knowledge_graph_kwd": "graph"}},
                         {"term": {"kb_id": kb.id}},
-                        {"term": {"doc_id": doc_id}},
+                        {"term": {"doc_id": doc}},
                     ]
                 }
             },
@@ -125,7 +125,7 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
         for link in doc_links:
             process_fun(graph,link)
     
-        update_graph(tenant,kb,doc_id,graph)
+        update_graph(tenant,kb,doc,graph)
         
 def update_graph(tenant,kb,doc,graph:nx.Graph):
     """
