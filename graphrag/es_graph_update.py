@@ -108,7 +108,7 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
                     "must": [
                         {"term": {"knowledge_graph_kwd": "graph"}},
                         {"term": {"kb_id": kb.id}},
-                        {"term": {"doc_id": doc}},
+                        {"term": {"doc_id": doc.id}},
                     ]
                 }
             },
@@ -149,7 +149,7 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
     
     tk_count = task_executor.embedding(cks, embd_mdl)
 
-    # TODO : 此处需要探讨下是否删除旧的 entity_chunks 和 graph_chunks? 是否忽略 mindmap (因为mindmap 知识总结了书籍的目录结构)
+    # TODO : 此处需要探讨下是否删除旧的 entity_chunks 和 graph_chunks? 是否忽略 mindmap (因为mindmap 知识总结了书籍的目录结构),是否忽略小区抽取？
     query = Q("term", kb_id=kb.id) & \
             Q("term", doc_id=doc.id) & \
             (Q("exists", field="name_kwd") | Q("term", knowledge_graph_kwd="graph"))
