@@ -70,15 +70,16 @@ def trigger():
     if deletedRelationships := req.get('deletedRelationships'):
         delete_links(tenant,kb,deletedRelationships)
         
-    if assignedNodeProperties := req['assignedNodeProperties']:
+    if assignedNodeProperties := req.get('assignedNodeProperties'):
+        create_node_ids = [n['id'] for n in createdNodes]
         # 获取所有nodes
-        nodes = [n['node'] for n in chain(*assignedNodeProperties.values())]
-        # 按照id去重
-        nodes = list({n['id']:n for n in nodes}.values())
-        
-        update_nodes(tenant,kb,nodes)
+        nodes = [n['node'] for n in chain(*assignedNodeProperties.values()) if n['node']['id'] not in create_node_ids]
+        if nodes:
+            # 按照id去重
+            nodes = list({n['id']:n for n in nodes}.values())
+            update_nodes(tenant,kb,nodes)
     
-    if assignedRelationshipProperties := req['assignedRelationshipProperties']:
+    if assignedRelationshipProperties := req.get('assignedRelationshipProperties'):
         links = {n['relationship'] for n in chain(*assignedRelationshipProperties.values())}
         # 去重
         links = [dict(t) for t in {frozenset(d.items()) for d in links}]

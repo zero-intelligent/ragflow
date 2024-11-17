@@ -11,6 +11,163 @@ def client():
 def test_home(client):
     response = client.get('/')
     assert response.status_code == 200
+    
+    
+def test_add_nodes(client):
+    # 定义查询参数
+    query_params = {
+        'tenant_id': '7d19a176807611efb0f80242ac120006',
+        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
+    }
+    
+    # 修改节点多个属性
+    data = {
+        'deletedNodes': [],
+        'deletedRelationships': [],
+        'assignedRelationshipProperties': {},
+        'createdRelationships': [],
+        'assignedNodeProperties': {
+            'entity_type': [{
+                'node': {
+                    'id': '4775',
+                    'type': 'node',
+                    'labels': ['LIFESTYLE(生活习惯)'],
+                    'properties': {
+                        'entity_type': 'LIFESTYLE (生活习惯)',
+                        'weight': '1',
+                        'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                        'rank': '6',
+                        'id': 'PREGNANCY (妊娠)',
+                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
+                    }
+                },
+                'new': 'LIFESTYLE (生活习惯)',
+                'old': None,
+                'key': 'entity_type'
+            }],
+            'rank': [{
+                'node': {
+                    'id': '4775',
+                    'type': 'node',
+                    'labels': ['LIFESTYLE(生活习惯)'],
+                    'properties': {
+                        'entity_type': 'LIFESTYLE (生活习惯)',
+                        'weight': '1',
+                        'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                        'rank': '6',
+                        'id': 'PREGNANCY (妊娠)',
+                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
+                    }
+                },
+                'new': '6',
+                'old': None,
+                'key': 'rank'
+            }],
+            'description': [{
+                'node': {
+                    'id': '4775',
+                    'type': 'node',
+                    'labels': ['LIFESTYLE(生活习惯)'],
+                    'properties': {
+                        'entity_type': 'LIFESTYLE (生活习惯)',
+                        'weight': '1',
+                        'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                        'rank': '6',
+                        'id': 'PREGNANCY (妊娠)',
+                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
+                    }
+                },
+                'new': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                'old': None,
+                'key': 'description'
+            }],
+            'weight': [{
+                'node': {
+                    'id': '4775',
+                    'type': 'node',
+                    'labels': ['LIFESTYLE(生活习惯)'],
+                    'properties': {
+                        'entity_type': 'LIFESTYLE (生活习惯)',
+                        'weight': '1',
+                        'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                        'rank': '6',
+                        'id': 'PREGNANCY (妊娠)',
+                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
+                    }
+                },
+                'new': '1',
+                'old': None,
+                'key': 'weight'
+            }],
+            'source_id': [{
+                'node': {
+                    'id': '4775',
+                    'type': 'node',
+                    'labels': ['LIFESTYLE(生活习惯)'],
+                    'properties': {
+                        'entity_type': 'LIFESTYLE (生活习惯)',
+                        'weight': '1',
+                        'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                        'rank': '6',
+                        'id': 'PREGNANCY (妊娠)',
+                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
+                    }
+                },
+                'new': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000',
+                'old': None,
+                'key': 'source_id'
+            }],
+            'id': [{
+                'node': {
+                    'id': '4775',
+                    'type': 'node',
+                    'labels': ['LIFESTYLE(生活习惯)'],
+                    'properties': {
+                        'entity_type': 'LIFESTYLE (生活习惯)',
+                        'weight': '1',
+                        'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                        'rank': '6',
+                        'id': 'PREGNANCY (妊娠)',
+                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
+                    }
+                },
+                'new': 'PREGNANCY (妊娠)',
+                'old': None,
+                'key': 'id'
+            }]
+        },
+        'createdNodes': [{
+            'id': '4775',
+            'type': 'node',
+            'labels': ['LIFESTYLE(生活习惯)'],
+            'properties': {
+                'entity_type': 'LIFESTYLE (生活习惯)',
+                'weight': '1',
+                'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
+                'rank': '6',
+                'id': 'PREGNANCY (妊娠)',
+                'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
+            }
+        }]
+    }
+    
+    # 发送 POST 请求
+    response = client.post('/v1/knowledge_graph/trigger', 
+                           json=data, 
+                           query_string=query_params,
+                           headers={'Content-Type': 'application/json'}
+                           )
+    
+    # 检查响应状态码
+    assert response.status_code == 200
+    
+    # 检查响应数据
+    response_data = response.get_json()
+    
+   
+    assert response_data['data']
+    
+    
 
 def test_update_node_properties(client):
     # 定义查询参数
@@ -64,6 +221,35 @@ def test_update_node_properties(client):
             }]
         },
         'createdNodes': []
+    }
+    
+    # 发送 POST 请求
+    response = client.post('/v1/knowledge_graph/trigger', 
+                           json=data, 
+                           query_string=query_params,
+                           headers={'Content-Type': 'application/json'}
+                           )
+    
+    # 检查响应状态码
+    assert response.status_code == 200
+    
+    # 检查响应数据
+    response_data = response.get_json()
+    
+   
+    assert response_data['data']
+    
+    
+
+def test_delete_nodes(client):
+    # 定义查询参数
+    query_params = {
+        'tenant_id': '7d19a176807611efb0f80242ac120006',
+        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
+    }
+    
+    # 修改节点多个属性
+    data = {
     }
     
     # 发送 POST 请求
