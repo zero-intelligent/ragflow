@@ -61,8 +61,7 @@ def trigger():
         create_nodes(tenant,kb,createdNodes)
     
     if deletedNodes := req.get('deletedNodes'):
-        node_ids = [n['name'] for n in deletedNodes]
-        delete_nodes(tenant,kb,node_ids)
+        delete_nodes(tenant,kb,deletedNodes)
         
     if createdRelationships := req.get('createdRelationships'):
         add_links(tenant,kb,createdRelationships)

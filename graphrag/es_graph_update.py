@@ -48,7 +48,8 @@ def delete_nodes(tenant, kb, node_names):
     if not all ([tenant,kb,node_names]):
         return
     def delete_node(graph:nx.Graph,node):
-        graph.remove_node(node)  
+        node_id = node['properties']['id']
+        graph.remove_node(node_id)  
         
     process_graph(tenant,kb,node_names,delete_node)
 
