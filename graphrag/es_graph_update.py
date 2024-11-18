@@ -19,13 +19,15 @@ default_attach_doc = '01宠物疾病/【04】《兽医组织学彩色图谱（�
 def create_nodes(tenant, kb, nodes):
     if not all ([tenant,kb,nodes]):
         return
-    
     for node in nodes:
-        if not node.get('source_id'):
-            node['source_id'] = default_attach_doc
+        if not node.get('properties'):
+            node['properties'] = {}
+        if not node['properties'].get('source_id'):
+            node['properties']['source_id'] = default_attach_doc
 
     def add_node(graph:nx.Graph,node):
-        graph.add_node(node) 
+        node_id = node['properties']['id']
+        graph.add_node(node_id,**node) 
         
     process_graph(tenant,kb,nodes,add_node)
     
@@ -34,8 +36,8 @@ def update_nodes(tenant, kb, nodes):
     if not all ([tenant,kb,nodes]):
         return
     def update_node(graph:nx.Graph,node):
-        node_id = node['id']
-        graph.nodes[node_id] = node  
+        node_id = node['properties']['id']
+        graph.nodes[node_id].update(node)
         
     process_graph(tenant,kb,nodes,update_node)
         
@@ -80,11 +82,11 @@ def add_links(tenant, kb, links):
     process_graph(tenant,kb,links,add_edge)
   
   
-def update_links(tenant, kb, links,link_process_fun):
+def update_links(tenant, kb, links):
     """
     更新边
     """
-    if not all ([tenant,kb,links,link_process_fun]):
+    if not all ([tenant,kb,links]):
         return
     
     def update_edge(graph:nx.Graph,link):
@@ -147,11 +149,11 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
     
     graph_chunks = graph2chunks(graph,llm_bdl,callback)
         
-    cks = task_executor.chuks2docs(graph_chunks)
+    cks = task_executor.chuks2docs(kb.id,doc.id,graph_chunks)
     
     embd_mdl = LLMBundle(tenant.id, LLMType.EMBEDDING, tenant.embd_id, kb.language)
     
-    tk_count = task_executor.embedding(cks, embd_mdl)
+    tk_count = task_executor.embedding(cks, embd_mdl,callback=callback)
 
     # TODO : 此处需要探讨下是否删除旧的 entity_chunks 和 graph_chunks? 是否忽略 mindmap (因为mindmap 知识总结了书籍的目录结构),是否忽略小区抽取？
     query = Q("term", kb_id=kb.id) & \
@@ -177,7 +179,7 @@ def get_doc(kb_id:str,source_id:str):
         .where(DocumentService.model.name == doc_name, \
                DocumentService.model.kb_id==kb_id)
     if not doc_id:
-        raise ValueError(f"document:{doc_name} do not exists!")
+        raise ValueError(f"document:{doc_name} do not exists in kb:{kb_id}!")
     return doc_id[0]
     
     

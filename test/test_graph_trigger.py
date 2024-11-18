@@ -13,7 +13,7 @@ def test_home(client):
     assert response.status_code == 200
     
     
-def test_add_nodes(client):
+def test_nodes_create(client):
     # 定义查询参数
     query_params = {
         'tenant_id': '7d19a176807611efb0f80242ac120006',
@@ -38,7 +38,6 @@ def test_add_nodes(client):
                         'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
                         'rank': '6',
                         'id': 'PREGNANCY (妊娠)',
-                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
                     }
                 },
                 'new': 'LIFESTYLE (生活习惯)',
@@ -56,7 +55,6 @@ def test_add_nodes(client):
                         'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
                         'rank': '6',
                         'id': 'PREGNANCY (妊娠)',
-                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
                     }
                 },
                 'new': '6',
@@ -74,7 +72,6 @@ def test_add_nodes(client):
                         'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
                         'rank': '6',
                         'id': 'PREGNANCY (妊娠)',
-                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
                     }
                 },
                 'new': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
@@ -92,30 +89,11 @@ def test_add_nodes(client):
                         'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
                         'rank': '6',
                         'id': 'PREGNANCY (妊娠)',
-                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
                     }
                 },
                 'new': '1',
                 'old': None,
                 'key': 'weight'
-            }],
-            'source_id': [{
-                'node': {
-                    'id': '4775',
-                    'type': 'node',
-                    'labels': ['LIFESTYLE(生活习惯)'],
-                    'properties': {
-                        'entity_type': 'LIFESTYLE (生活习惯)',
-                        'weight': '1',
-                        'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
-                        'rank': '6',
-                        'id': 'PREGNANCY (妊娠)',
-                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
-                    }
-                },
-                'new': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000',
-                'old': None,
-                'key': 'source_id'
             }],
             'id': [{
                 'node': {
@@ -128,7 +106,6 @@ def test_add_nodes(client):
                         'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
                         'rank': '6',
                         'id': 'PREGNANCY (妊娠)',
-                        'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
                     }
                 },
                 'new': 'PREGNANCY (妊娠)',
@@ -146,7 +123,6 @@ def test_add_nodes(client):
                 'description': '华法林钠禁用于妊娠期，因为可引起先天性畸形。',
                 'rank': '6',
                 'id': 'PREGNANCY (妊娠)',
-                'source_id': '01宠物疾病/【06】《Plumbs兽药手册（第5版）》.pdf.txt-50000'
             }
         }]
     }
@@ -169,7 +145,7 @@ def test_add_nodes(client):
     
     
 
-def test_update_node_properties(client):
+def test_nodes_update(client):
     # 定义查询参数
     query_params = {
         'tenant_id': '7d19a176807611efb0f80242ac120006',
@@ -241,7 +217,7 @@ def test_update_node_properties(client):
     
     
 
-def test_delete_nodes(client):
+def test_nodes_delete(client):
     # 定义查询参数
     query_params = {
         'tenant_id': '7d19a176807611efb0f80242ac120006',
@@ -269,7 +245,7 @@ def test_delete_nodes(client):
     assert response_data['data']
     
 
-def test_add_relations(client):
+def test_relations_add(client):
     # 定义查询参数
     query_params = {
         'tenant_id': '7d19a176807611efb0f80242ac120006',
@@ -375,7 +351,7 @@ def test_add_relations(client):
     
     
 
-def test_update_relation_properties(client):
+def testrelation_update(client):
     # 定义查询参数
     query_params = {
         'tenant_id': '7d19a176807611efb0f80242ac120006',
