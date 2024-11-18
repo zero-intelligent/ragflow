@@ -1,3 +1,4 @@
+import json
 import re
 from elasticsearch_dsl import Q
 import networkx as nx
@@ -13,9 +14,8 @@ from rag.utils.es_conn import ELASTICSEARCH
 from loguru import logger as log
 
 # 当新增加的节点找不到附着文档时，则从这个文档开始附着
-default_attach_doc = '21小动物疾病临床症状Clinical_Signs_in_Small_Animal_Medicine.pdf.txt-graph'
+default_attach_doc = '01宠物疾病/【04】《兽医组织学彩色图谱（第2版）》.pdf.txt-graph'
     
-
 def create_nodes(tenant, kb, nodes):
     if not all ([tenant,kb,nodes]):
         return
@@ -63,17 +63,19 @@ def delete_links(tenant, kb, links):
     process_graph(tenant,kb,links,remove_edge)
     
 
-def add_links(tenant, kb, links,link_process_fun):
-    if not all ([tenant,kb,links,link_process_fun]):
+def add_links(tenant, kb, links):
+    if not all ([tenant,kb,links]):
         return
     for link in links:
-        if not link.get('source_id'):
-            link['source_id'] = default_attach_doc
+        if not link.get('properties'):
+            link['properties'] = {}
+        if not link['properties'].get('source_id'):
+            link['properties']['source_id'] = default_attach_doc
             
     def add_edge(graph:nx.Graph,link):
         start = link["start"]['properties']['id']
         end = link["end"]['properties']['id']
-        graph.add_edge(start,end)  # 添加边信息
+        graph.add_edge(start,end,**link['properties'])  # 添加边信息
         
     process_graph(tenant,kb,links,add_edge)
   
@@ -99,7 +101,7 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
     """
     grouped_data = defaultdict(list)
     for link in nodes_or_links:
-        doc = get_doc(link['properties'].get("source_id"))
+        doc = get_doc(kb.id, link['properties'].get("source_id"))
         grouped_data[doc].append(link)
     
     for doc, doc_links in grouped_data.items():
@@ -116,11 +118,12 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
             "_source": ["content_with_weight"],
             "size": 1
         }
-        
-        graph_json = ELASTICSEARCH.search(query,search.index_name(tenant.id))
-        if not (graph_json := ELASTICSEARCH.search(query,search.index_name(tenant.id))):
+        resp = ELASTICSEARCH.search(query,search.index_name(tenant.id))
+        if not (hits := resp.body['hits']['hits']):
             log.error(f"search:{query} fail!")
             return
+        graph_json_str = hits[0]['_source']['content_with_weight']
+        graph_json = json.loads(graph_json_str)
         graph: nx.Graph = nx.node_link_graph(graph_json)
         
         for link in doc_links:
@@ -164,14 +167,17 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
     chunk_count = len(set([c["_id"] for c in cks]))
     DocumentService.increment_chunk_num(doc.id, kb.id, tk_count, chunk_count, 0)
     
-def get_doc(source_id:str):
+def get_doc(kb_id:str,source_id:str):
     match=re.match(r'^(.*?)(?=-graph|-\d)', source_id)
     if not match:
         raise ValueError(f"source_id {source_id} 需要'-graph'结尾或者'-数字'结尾!")
     
     doc_name = match.group(0)
-    if not (doc_id := DocumentService.get_doc_id_by_doc_name(doc_name)):
+    doc_id = DocumentService.model.select(DocumentService.model.id) \
+        .where(DocumentService.model.name == doc_name, \
+               DocumentService.model.kb_id==kb_id)
+    if not doc_id:
         raise ValueError(f"document:{doc_name} do not exists!")
+    return doc_id[0]
     
-    _,doc = DocumentService.get_by_id(doc_id)
-    return doc
+    

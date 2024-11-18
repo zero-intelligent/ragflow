@@ -269,6 +269,112 @@ def test_delete_nodes(client):
     assert response_data['data']
     
 
+def test_add_relations(client):
+    # 定义查询参数
+    query_params = {
+        'tenant_id': '7d19a176807611efb0f80242ac120006',
+        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
+    }
+   
+    data = {
+        'deletedNodes': [],
+        'deletedRelationships': [],
+        'assignedRelationshipProperties': {
+            'source_id': [{
+                'new': 'source_id',
+                'old': None,
+                'relationship': {
+                    'id': '1',
+                    'type': 'relationship',
+                    'label': 'KNOWS',
+                    'start': {
+                        'id': '117515',
+                        'type': 'node',
+                        'labels': ['BREED(品种)'],
+                        'properties': {
+                            'entity_type': 'BREED(品种)',
+                            'weight': 1,
+                            'rank': 0,
+                            'description': '金毛寻猎犬也是脊髓肿瘤的高发品种。',
+                            'source_id': '/home/admin/python_projects/MedicalGPT/data/pretrain/pet_books/宠医临床书籍/【61】小动物临床手册.pdf.txt-graph_25000',
+                            'id': 'GOLDEN-RETRIEVER(金毛寻猎犬)'
+                        }
+                    },
+                    'end': {
+                        'id': '239089',
+                        'type': 'node',
+                        'labels': ['DISEASE(疾病)'],
+                        'properties': {
+                            'entity_type': 'DISEASE(疾病)',
+                            'rank': 2,
+                            'weight': 2,
+                            'description': '一种常见的犬类遗传性疾病，影响髋关节的正常发育，导致关节不稳定和疼痛。犬髋关节发育异常，可能导致后肢步态不稳。',
+                            'source_id': '14训犬相关/狗狗成长日志++驯养与疾病防治.pdf.txt-graph_1000',
+                            'id': 'HIP-JOINT-DYSPLASIA(髋关节发育异常)'
+                        }
+                    },
+                    'properties': {
+                        'source_id': 'source_id'
+                    }
+                },
+                'key': 'source_id'
+            }]
+        },
+        'createdRelationships': [{
+            'id': '1',
+            'type': 'relationship',
+            'label': 'KNOWS',
+            'start': {
+                'id': '117515',
+                'type': 'node',
+                'labels': ['BREED(品种)'],
+                'properties': {
+                    'entity_type': 'BREED(品种)',
+                    'weight': 1,
+                    'rank': 0,
+                    'description': '金毛寻猎犬也是脊髓肿瘤的高发品种。',
+                    'source_id': '/home/admin/python_projects/MedicalGPT/data/pretrain/pet_books/宠医临床书籍/【61】小动物临床手册.pdf.txt-graph_25000',
+                    'id': 'GOLDEN-RETRIEVER(金毛寻猎犬)'
+                }
+            },
+            'end': {
+                'id': '239089',
+                'type': 'node',
+                'labels': ['DISEASE(疾病)'],
+                'properties': {
+                    'entity_type': 'DISEASE(疾病)',
+                    'rank': 2,
+                    'weight': 2,
+                    'description': '一种常见的犬类遗传性疾病，影响髋关节的正常发育，导致关节不稳定和疼痛。犬髋关节发育异常，可能导致后肢步态不稳。',
+                    'source_id': '14训犬相关/狗狗成长日志++驯养与疾病防治.pdf.txt-graph_1000',
+                    'id': 'HIP-JOINT-DYSPLASIA(髋关节发育异常)'
+                }
+            },
+            'properties': {
+            }
+        }],
+        'assignedNodeProperties': {},
+        'createdNodes': []
+    }
+    # 发送 POST 请求
+    response = client.post('/v1/knowledge_graph/trigger', 
+                           json=data, 
+                           query_string=query_params,
+                           headers={
+        'Content-Type': 'application/json'
+    })
+    
+    # 检查响应状态码
+    assert response.status_code == 200
+    
+    # 检查响应数据
+    response_data = response.get_json()
+    
+   
+    assert response_data['data']
+    
+    
+
 def test_update_relation_properties(client):
     # 定义查询参数
     query_params = {
@@ -388,3 +494,5 @@ def test_update_relation_properties(client):
     assert response_data['data']
     
     
+
+

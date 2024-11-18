@@ -80,10 +80,13 @@ def trigger():
             update_nodes(tenant,kb,nodes)
     
     if assignedRelationshipProperties := req.get('assignedRelationshipProperties'):
-        links = {n['relationship'] for n in chain(*assignedRelationshipProperties.values())}
-        # 去重
-        links = [dict(t) for t in {frozenset(d.items()) for d in links}]
-        update_links(tenant,kb,links)
+        create_link_ids = [r['id'] for r in createdRelationships]
+        # 获取所有 links 
+        links = {n['relationship'] for n in chain(*assignedRelationshipProperties.values()) if n['relationship']['id'] not in create_link_ids}
+        if links:
+            # 按照id去重
+            links = [dict(t) for t in {frozenset(d.items()) for d in links}]
+            update_links(tenant,kb,links)
         
     return get_json_result(data=True)
 

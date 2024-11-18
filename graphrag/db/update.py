@@ -136,7 +136,7 @@ def add_trigger():
         ) YIELD value
         RETURN value",
         {phase: 'before'}
-    )
+    );
     """
     result = query(add_trigger_cql)
     summary = result.consume()
