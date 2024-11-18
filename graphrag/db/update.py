@@ -1,4 +1,5 @@
 
+
 from graphrag.db import driver,query
 from loguru import logger as log
 
@@ -245,13 +246,13 @@ clean_cqls = [
     ""
 ]
 def remove_enity_with_empty_entity_type_and_empty_desc():
-   
     pass
+
 def main():
-    remove_enity_with_empty_entity_type_and_empty_desc()
-    add_trigger()
-    update_similary_entity_types()
-    update_index()
+    # check_lost_import_file()
+    # add_trigger()
+    # update_similary_entity_types()
+    # update_index()
     # remove_unlabled_entity()
 
 

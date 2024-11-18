@@ -21,6 +21,7 @@ answer/res
 *.trie
 .venv
 wheels/
+pet_books/
 .pytest_cache
 .idea/
 *.log
