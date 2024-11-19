@@ -40,6 +40,15 @@ class UserService(CommonService):
 
     @classmethod
     @DB.connection_context()
+    def get_by_nickname(cls, nickname):
+        try:
+            user = cls.model.select().where(cls.model.nickname == nickname).get()
+            return user
+        except peewee.DoesNotExist:
+            return None
+        
+    @classmethod
+    @DB.connection_context()
     def query_user(cls, email, password):
         user = cls.model.select().where((cls.model.email == email),
                                         (cls.model.status == StatusEnum.VALID.value)).first()
