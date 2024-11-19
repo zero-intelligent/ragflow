@@ -136,7 +136,7 @@ def add_trigger():
             })
         ) YIELD value
         RETURN value",
-        {phase: 'before'}
+        {phase: 'afterAsync'}
     );
     """
     result = query(add_trigger_cql)

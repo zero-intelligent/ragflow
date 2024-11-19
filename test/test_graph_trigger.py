@@ -226,6 +226,23 @@ def test_nodes_delete(client):
     
     # 修改节点多个属性
     data = {
+        'deletedNodes': [{
+            'id': '-2',
+            'type': 'node',
+            'properties': {
+                'rank': 1,
+                'weight': 1,
+                'description': '',
+                'entity_type': '',
+                'source_id': '092动物解剖原色图谱.pdf(2).txt-graph_0',
+                'id': 'EXTERNAL-STIMULATION(外界刺激)'
+            }
+        }],
+        'deletedRelationships': [],
+        'assignedRelationshipProperties': {},
+        'createdRelationships': [],
+        'assignedNodeProperties': {},
+        'createdNodes': []
     }
     
     # 发送 POST 请求
