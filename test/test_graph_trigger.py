@@ -8,7 +8,7 @@ def client():
     with app.test_client() as client:
         yield client
     
-def post_trigger(data:dict):
+def post_trigger(client,data:dict):
     # 定义查询参数
     query_params = {
         'tenant_id': '7d19a176807611efb0f80242ac120006',
@@ -138,7 +138,7 @@ def test_nodes_create(client):
             }
         }]
     }
-    post_trigger(data)
+    post_trigger(client,data)
     
     
 
@@ -189,7 +189,7 @@ def test_nodes_update(client):
         'createdNodes': []
     }
     
-    post_trigger(data)
+    post_trigger(client,data)
 
 def test_nodes_delete(client):
     # 修改节点多个属性
@@ -212,7 +212,7 @@ def test_nodes_delete(client):
         'assignedNodeProperties': {},
         'createdNodes': []
     }
-    post_trigger(data)
+    post_trigger(client,data)
 
 def test_relations_add(client):
     data = {
@@ -295,7 +295,7 @@ def test_relations_add(client):
         'assignedNodeProperties': {},
         'createdNodes': []
     }
-    post_trigger(data)
+    post_trigger(client,data)
     
 def test_relation_update(client):
     # 修改边多个属性
@@ -392,7 +392,7 @@ def test_relation_update(client):
         'assignedNodeProperties': {},
         'createdNodes': []
     }
-    post_trigger(data)
+    post_trigger(client,data)
     
 
 def test_relations_delete(client):
@@ -409,4 +409,4 @@ def test_relations_delete(client):
         }]
     }
     
-    post_trigger(data)
+    post_trigger(client,data)
