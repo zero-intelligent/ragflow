@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 from flask import request
 from api.settings import RetCode
@@ -7,6 +8,8 @@ from api.db.services.user_service import TenantService
 from graphrag.es_graph_update import add_links, create_nodes, update_links, update_nodes,delete_nodes,delete_links
 from loguru import logger as log
 
+
+executor = ThreadPoolExecutor(max_workers=32)
 
 @manager.route('/trigger', methods=['POST'])
 def trigger():
@@ -58,16 +61,16 @@ def trigger():
 
     req = request.json    
     if createdNodes := req.get('createdNodes'):
-        create_nodes(tenant,kb,createdNodes)
+        executor.submit(create_nodes,tenant,kb,createdNodes)
     
     if deletedNodes := req.get('deletedNodes'):
-        delete_nodes(tenant,kb,deletedNodes)
+        executor.submit(delete_nodes,tenant,kb,deletedNodes)
         
     if createdRelationships := req.get('createdRelationships'):
-        add_links(tenant,kb,createdRelationships)
+        executor.submit(add_links,tenant,kb,createdRelationships)
     
     if deletedRelationships := req.get('deletedRelationships'):
-        delete_links(tenant,kb,deletedRelationships)
+        executor.submit(delete_links,tenant,kb,deletedRelationships)
         
     if assignedNodeProperties := req.get('assignedNodeProperties'):
         create_node_ids = [n['id'] for n in createdNodes]
@@ -76,7 +79,7 @@ def trigger():
         if nodes:
             # 按照id去重
             nodes = list({n['id']:n for n in nodes}.values())
-            update_nodes(tenant,kb,nodes)
+            executor.submit(update_nodes,tenant,kb,nodes)
     
     if assignedRelationshipProperties := req.get('assignedRelationshipProperties'):
         create_link_ids = [r['id'] for r in createdRelationships]
@@ -85,7 +88,7 @@ def trigger():
         if links:
             # 按照id去重
             links = list({n['id']:n for n in links}.values())
-            update_links(tenant,kb,links)
+            executor.submit(update_links,tenant,kb,links)
         
     return get_json_result(data=True)
 
