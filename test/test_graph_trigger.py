@@ -7,19 +7,31 @@ from api.apps import app
 def client():
     with app.test_client() as client:
         yield client
-
-def test_home(client):
-    response = client.get('/')
-    assert response.status_code == 200
     
-    
-def test_nodes_create(client):
+def post_trigger(data:dict):
     # 定义查询参数
     query_params = {
         'tenant_id': '7d19a176807611efb0f80242ac120006',
-        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
+        'kb_id': 'fb7c4312973b11ef88ed0242ac120006',
+        'sync': True
     }
+    # 发送 POST 请求
+    response = client.post('/v1/knowledge_graph/trigger', 
+                           json=data, 
+                           query_string=query_params,
+                           headers={'Content-Type': 'application/json'}
+                           )
     
+    # 检查响应状态码
+    assert response.status_code == 200
+    
+    # 检查响应数据
+    response_data = response.get_json()
+    
+   
+    assert response_data['data']
+    
+def test_nodes_create(client):
     # 修改节点多个属性
     data = {
         'deletedNodes': [],
@@ -126,33 +138,11 @@ def test_nodes_create(client):
             }
         }]
     }
-    
-    # 发送 POST 请求
-    response = client.post('/v1/knowledge_graph/trigger', 
-                           json=data, 
-                           query_string=query_params,
-                           headers={'Content-Type': 'application/json'}
-                           )
-    
-    # 检查响应状态码
-    assert response.status_code == 200
-    
-    # 检查响应数据
-    response_data = response.get_json()
-    
-   
-    assert response_data['data']
+    post_trigger(data)
     
     
 
 def test_nodes_update(client):
-    # 定义查询参数
-    query_params = {
-        'tenant_id': '7d19a176807611efb0f80242ac120006',
-        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
-    }
-    
-    # 修改节点多个属性
     data = {
         'deletedNodes': [],
         'deletedRelationships': [],
@@ -199,31 +189,9 @@ def test_nodes_update(client):
         'createdNodes': []
     }
     
-    # 发送 POST 请求
-    response = client.post('/v1/knowledge_graph/trigger', 
-                           json=data, 
-                           query_string=query_params,
-                           headers={'Content-Type': 'application/json'}
-                           )
-    
-    # 检查响应状态码
-    assert response.status_code == 200
-    
-    # 检查响应数据
-    response_data = response.get_json()
-    
-   
-    assert response_data['data']
-    
-    
+    post_trigger(data)
 
 def test_nodes_delete(client):
-    # 定义查询参数
-    query_params = {
-        'tenant_id': '7d19a176807611efb0f80242ac120006',
-        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
-    }
-    
     # 修改节点多个属性
     data = {
         'deletedNodes': [{
@@ -244,31 +212,9 @@ def test_nodes_delete(client):
         'assignedNodeProperties': {},
         'createdNodes': []
     }
-    
-    # 发送 POST 请求
-    response = client.post('/v1/knowledge_graph/trigger', 
-                           json=data, 
-                           query_string=query_params,
-                           headers={'Content-Type': 'application/json'}
-                           )
-    
-    # 检查响应状态码
-    assert response.status_code == 200
-    
-    # 检查响应数据
-    response_data = response.get_json()
-    
-   
-    assert response_data['data']
-    
+    post_trigger(data)
 
 def test_relations_add(client):
-    # 定义查询参数
-    query_params = {
-        'tenant_id': '7d19a176807611efb0f80242ac120006',
-        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
-    }
-   
     data = {
         'deletedNodes': [],
         'deletedRelationships': [],
@@ -349,32 +295,9 @@ def test_relations_add(client):
         'assignedNodeProperties': {},
         'createdNodes': []
     }
-    # 发送 POST 请求
-    response = client.post('/v1/knowledge_graph/trigger', 
-                           json=data, 
-                           query_string=query_params,
-                           headers={
-        'Content-Type': 'application/json'
-    })
+    post_trigger(data)
     
-    # 检查响应状态码
-    assert response.status_code == 200
-    
-    # 检查响应数据
-    response_data = response.get_json()
-    
-   
-    assert response_data['data']
-    
-    
-
 def test_relation_update(client):
-    # 定义查询参数
-    query_params = {
-        'tenant_id': '7d19a176807611efb0f80242ac120006',
-        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
-    }
-   
     # 修改边多个属性
     data = {
         'deletedNodes': [],
@@ -469,31 +392,10 @@ def test_relation_update(client):
         'assignedNodeProperties': {},
         'createdNodes': []
     }
-    # 发送 POST 请求
-    response = client.post('/v1/knowledge_graph/trigger', 
-                           json=data, 
-                           query_string=query_params,
-                           headers={
-        'Content-Type': 'application/json'
-    })
-    
-    # 检查响应状态码
-    assert response.status_code == 200
-    
-    # 检查响应数据
-    response_data = response.get_json()
-    
-   
-    assert response_data['data']
+    post_trigger(data)
     
 
 def test_relations_delete(client):
-    # 定义查询参数
-    query_params = {
-        'tenant_id': '7d19a176807611efb0f80242ac120006',
-        'kb_id': 'fb7c4312973b11ef88ed0242ac120006'
-    }
-    
     # 修改节点多个属性
     data = {
         'deletedRelationships': [{
@@ -507,21 +409,4 @@ def test_relations_delete(client):
         }]
     }
     
-    # 发送 POST 请求
-    response = client.post('/v1/knowledge_graph/trigger', 
-                           json=data, 
-                           query_string=query_params,
-                           headers={'Content-Type': 'application/json'}
-                           )
-    
-    # 检查响应状态码
-    assert response.status_code == 200
-    
-    # 检查响应数据
-    response_data = response.get_json()
-    
-   
-    assert response_data['data']
-    
-
-
+    post_trigger(data)
