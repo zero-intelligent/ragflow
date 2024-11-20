@@ -122,7 +122,7 @@ def add_trigger():
     :use system;
     CALL apoc.trigger.install(
         'neo4j',
-        'sendAllChangesToApi',
+        'sendAllChangesToApi_afterAsync',
         "CALL apoc.load.jsonParams(
             'http://8.140.49.13:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006',  // 外部 API 的 URL
             {method: 'POST'},  // 使用 POST 方法
@@ -131,6 +131,7 @@ def add_trigger():
                 deletedNodes: $deletedNodes,
                 createdRelationships: $createdRelationships,
                 deletedRelationships: $deletedRelationships,
+                removedLabels: $removedLabels,
                 assignedNodeProperties: $assignedNodeProperties,
                 assignedRelationshipProperties: $assignedRelationshipProperties
             })
@@ -138,6 +139,7 @@ def add_trigger():
         RETURN value",
         {phase: 'afterAsync'}
     );
+    
     """
     result = query(add_trigger_cql)
     summary = result.consume()

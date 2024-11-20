@@ -496,6 +496,15 @@ def test_relations_delete(client):
     
     # 修改节点多个属性
     data = {
+        'deletedRelationships': [{
+            'start_id': 'COMPLETE-BLOOD-COUNT(CBC)(全血细胞计数)',
+            'properties': {
+                'weight': '1.0',
+                'description': 'EDTA是常用的抗凝剂，用于防止血液在CBC检查中凝固。',
+                'source_id': '016犬猫血液学手册.pdf.txt-graph_0'
+            },
+            'end_id': 'EDTA(乙二胺四乙酸)'
+        }]
     }
     
     # 发送 POST 请求

@@ -57,10 +57,10 @@ def delete_nodes(tenant, kb, node_names):
 def delete_links(tenant, kb, links):
     if not all ([tenant,kb,links]):
         return
-    
+    # assure source_id not empty
     def remove_edge(graph:nx.Graph,link):
-        start = link["start"]['properties']['id']
-        end = link["end"]['properties']['id']
+        start = link["start_id"]
+        end = link["end_id"]
         graph.remove_edge(start,end)  
         
     process_graph(tenant,kb,links,remove_edge)
