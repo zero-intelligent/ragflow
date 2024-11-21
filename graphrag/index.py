@@ -60,9 +60,10 @@ def graph_merge(g1, g2):
     
 def graph2chunks(graph:nx.Graph, llm_bdl:LLMBundle,callback):
     chunks = []
+    ignore_nodes = []
     for n, attr in graph.nodes(data=True):
         if attr.get("rank", 0) == 0:
-            print(f"graph2chunks ignore rank==0 entity : {n}")
+            ignore_nodes.append(n)
             continue
         chunk = {
             "name_kwd": n,
@@ -76,6 +77,8 @@ def graph2chunks(graph:nx.Graph, llm_bdl:LLMBundle,callback):
         }
         chunk["content_sm_ltks"] = rag_tokenizer.fine_grained_tokenize(chunk["content_ltks"])
         chunks.append(chunk)
+                
+    log.info(f"graph2chunks ignore rank==0 {len(ignore_nodes)}/{len(graph.nodes(data=True))} entities,{ignore_nodes}")
 
     callback(0.6, "Extracting community reports.")
     cr = CommunityReportsExtractor(llm_bdl)

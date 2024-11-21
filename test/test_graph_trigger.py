@@ -3,6 +3,11 @@
 import pytest
 from api.apps import app
 
+import warnings
+# 忽略 DeprecationWarning
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
 @pytest.fixture
 def client():
     with app.test_client() as client:
