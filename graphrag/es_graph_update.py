@@ -49,7 +49,8 @@ def delete_nodes(tenant, kb, node_names):
         return
     def delete_node(graph:nx.Graph,node):
         node_id = node['properties']['id']
-        graph.remove_node(node_id)  
+        if graph.has_node(node_id):
+            graph.remove_node(node_id)
         
     process_graph(tenant,kb,node_names,delete_node)
 
@@ -61,7 +62,8 @@ def delete_links(tenant, kb, links):
     def remove_edge(graph:nx.Graph,link):
         start = link["start_id"]
         end = link["end_id"]
-        graph.remove_edge(start,end)  
+        if graph.has_edge(start,end):
+            graph.remove_edge(start,end)
         
     process_graph(tenant,kb,links,remove_edge)
     

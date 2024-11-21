@@ -12,11 +12,11 @@ from loguru import logger as log
 executor = ThreadPoolExecutor(max_workers=32)
 
 
-def call_func(func,tenant,kb,nodes):
+def call_func(func,*args):
     if request.args.get('sync'):
-        func(tenant,kb,nodes)
+        func(*args)
     else:
-        executor.submit(func,tenant,kb,nodes)
+        executor.submit(func,*args)
     
 @manager.route('/trigger', methods=['POST'])
 def trigger():
