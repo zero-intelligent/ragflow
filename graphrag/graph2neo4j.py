@@ -133,7 +133,7 @@ def sync(index:str="ragflow_7d19a176807611efb0f80242ac120006",
     
     for hits in ELASTICSEARCH.scrollIter(q=query):
         for hit in hits:
-            log.info(f"processing graph of doc:{hit['_source']["docnm_kwd"]}")
+            log.info(f"processing graph of doc:{hit['_source']['docnm_kwd']}")
             graph_json = hit['_source']['content_with_weight']
             node_link_data = json.loads(graph_json)
             graph = nx.node_link_graph(node_link_data)

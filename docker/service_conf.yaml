@@ -21,7 +21,11 @@ redis:
   db: 1
   password: 'infini_rag_flow'
   host: 'redis:6379'
-
+neo4j:
+  uri: bolt://localhost:7687
+  username: 'neo4j'
+  password: 'bitzero123'
+  
 # postgres:
 #   name: 'rag_flow'
 #   user: 'rag_flow'
