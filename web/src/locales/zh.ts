@@ -45,8 +45,7 @@ export default {
       register: '创建账户',
       continue: '继续',
       title: '开始构建您的智能助手',
-      description:
-        '免费注册以探索顶级 RAG 技术。 创建知识库和人工智能来增强您的业务',
+      description: '顶级 RAG 技术，创建知识库和人工智能来让宠物医疗更智能',
       review: '来自 500 多条评论',
     },
     header: {
