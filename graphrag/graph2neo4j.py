@@ -26,6 +26,11 @@ def do_graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type'])
         log.error("graph shouldn't be None")
         return
     
+    def quota_escape(v):
+        if isinstance(v, str):
+            return "'" + escape(v) + "'"
+        return v
+    
     with driver.session() as session:
         # 批量创建或融合节点
         node_queries = []
@@ -34,9 +39,9 @@ def do_graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type'])
             labels = [f':`{escape(attrs[attr])}`' for attr in nodeLabel_attr if attrs.get(attr)]
             label_str = "".join(labels) if labels else ''
             nodes_dict[label_str] += 1
-            node_properties = ', '.join([f"{k}: {"'" + escape(v) + "'"  if isinstance(v, str) else v}" for k, v in attrs.items()])
+            node_properties = ', '.join([f"{k}: {quota_escape(v)}" for k, v in attrs.items()])
             node_queries.append(f"""
-                MERGE (n{label_str} {{id: '{escape(node)}'}})
+                MERGE (n{label_str} {{id: {quota_escape(node)}}})
                 ON CREATE SET n += {{{node_properties}}}
                 ON MATCH SET n += {{{node_properties}}}
             """)
@@ -45,9 +50,9 @@ def do_graph2neo4j(graph: nx.Graph, nodeLabel_attr: List[str] = ['entity_type'])
         edge_queries = []
         for source, target, attrs in graph.edges(data=True):
             
-            edge_properties = ', '.join([f"{k}: '{escape(v)}'" for k, v in attrs.items()])
+            edge_properties = ', '.join([f"{k}: {quota_escape(v)}" for k, v in attrs.items()])
             edge_queries.append(f"""
-                MATCH (a {{id: '{escape(source)}'}}), (b {{id: '{escape(target)}'}})
+                MATCH (a {{id: {quota_escape(source)}}}), (b {{id: {quota_escape(target)}}})
                 MERGE (a)-[r:CONNECTED_TO]-(b)
                 ON CREATE SET r += {{{edge_properties}}}
                 ON MATCH SET r += {{{edge_properties}}}
