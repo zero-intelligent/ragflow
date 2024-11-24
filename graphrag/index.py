@@ -80,6 +80,15 @@ def graph2chunks(graph:nx.Graph, llm_bdl:LLMBundle,callback):
                 
     log.info(f"graph2chunks ignore rank==0 {len(ignore_nodes)}/{len(graph.nodes(data=True))} entities,{ignore_nodes}")
 
+    chunks.append(
+        {
+            "content_with_weight": json.dumps(nx.node_link_data(graph), ensure_ascii=False, indent=2),
+            "knowledge_graph_kwd": "graph"
+        })
+    return chunks
+
+def build_commnity2chunks(graph:nx.Graph, llm_bdl:LLMBundle,callback):
+    chunks = []
     callback(0.6, "Extracting community reports.")
     cr = CommunityReportsExtractor(llm_bdl)
     cr = cr(graph, callback=callback)
@@ -95,12 +104,6 @@ def graph2chunks(graph:nx.Graph, llm_bdl:LLMBundle,callback):
         }
         chunk["content_sm_ltks"] = rag_tokenizer.fine_grained_tokenize(chunk["content_ltks"])
         chunks.append(chunk)
-
-    chunks.append(
-        {
-            "content_with_weight": json.dumps(nx.node_link_data(graph), ensure_ascii=False, indent=2),
-            "knowledge_graph_kwd": "graph"
-        })
     return chunks
     
 def mind_map2chunk(mind_map: dict):
@@ -154,9 +157,10 @@ def build_knowlege_graph_chunks(tenant_id: str, filename:str,chunks: List[str], 
     graph2neo4j(graph)
     
     graph_chunks = graph2chunks(graph,llm_bdl,callback)
+    community_chunks = build_commnity2chunks(graph,llm_bdl,callback)
     mind_map_chunks = mind_map2chunk(mind_map_result)
     
     log.info(f"{filename} build_knowlege_graph_chunks completed.")
-    return graph_chunks + mind_map_chunks
+    return graph_chunks + community_chunks + mind_map_chunks
 
     
