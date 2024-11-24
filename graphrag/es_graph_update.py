@@ -86,8 +86,8 @@ def add_links(tenant, kb, links):
             link['properties']['source_id'] = default_attach_doc
             
     def add_edge(graph:nx.Graph,link):
-        start = link["start"]['properties']['id']
-        end = link["end"]['properties']['id']
+        start = link['start_node_id']
+        end = link['end_node_id']
         graph.add_edge(start,end,**link['properties'])  # 添加边信息
         return True
         
@@ -102,8 +102,8 @@ def update_links(tenant, kb, links):
         return
     
     def update_edge(graph:nx.Graph,link):
-        start = link["start"]['properties']['id']
-        end = link["end"]['properties']['id']
+        start = link['start_node_id']
+        end = link['end_node_id']
         graph[start][end].update(**link['properties'])  # 更新边信息
         return True
         
@@ -129,13 +129,14 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
                         {"term": {"doc_id": doc.id}},
                     ]
                 }
-            },
-            "_source": ["content_with_weight"],
-            "size": 1
+            }
         }
         resp = ELASTICSEARCH.search(query,search.index_name(tenant.id))
         if not (hits := resp.body['hits']['hits']):
-            raise Exception(f"search:{query} fail!")
+            raise Exception(f"search:{query} fail!no hits")
+        if len(hits) > 1:
+            log.warning(f"search:{query} fail! >1 hits")
+        
         graph_json_str = hits[0]['_source']['content_with_weight']
         graph_json = json.loads(graph_json_str)
         graph: nx.Graph = nx.node_link_graph(graph_json)
@@ -163,21 +164,20 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
     
     embd_mdl = LLMBundle(tenant.id, LLMType.EMBEDDING, tenant.embd_id, kb.language)
     
+    log.info(f"embedding {len(cks)} chunks ...")
     tk_count = task_executor.embedding(cks, embd_mdl,callback=callback)
 
     # TODO : 此处需要探讨下是否删除旧的 entity_chunks 和 graph_chunks? 是否忽略 mindmap (因为mindmap 知识总结了书籍的目录结构),是否忽略小区抽取？
     query = Q("term", kb_id=kb.id) & \
             Q("term", doc_id=doc.id) & \
             (Q("exists", field="name_kwd") | Q("term", knowledge_graph_kwd="graph"))
+    log.info(f"es deleteByQuery {query} ...")
+    ELASTICSEARCH.deleteByQuery(query, idxnm=search.index_name(tenant.id))
     
-    # ELASTICSEARCH.deleteByQuery(query, idxnm=search.index_name(tenant.id))
-    
+    log.info(f"es bulking {len(cks)} chunks ...")
     es_r = ELASTICSEARCH.bulk(cks, search.index_name(tenant))  
     if es_r:
         raise Exception(f"es bulk fail: {es_r}")
-    
-    chunk_count = len(set([c["_id"] for c in cks]))
-    DocumentService.increment_chunk_num(doc.id, kb.id, tk_count, chunk_count, 0)
     
 def get_doc(kb_id:str,source_id:str):
     match=re.match(r'^(.*?)(?=-graph|-\d)', source_id)
@@ -185,11 +185,13 @@ def get_doc(kb_id:str,source_id:str):
         raise ValueError(f"source_id {source_id} 需要'-graph'结尾或者'-数字'结尾!")
     
     doc_name = match.group(0)
-    doc_id = DocumentService.model.select(DocumentService.model.id) \
+    docs = DocumentService.model.select() \
         .where(DocumentService.model.name == doc_name, \
                DocumentService.model.kb_id==kb_id)
-    if not doc_id:
+    if not docs:
         raise ValueError(f"document:{doc_name} do not exists in kb:{kb_id}!")
-    return doc_id[0]
+    if len(docs) > 1:
+        raise ValueError(f"get {len(docs)} document by {doc_name} in kb:{kb_id}!")
+    return docs[0]
     
     

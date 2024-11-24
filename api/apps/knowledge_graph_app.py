@@ -173,9 +173,11 @@ def user_custom_modify():
     kb_id = request.args.get('kb_id')
     
     if not (tenant := TenantService.get_or_none(id=tenant_id)):
+        log.error(f'tenant:{tenant_id} invalid or not exists.')
         return get_json_result(data=False, retmsg=f'tenant:{tenant_id} invalid or not exists.',retcode=RetCode.ARGUMENT_ERROR)
     
     if not (kb := KnowledgebaseService.get_or_none(id=kb_id)):
+        log.error(f'kb_id:{kb_id} invalid or not exists.')
         return get_json_result(data=False, retmsg=f'kb_id:{kb_id} invalid or not exists.',retcode=RetCode.ARGUMENT_ERROR)
 
     req = request.json    
@@ -198,6 +200,7 @@ def user_custom_modify():
         if assignedRelationshipProperties := req.get('assignedRelationshipProperties'):
             update_links(tenant,kb,assignedRelationshipProperties)
     except Exception as ex:
+        log.error(f'{str(ex)}')
         return get_json_result(data=False, retmsg=f'{str(ex)}',retcode=RetCode.DATA_ERROR)
             
     return get_json_result(data=True)
