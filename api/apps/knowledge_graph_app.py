@@ -55,7 +55,7 @@ def trigger():
         '
         实际测试过程中，需要补充具体的修改信息，不能全是空值
     """
-    log.debug(f"args:{request.args},payload:{request.json}")
+    log.debug(f"trigger args:{request.args},payload:{request.json}")
     
     tenant_id = request.args.get('tenant_id')
     kb_id = request.args.get('kb_id')
@@ -100,3 +100,101 @@ def trigger():
     return get_json_result(data=True)
 
 
+@manager.route('/user_custom_modify', methods=['POST'])
+def user_custom_modify():
+    """
+    数据示例：
+    {
+        "createdNodes": [{
+            "labels": ["LIFESTYLE(生活习惯)"],
+            "properties": {
+                "entity_type": "LIFESTYLE (生活习惯)",
+                "rank": 6,
+                "description": "华法林钠禁用于妊娠期，因为可引起先天性畸形。",
+                "weight": 1,
+                "source_id": "01宠物疾病/【06】《Plumb's兽药手册（第5版）》.pdf.txt-50000",
+                "id": "PREGNANCY (妊娠)"
+            }
+        }],
+        "assignedNodeProperties": [{
+            "labels": ["LIFESTYLE(生活习惯)"],
+            "properties": {
+                "entity_type": "LIFESTYLE (生活习惯)",
+                "rank": 6,
+                "description": "华法林钠禁用于妊娠期，因为可引起先天性畸形。2",
+                "weight": 1,
+                "source_id": "01宠物疾病/【06】《Plumb's兽药手册（第5版）》.pdf.txt-50000",
+                "id": "PREGNANCY (妊娠)"
+            }
+        }],
+        "deletedNodes": [{
+            "labels": ["LIFESTYLE(生活习惯)"],
+            "properties": {
+                "entity_type": "LIFESTYLE (生活习惯)",
+                "source_id": "01宠物疾病/【06】《Plumb's兽药手册（第5版）》.pdf.txt-50000",
+                "id": "PREGNANCY (妊娠)"
+            }
+        }],
+        "createdRelationships": [{
+            "type": "CONNECTED_TO",
+            "start_node_id": "PREGNANCY (妊娠)",
+            "end_node_id": "PHENYLBUTAZONE (保泰松)",
+            "properties": {
+                "weight": "1.0",
+                "description": "尽管保泰松没有直接的致畸作用，但在啮齿动物中进行的研究表明该药具有降低胎仔数、增加新生儿死亡率和死胎率的不良作用。",
+                "source_id": "01宠物疾病/【06】《Plumb's兽药手册（第5版）》.pdf.txt-80000"
+            }
+        }],
+        "assignedRelationshipProperties": [{
+            "type": "CONNECTED_TO",
+            "start_node_id": "PREGNANCY (妊娠)",
+            "end_node_id": "PHENYLBUTAZONE (保泰松)",
+            "properties": {
+                "weight": "1.0",
+                "description": "尽管保泰松没有直接的致畸作用，但在啮齿动物中进行的研究表明该药具有降低胎仔数、增加新生儿死亡率和死胎率的不良作用。2",
+                "source_id": "01宠物疾病/【06】《Plumb's兽药手册（第5版）》.pdf.txt-80000"
+            }
+        }],
+        "deletedRelationships": [{
+            "type": "CONNECTED_TO",
+            "start_node_id": "PREGNANCY (妊娠)",
+            "end_node_id": "PHENYLBUTAZONE (保泰松)",
+            "properties": {
+                "source_id": "01宠物疾病/【06】《Plumb's兽药手册（第5版）》.pdf.txt-80000"
+            }
+        }]
+    }
+
+    
+    """
+    log.debug(f"user_custom_modify args:{request.args},payload:{request.json}")
+    
+    tenant_id = request.args.get('tenant_id')
+    kb_id = request.args.get('kb_id')
+    
+    if not (tenant := TenantService.get_or_none(id=tenant_id)):
+        return get_json_result(data=False, retmsg=f'tenant:{tenant_id} invalid or not exists.',retcode=RetCode.ARGUMENT_ERROR)
+    
+    if not (kb := KnowledgebaseService.get_or_none(id=kb_id)):
+        return get_json_result(data=False, retmsg=f'kb_id:{kb_id} invalid or not exists.',retcode=RetCode.ARGUMENT_ERROR)
+
+    req = request.json    
+    if createdNodes := req.get('createdNodes'):
+        create_nodes(tenant,kb,createdNodes)
+    
+    if deletedNodes := req.get('deletedNodes'):
+        delete_nodes(tenant,kb,deletedNodes)
+        
+    if createdRelationships := req.get('createdRelationships'):
+        add_links(tenant,kb,createdRelationships)
+    
+    if deletedRelationships := req.get('deletedRelationships'):
+        delete_links(tenant,kb,deletedRelationships)
+        
+    if assignedNodeProperties := req.get('assignedNodeProperties'):
+        update_nodes(tenant,kb,assignedNodeProperties)
+    
+    if assignedRelationshipProperties := req.get('assignedRelationshipProperties'):
+        update_links(tenant,kb,assignedRelationshipProperties)
+            
+    return get_json_result(data=True)

@@ -27,7 +27,10 @@ def create_nodes(tenant, kb, nodes):
 
     def add_node(graph:nx.Graph,node):
         node_id = node['properties']['id']
-        graph.add_node(node_id,**node) 
+        if not graph.has_node(node_id):
+            graph.add_node(node_id,**node['properties']) 
+            return True
+        return False
         
     process_graph(tenant,kb,nodes,add_node)
     
@@ -37,22 +40,22 @@ def update_nodes(tenant, kb, nodes):
         return
     def update_node(graph:nx.Graph,node):
         node_id = node['properties']['id']
-        graph.nodes[node_id].update(node)
+        graph.nodes[node_id].update(**node['properties'])
         
     process_graph(tenant,kb,nodes,update_node)
         
-def delete_nodes(tenant, kb, node_names):
+def delete_nodes(tenant, kb, nodes):
     """
     删除节点
     """
-    if not all ([tenant,kb,node_names]):
+    if not all ([tenant,kb,nodes]):
         return
     def delete_node(graph:nx.Graph,node):
         node_id = node['properties']['id']
         if graph.has_node(node_id):
             graph.remove_node(node_id)
         
-    process_graph(tenant,kb,node_names,delete_node)
+    process_graph(tenant,kb,nodes,delete_node)
 
 
 def delete_links(tenant, kb, links):
@@ -60,8 +63,8 @@ def delete_links(tenant, kb, links):
         return
     # assure source_id not empty
     def remove_edge(graph:nx.Graph,link):
-        start = link["start_id"]
-        end = link["end_id"]
+        start = link["start_node_id"]
+        end = link["end_node_id"]
         if graph.has_edge(start,end):
             graph.remove_edge(start,end)
         
@@ -95,7 +98,7 @@ def update_links(tenant, kb, links):
     def update_edge(graph:nx.Graph,link):
         start = link["start"]['properties']['id']
         end = link["end"]['properties']['id']
-        graph[start][end].update(link)  # 更新边信息
+        graph[start][end].update(**link['properties'])  # 更新边信息
         
     process_graph(tenant,kb,links,update_edge)  
 
