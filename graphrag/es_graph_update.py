@@ -135,8 +135,7 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
         }
         resp = ELASTICSEARCH.search(query,search.index_name(tenant.id))
         if not (hits := resp.body['hits']['hits']):
-            log.error(f"search:{query} fail!")
-            return
+            raise Exception(f"search:{query} fail!")
         graph_json_str = hits[0]['_source']['content_with_weight']
         graph_json = json.loads(graph_json_str)
         graph: nx.Graph = nx.node_link_graph(graph_json)
@@ -171,11 +170,11 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
             Q("term", doc_id=doc.id) & \
             (Q("exists", field="name_kwd") | Q("term", knowledge_graph_kwd="graph"))
     
-    ELASTICSEARCH.deleteByQuery(query, idxnm=search.index_name(tenant.id))
+    # ELASTICSEARCH.deleteByQuery(query, idxnm=search.index_name(tenant.id))
     
     es_r = ELASTICSEARCH.bulk(cks, search.index_name(tenant))  
-    if not es_r:
-        return
+    if es_r:
+        raise Exception(f"es bulk fail: {es_r}")
     
     chunk_count = len(set([c["_id"] for c in cks]))
     DocumentService.increment_chunk_num(doc.id, kb.id, tk_count, chunk_count, 0)

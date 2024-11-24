@@ -179,22 +179,25 @@ def user_custom_modify():
         return get_json_result(data=False, retmsg=f'kb_id:{kb_id} invalid or not exists.',retcode=RetCode.ARGUMENT_ERROR)
 
     req = request.json    
-    if createdNodes := req.get('createdNodes'):
-        create_nodes(tenant,kb,createdNodes)
-    
-    if deletedNodes := req.get('deletedNodes'):
-        delete_nodes(tenant,kb,deletedNodes)
+    try:
+        if createdNodes := req.get('createdNodes'):
+            create_nodes(tenant,kb,createdNodes)
         
-    if createdRelationships := req.get('createdRelationships'):
-        add_links(tenant,kb,createdRelationships)
-    
-    if deletedRelationships := req.get('deletedRelationships'):
-        delete_links(tenant,kb,deletedRelationships)
+        if deletedNodes := req.get('deletedNodes'):
+            delete_nodes(tenant,kb,deletedNodes)
+            
+        if createdRelationships := req.get('createdRelationships'):
+            add_links(tenant,kb,createdRelationships)
         
-    if assignedNodeProperties := req.get('assignedNodeProperties'):
-        update_nodes(tenant,kb,assignedNodeProperties)
-    
-    if assignedRelationshipProperties := req.get('assignedRelationshipProperties'):
-        update_links(tenant,kb,assignedRelationshipProperties)
+        if deletedRelationships := req.get('deletedRelationships'):
+            delete_links(tenant,kb,deletedRelationships)
+            
+        if assignedNodeProperties := req.get('assignedNodeProperties'):
+            update_nodes(tenant,kb,assignedNodeProperties)
+        
+        if assignedRelationshipProperties := req.get('assignedRelationshipProperties'):
+            update_links(tenant,kb,assignedRelationshipProperties)
+    except Exception as ex:
+        return get_json_result(data=False, retmsg=f'{str(ex)}',retcode=RetCode.DATA_ERROR)
             
     return get_json_result(data=True)

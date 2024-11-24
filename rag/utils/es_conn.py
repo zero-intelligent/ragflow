@@ -122,15 +122,15 @@ class ESConnection:
             try:
                 if elasticsearch.__version__[0] < 8:
                     r = self.es.bulk(
-                        index=(
-                            self.idxnm if not idx_nm else idx_nm),
+                        index=(self.idxnm if not idx_nm else idx_nm),
                         body=acts,
                         refresh=False,
                         timeout="600s")
                 else:
-                    r = self.es.bulk(index=(self.idxnm if not idx_nm else
-                                            idx_nm), operations=acts,
-                                     refresh=False, timeout="600s")
+                    r = self.es.bulk(index=(self.idxnm if not idx_nm else idx_nm), 
+                                     operations=acts,
+                                     refresh=False, 
+                                     timeout="600s")
                 if re.search(r"False", str(r["errors"]), re.IGNORECASE):
                     return res
 
