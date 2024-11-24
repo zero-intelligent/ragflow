@@ -25,7 +25,7 @@ def readExcel(file_path):
 
 
 def getRef(cid):
-    url = 'http://8.140.49.13:18080/v1/conversation/get'
+    url = 'http://39.101.69.172:18080/v1/conversation/get'
     params = {"conversation_id": cid}
 
     # 自定义请求头
@@ -50,7 +50,7 @@ def getRef(cid):
 
 
 def genConversationId():
-    url = 'http://8.140.49.13:18080/v1/conversation/set'
+    url = 'http://39.101.69.172:18080/v1/conversation/set'
     payload = {"dialog_id": DIALOG_ID, "name": "你好",
                "message": [{"role": "assistant", "content": "你好"}]}
 
@@ -72,7 +72,7 @@ def genConversationId():
 
 
 def req(questionText: str, cId):
-    url = 'http://8.140.49.13:18080/v1/conversation/completion'
+    url = 'http://39.101.69.172:18080/v1/conversation/completion'
 
     payload = {
         "conversation_id": f"{cId}",

@@ -27,7 +27,7 @@ def trigger():
             'neo4j',
             'sendAllChangesToApi',
             "CALL apoc.load.jsonParams(
-                'http://8.140.49.13:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006',  // 外部 API 的 URL
+                'http://39.101.69.172:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006',  // 外部 API 的 URL
                 {method: 'POST'},  // 使用 POST 方法
                 apoc.convert.toJson({
                     createdNodes: $createdNodes,
@@ -43,7 +43,7 @@ def trigger():
         )
     
         测试脚本如下：
-        curl -X POST "http://8.140.49.13:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006" -H 'Content-Type: application/json' -d'
+        curl -X POST "http://39.101.69.172:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006" -H 'Content-Type: application/json' -d'
         {
             "createdNodes": [],
             "deletedNodes": [],
