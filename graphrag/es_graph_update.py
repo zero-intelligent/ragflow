@@ -41,6 +41,7 @@ def update_nodes(tenant, kb, nodes):
     def update_node(graph:nx.Graph,node):
         node_id = node['properties']['id']
         graph.nodes[node_id].update(**node['properties'])
+        return True
         
     process_graph(tenant,kb,nodes,update_node)
         
@@ -54,6 +55,8 @@ def delete_nodes(tenant, kb, nodes):
         node_id = node['properties']['id']
         if graph.has_node(node_id):
             graph.remove_node(node_id)
+            return True
+        return False
         
     process_graph(tenant,kb,nodes,delete_node)
 
@@ -67,6 +70,8 @@ def delete_links(tenant, kb, links):
         end = link["end_node_id"]
         if graph.has_edge(start,end):
             graph.remove_edge(start,end)
+            return True
+        return False
         
     process_graph(tenant,kb,links,remove_edge)
     
@@ -84,6 +89,7 @@ def add_links(tenant, kb, links):
         start = link["start"]['properties']['id']
         end = link["end"]['properties']['id']
         graph.add_edge(start,end,**link['properties'])  # 添加边信息
+        return True
         
     process_graph(tenant,kb,links,add_edge)
   
@@ -99,6 +105,7 @@ def update_links(tenant, kb, links):
         start = link["start"]['properties']['id']
         end = link["end"]['properties']['id']
         graph[start][end].update(**link['properties'])  # 更新边信息
+        return True
         
     process_graph(tenant,kb,links,update_edge)  
 
@@ -134,10 +141,8 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
         graph_json = json.loads(graph_json_str)
         graph: nx.Graph = nx.node_link_graph(graph_json)
         
-        for link in doc_links:
-            process_fun(graph,link)
-    
-        update_graph(tenant,kb,doc,graph)
+        if any([link for link in doc_links if process_fun(graph,link)]):
+            update_graph(tenant,kb,doc,graph)
         
 def update_graph(tenant,kb,doc,graph:nx.Graph):
     """
