@@ -7,8 +7,7 @@ from api.db import LLMType
 from api.db.services.document_service import DocumentService
 from api.db.services.llm_service import LLMBundle
 from api.db.services.document_service import DocumentService
-from graphrag.index import graph2chunks
-from rag.nlp import search
+from rag.nlp import rag_tokenizer, search
 from rag.svr import task_executor
 from rag.utils.es_conn import ELASTICSEARCH
 from loguru import logger as log
@@ -29,8 +28,10 @@ def create_nodes(tenant, kb, nodes):
         node_id = node['properties']['id']
         if not graph.has_node(node_id):
             graph.add_node(node_id,**node['properties']) 
-            return True
-        return False
+            return {
+                "added":node_id,
+            }
+        return {}
         
     process_graph(tenant,kb,nodes,add_node)
     
@@ -41,7 +42,10 @@ def update_nodes(tenant, kb, nodes):
     def update_node(graph:nx.Graph,node):
         node_id = node['properties']['id']
         graph.nodes[node_id].update(**node['properties'])
-        return True
+        return {
+                "added":node_id,
+                "deleted":node_id,
+            }
         
     process_graph(tenant,kb,nodes,update_node)
         
@@ -55,8 +59,10 @@ def delete_nodes(tenant, kb, nodes):
         node_id = node['properties']['id']
         if graph.has_node(node_id):
             graph.remove_node(node_id)
-            return True
-        return False
+            return {
+                "deleted":node_id,
+            }
+        return {}
         
     process_graph(tenant,kb,nodes,delete_node)
 
@@ -104,7 +110,9 @@ def update_links(tenant, kb, links):
     def update_edge(graph:nx.Graph,link):
         start = link['start_node_id']
         end = link['end_node_id']
-        graph[start][end].update(**link['properties'])  # 更新边信息
+        if graph.has_edge(start,end):
+            graph[start][end].update(**link['properties'])  # 更新边信息
+            return False
         return True
         
     process_graph(tenant,kb,links,update_edge)  
@@ -141,10 +149,48 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
         graph_json = json.loads(graph_json_str)
         graph: nx.Graph = nx.node_link_graph(graph_json)
         
-        if any([link for link in doc_links if process_fun(graph,link)]):
-            update_graph(tenant,kb,doc,graph)
+        added = []
+        deleted = []
+        is_graph_dirty = False
+        for link in doc_links:
+            r = process_fun(graph,link)
+            if r:
+                is_graph_dirty = True
+                if isinstance(r,dict):
+                    if r.get('added'):
+                        added.append(r['added'])
+                    if r.get('deleted'):
+                        deleted.append(r['deleted'])
+                
+        if is_graph_dirty:
+            update_graph(tenant,kb,doc,graph,added,deleted)
         
-def update_graph(tenant,kb,doc,graph:nx.Graph):
+    
+def graph_nodes2chunks(graph:nx.Graph, llm_bdl:LLMBundle,added_node_ids):
+    chunks = []
+    for n in added_node_ids:
+        attr = graph.nodes[n]
+        chunk = {
+            "name_kwd": n,
+            "important_kwd": [n],
+            "title_tks": rag_tokenizer.tokenize(n),
+            "content_with_weight": json.dumps({"name": n, **attr}, ensure_ascii=False),
+            "content_ltks": rag_tokenizer.tokenize(attr["description"]),
+            "knowledge_graph_kwd": "entity",
+            "rank_int": attr["rank"],
+            "weight_int": attr["weight"]
+        }
+        chunk["content_sm_ltks"] = rag_tokenizer.fine_grained_tokenize(chunk["content_ltks"])
+        chunks.append(chunk)
+
+    chunks.append(
+        {
+            "content_with_weight": json.dumps(nx.node_link_data(graph), ensure_ascii=False, indent=2),
+            "knowledge_graph_kwd": "graph"
+        })
+    return chunks
+
+def update_graph(tenant,kb,doc,graph:nx.Graph,added_ids:list[str],deleted_ids:list[str]):
     """
         当内存图更新时，需要继续更新：
         1. 图对应的 chunks (包含图的节点chunk,图本身chunk,图的小区chunks,图的mindmap chunk)
@@ -158,7 +204,7 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
     def callback(*args,**kwargs):  # 空的callback, 以后按需修改
         pass
     
-    graph_chunks = graph2chunks(graph,llm_bdl,callback)
+    graph_chunks = graph_nodes2chunks(graph,llm_bdl,added_ids)
         
     cks = task_executor.chuks2docs(kb.id,doc.id,graph_chunks)
     
@@ -170,7 +216,7 @@ def update_graph(tenant,kb,doc,graph:nx.Graph):
     # TODO : 此处需要探讨下是否删除旧的 entity_chunks 和 graph_chunks? 是否忽略 mindmap (因为mindmap 知识总结了书籍的目录结构),是否忽略小区抽取？
     query = Q("term", kb_id=kb.id) & \
             Q("term", doc_id=doc.id) & \
-            (Q("exists", field="name_kwd") | Q("term", knowledge_graph_kwd="graph"))
+            (Q("term", knowledge_graph_kwd="graph") | Q("term", knowledge_graph_kwd="entity") & (Q("term", name_kwd=deleted_ids)))
     log.info(f"es deleteByQuery {query} ...")
     ELASTICSEARCH.deleteByQuery(query, idxnm=search.index_name(tenant.id))
     
