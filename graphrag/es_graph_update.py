@@ -26,12 +26,12 @@ def create_nodes(tenant, kb, nodes):
 
     def add_node(graph:nx.Graph,node):
         node_id = node['properties']['id']
-        if not graph.has_node(node_id):
-            graph.add_node(node_id,**node['properties']) 
-            return {
-                "added":node_id,
-            }
-        return {}
+        if graph.has_node(node_id):
+            raise ValueError(f"node_id:{node_id} exists, add failed!")
+        graph.add_node(node_id,**node['properties']) 
+        return {
+            "added":node_id,
+        }
         
     process_graph(tenant,kb,nodes,add_node)
     
