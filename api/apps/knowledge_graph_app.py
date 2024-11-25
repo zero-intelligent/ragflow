@@ -99,6 +99,9 @@ def trigger():
         
     return get_json_result(data=True)
 
+        
+DEFAULT_TENANT_ID='7d19a176807611efb0f80242ac120006'
+DEFAULT_KB_ID='fb7c4312973b11ef88ed0242ac120006'
 
 @manager.route('/user_custom_modify', methods=['POST'])
 def user_custom_modify():
@@ -169,9 +172,9 @@ def user_custom_modify():
     """
     log.debug(f"user_custom_modify args:{request.args},payload:{request.json}")
     
-    tenant_id = request.args.get('tenant_id')
-    kb_id = request.args.get('kb_id')
-    
+    tenant_id = request.args.get('tenant_id') or DEFAULT_TENANT_ID
+    kb_id = request.args.get('kb_id') or DEFAULT_KB_ID
+        
     if not (tenant := TenantService.get_or_none(id=tenant_id)):
         log.error(f'tenant:{tenant_id} invalid or not exists.')
         return get_json_result(data=False, retmsg=f'tenant:{tenant_id} invalid or not exists.',retcode=RetCode.ARGUMENT_ERROR)
