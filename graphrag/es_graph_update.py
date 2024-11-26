@@ -59,10 +59,7 @@ def delete_nodes(tenant, kb, nodes):
         node_id = node['properties']['id']
         if graph.has_node(node_id):
             graph.remove_node(node_id)
-            return {
-                "deleted":node_id,
-            }
-        return {}
+        return {"deleted":node_id}
         
     process_graph(tenant,kb,nodes,delete_node)
 
@@ -143,7 +140,8 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
         if not (hits := resp.body['hits']['hits']):
             raise Exception(f"search:{query} fail!no hits")
         if len(hits) > 1:
-            log.warning(f"search:{query} fail! >1 hits")
+            hits.sort(key=lambda i:i['_source']['create_timestamp_flt'],reverse=True)
+            log.warning(f"search:{query} fail! {len(hits)}>1 hits")
         
         graph_json_str = hits[0]['_source']['content_with_weight']
         graph_json = json.loads(graph_json_str)
@@ -151,19 +149,16 @@ def process_graph(tenant, kb, nodes_or_links,process_fun):
         
         added = []
         deleted = []
-        is_graph_dirty = False
         for link in doc_links:
             r = process_fun(graph,link)
-            if r:
-                is_graph_dirty = True
-                if isinstance(r,dict):
-                    if r.get('added'):
-                        added.append(r['added'])
-                    if r.get('deleted'):
-                        deleted.append(r['deleted'])
+            if isinstance(r,dict):
+                if r.get('added'):
+                    added.append(r['added'])
+                if r.get('deleted'):
+                    deleted.append(r['deleted'])
                 
-        if is_graph_dirty:
-            update_graph(tenant,kb,doc,graph,added,deleted)
+                
+        update_graph(tenant,kb,doc,graph,added,deleted)
         
     
 def graph_nodes2chunks(graph:nx.Graph, llm_bdl:LLMBundle,added_node_ids):
@@ -215,9 +210,8 @@ def update_graph(tenant,kb,doc,graph:nx.Graph,added_ids:list[str],deleted_ids:li
     tk_count = task_executor.embedding(cks, embd_mdl,callback=callback)
 
     # TODO : 此处需要探讨下是否删除旧的 entity_chunks 和 graph_chunks? 是否忽略 mindmap (因为mindmap 知识总结了书籍的目录结构),是否忽略小区抽取？
-    query = Q("term", kb_id=kb.id) & \
-            Q("term", doc_id=doc.id) & \
-            (Q("term", knowledge_graph_kwd="graph") | Q("term", knowledge_graph_kwd="entity") & (Q("term", name_kwd=deleted_ids)))
+    query = Q("term", kb_id=kb.id) & Q("term", doc_id=doc.id) & Q("term", knowledge_graph_kwd="graph") | \
+            Q("term", kb_id=kb.id) & Q("term", doc_id=doc.id) & Q("term", knowledge_graph_kwd="entity") & Q("terms", name_kwd=deleted_ids)
     log.info(f"es deleteByQuery {query} ...")
     ELASTICSEARCH.deleteByQuery(query, idxnm=search.index_name(tenant.id))
     
