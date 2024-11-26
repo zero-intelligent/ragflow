@@ -173,6 +173,7 @@ def graph_nodes2chunks(graph:nx.Graph, llm_bdl:LLMBundle,added_node_ids):
         chunk = {
             "name_kwd": n,
             "important_kwd": [n],
+            "docnm_kwd": attr['source_id'],
             "title_tks": rag_tokenizer.tokenize(n),
             "content_with_weight": json.dumps({"name": n, **attr}, ensure_ascii=False),
             "content_ltks": rag_tokenizer.tokenize(attr["description"]),
