@@ -64,11 +64,14 @@ class CommonService:
     @classmethod
     @DB.connection_context()
     def save(cls, **kwargs):
-        # if "id" not in kwargs:
-        #    kwargs["id"] = get_uuid()
-        sample_obj = cls.model(**kwargs).save(force_insert=False)
-        return sample_obj
-
+        # 先执行insert,如果冲突就update
+        try:
+            query = cls.model.replace(**kwargs)
+            query.execute()
+            return True
+        except Exception:
+            return False
+    
     @classmethod
     @DB.connection_context()
     def insert(cls, **kwargs):
