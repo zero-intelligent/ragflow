@@ -18,6 +18,7 @@ import json
 from flask import request
 from flask_login import login_required, current_user
 from api.db.services.llm_service import LLMFactoriesService, TenantLLMService, LLMService
+from api.db.services.user_service import UserTenantService
 from api.settings import LIGHTEN
 from api.utils.api_utils import server_error_response, get_data_error_result, validate_request
 from api.db import StatusEnum, LLMType
@@ -103,15 +104,19 @@ def set_api_key():
     for n in ["model_type", "llm_name"]:
         if n in req:
             llm_config[n] = req[n]
-
+            
+    tenant_id = UserTenantService.get_tenant_id(current_user.id)
+    if not tenant_id:
+        return get_data_error_result(retmsg="Tenant not found!")
+        
     for llm in LLMService.query(fid=factory):
         if not TenantLLMService.filter_update(
-                [TenantLLM.tenant_id == current_user.id,
+                [TenantLLM.tenant_id == tenant_id,
                  TenantLLM.llm_factory == factory,
                  TenantLLM.llm_name == llm.llm_name],
                 llm_config):
             TenantLLMService.save(
-                tenant_id=current_user.id,
+                tenant_id=tenant_id,
                 llm_factory=factory,
                 llm_name=llm.llm_name,
                 model_type=llm.model_type,
@@ -323,7 +328,11 @@ def list_app():
     weighted = ["Youdao","FastEmbed", "BAAI"] if LIGHTEN else []
     model_type = request.args.get("model_type")
     try:
-        objs = TenantLLMService.query(tenant_id=current_user.id)
+        tenant_id = UserTenantService.get_tenant_id(current_user.id)
+        if not tenant_id:
+            return get_data_error_result(retmsg="Tenant not found!")
+        
+        objs = TenantLLMService.query(tenant_id=tenant_id)
         facts = set([o.to_dict()["llm_factory"] for o in objs if o.api_key])
         llms = LLMService.get_all()
         llms = [m.to_dict()

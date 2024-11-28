@@ -121,7 +121,10 @@ def rm():
 def list_convsersation():
     dialog_id = request.args["dialog_id"]
     try:
-        if not DialogService.query(tenant_id=current_user.id, id=dialog_id):
+        tenant_id = UserTenantService.get_tenant_id(current_user.id)
+        if not tenant_id:
+            return get_data_error_result(retmsg="Tenant not found!")
+        if not DialogService.query(tenant_id=tenant_id, id=dialog_id):
             return get_json_result(
                 data=False, retmsg=f'Only owner of dialog authorized for this operation.',
                 retcode=RetCode.OPERATING_ERROR)

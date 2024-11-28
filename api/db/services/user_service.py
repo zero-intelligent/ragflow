@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from datetime import datetime
+from types import SimpleNamespace
 
 import peewee
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -167,3 +168,21 @@ class UserTenantService(CommonService):
                     .join(User, on=((cls.model.user_id == User.id) & (cls.model.status == StatusEnum.VALID.value)))
                     .where(cls.model.tenant_id == tenant_id)
                     .dicts())
+        
+    @classmethod
+    @DB.connection_context()
+    def get_by_user_id(cls, user_id):
+        query_result = cls.model.select(cls.model.tenant_id,Tenant.llm_id) \
+                    .where(cls.model.user_id == user_id) \
+                    .join(Tenant, on=(cls.model.tenant_id == Tenant.id))
+        return [SimpleNamespace(**r) for r in query_result.dicts()]
+    
+    @classmethod
+    @DB.connection_context()
+    def get_tenant_id(cls, user_id):
+        query_result = cls.model.select(cls.model.tenant_id) \
+                    .where(cls.model.user_id == user_id) \
+                    .join(Tenant, on=(cls.model.tenant_id == Tenant.id))
+        for r in query_result:
+            return r.tenant_id
+        return None

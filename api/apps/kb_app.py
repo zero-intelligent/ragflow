@@ -39,10 +39,15 @@ from rag.utils.es_conn import ELASTICSEARCH
 def create():
     req = request.json
     req["name"] = req["name"].strip()
+    
+    tenant_id = UserTenantService.get_tenant_id(current_user.id)
+    if not tenant_id:
+        return get_data_error_result(retmsg="Tenant not found!")
+    
     req["name"] = duplicate_name(
         KnowledgebaseService.query,
         name=req["name"],
-        tenant_id=current_user.id,
+        tenant_id=tenant_id,
         status=StatusEnum.VALID.value)
     try:
         req["id"] = get_uuid()
@@ -76,10 +81,13 @@ def update():
             return get_data_error_result(
                 retmsg="Can't find this knowledgebase!")
 
+        tenant_id = UserTenantService.get_tenant_id(current_user.id)
+        if not tenant_id:
+            return get_data_error_result(retmsg="Tenant not found!")
+        
         if req["name"].lower() != kb.name.lower() \
-                and len(KnowledgebaseService.query(name=req["name"], tenant_id=current_user.id, status=StatusEnum.VALID.value)) > 1:
-            return get_data_error_result(
-                retmsg="Duplicated knowledgebase name.")
+                and len(KnowledgebaseService.query(name=req["name"], tenant_id=tenant_id, status=StatusEnum.VALID.value)) > 1:
+            return get_data_error_result(retmsg="Duplicated knowledgebase name.")
 
         del req["kb_id"]
         if not KnowledgebaseService.update_by_id(kb.id, req):

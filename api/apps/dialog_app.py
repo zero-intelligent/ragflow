@@ -71,9 +71,10 @@ def set_dialog():
                 retmsg="Parameter '{}' is not used".format(p["key"]))
 
     try:
-        e, tenant = TenantService.get_by_id(current_user.id)
-        if not e:
+        tenants = UserTenantService.get_by_user_id(current_user.id)
+        if not tenants:
             return get_data_error_result(retmsg="Tenant not found!")
+        tenant = tenants[0]
         llm_id = req.get("llm_id", tenant.llm_id)
         if not dialog_id:
             if not req.get("kb_ids"):
@@ -81,7 +82,7 @@ def set_dialog():
                     retmsg="Fail! Please select knowledgebase!")
             dia = {
                 "id": get_uuid(),
-                "tenant_id": current_user.id,
+                "tenant_id": tenant.tenant_id,
                 "name": name,
                 "kb_ids": req["kb_ids"],
                 "description": description,
@@ -147,8 +148,12 @@ def get_kb_names(kb_ids):
 @login_required
 def list_dialogs():
     try:
+        tenant_id = UserTenantService.get_tenant_id(current_user.id)
+        if not tenant_id:
+            return get_data_error_result(retmsg="Tenant not found!")
+        
         diags = DialogService.query(
-            tenant_id=current_user.id,
+            tenant_id=tenant_id,
             status=StatusEnum.VALID.value,
             reverse=True,
             order_by=DialogService.model.create_time)

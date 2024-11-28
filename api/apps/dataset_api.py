@@ -33,10 +33,10 @@ from api.db.services.document_service import DocumentService
 from api.db.services.file2document_service import File2DocumentService
 from api.db.services.file_service import FileService
 from api.db.services.knowledgebase_service import KnowledgebaseService
-from api.db.services.user_service import TenantService
+from api.db.services.user_service import TenantService, UserTenantService
 from api.settings import RetCode
 from api.utils import get_uuid
-from api.utils.api_utils import construct_json_result, construct_error_response
+from api.utils.api_utils import construct_json_result, construct_error_response, get_data_error_result
 from api.utils.api_utils import construct_result, validate_request
 from api.utils.file_utils import filename_type, thumbnail
 from rag.app import book, laws, manual, naive, one, paper, presentation, qa, resume, table, picture, audio, email
@@ -216,8 +216,11 @@ def update_dataset(dataset_id):
         if "name" in req:
             name = req["name"].strip()
             # check whether there is duplicate name
+            tenant_id = UserTenantService.get_tenant_id(current_user.id)
+            if not tenant_id:
+                return get_data_error_result(retmsg="Tenant not found!")
             if name.lower() != dataset.name.lower() \
-                    and len(KnowledgebaseService.query(name=name, tenant_id=current_user.id,
+                    and len(KnowledgebaseService.query(name=name, tenant_id=tenant_id,
                                                        status=StatusEnum.VALID.value)) > 1:
                 return construct_json_result(code=RetCode.DATA_ERROR,
                                              message=f"The name: {name.lower()} is already used by other "
