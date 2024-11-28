@@ -19,6 +19,7 @@ import peewee
 
 from api.db.db_models import DB
 from api.utils import datetime_format, current_timestamp, get_uuid
+from loguru import logger as log
 
 
 class CommonService:
@@ -69,7 +70,8 @@ class CommonService:
             query = cls.model.replace(**kwargs)
             query.execute()
             return True
-        except Exception:
+        except Exception as ex:
+            log.error(f"db save error:{str(ex)}")
             return False
     
     @classmethod
