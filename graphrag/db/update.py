@@ -1,10 +1,12 @@
 
 
+from concurrent.futures import ThreadPoolExecutor
+from functools import cache
 from itertools import chain
 import pandas as pd
 from api.db import LLMType
 from api.db.services.llm_service import LLMBundle
-from graphrag.db import driver,query
+from graphrag.db import driver, execute_update,query
 from loguru import logger as log
 
 from graphrag.utils import escape, get_filepaths_from_source_id
@@ -222,11 +224,81 @@ def export_duplicate_nodes(export_csv_file="duplicate_nodes.csv"):
         # Export DataFrame to CSV
         df.to_csv(export_csv_file, index=False)
 
-        
-def merge_duplicate_nodes(tenant_id:str = "7d19a176807611efb0f80242ac120006",
-                          llm_id:str="qwen-plus"):
+@cache
+def get_llm(tenant_id:str = "7d19a176807611efb0f80242ac120006",
+        llm_id:str="qwen-plus"):
+    return LLMBundle(tenant_id, LLMType.CHAT, llm_id)
+
+def merge_group_of_nodes(node_id:str,
+                        nodes_dataframe:pd.DataFrame
+                        ):
+    llm_bdl = get_llm()
+    log.info(f"processing {node_id}")
+    # 计算每个组的 entity_type count
+    entity_type_grouped = nodes_dataframe.groupby('entity_type').size().reset_index(name='count')
+    # 找到 count 最大的 entity_type
+    entity_type:str = entity_type_grouped['entity_type'][entity_type_grouped['count'].idxmax()]
     
-    llm_bdl = LLMBundle(tenant_id, LLMType.CHAT, llm_id)
+    #找到全部的 entiti_type 去重
+    labels:list = nodes_dataframe['entity_type'].unique().tolist()
+    
+    #找到全部的 description
+    description:str = '\n'.join(nodes_dataframe['description'])
+    prompt = f"以下是关于{node_id}的描述信息，你是宠物医生，将以下内容润色，去重，综合成有序，容易理解的语句:{description}"
+    description_summary = llm_bdl.chat(prompt, [{"role": "user", "content": "输出:"}], {"temperature": 0.5})
+    
+    
+    #找到全部的 source_id,去重
+    file_names = chain(*[get_filepaths_from_source_id(sid) for sid in nodes_dataframe['source_id']])
+    source_id:str = '\n'.join(set(file_names))
+    
+    keep_node_id = nodes_dataframe[nodes_dataframe['entity_type'] == entity_type]["id"].iloc[0]
+    
+    labels_str = ' '.join([f':`{la}`' for la in labels])
+    
+    #更新保留节点，融合进其他节点的信息
+    execute_update(f"""
+        match(n) 
+        where id(n)={keep_node_id}
+        set n{labels_str},
+        n.description='{escape(description_summary)}',
+        n.source_id='{escape(source_id)}'
+    """)
+    
+    remove_node_ids = ','.join([str(id) for id in nodes_dataframe['id'] if id != keep_node_id])
+
+        #删除其他节点，并将关系（入和出方向）转移到保留节点
+    execute_update(f"""
+        MATCH (node)
+        where id(node) in [{remove_node_ids}]
+        MATCH(keep_node)
+        where id(keep_node)={keep_node_id}
+        WITH node,keep_node
+        // Transfer outgoing relationships from the duplicate nodes to the "keep" node
+        MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
+        MERGE (keep_node)-[outgoing_rel2:CONNECTED_TO]->(target) // create the same outgoing relationship for the "keep" node
+
+        WITH node,keep_node
+        // Transfer incoming relationships from the duplicate nodes to the "keep" node
+        MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
+        MERGE (source)-[incoming_rel2:CONNECTED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
+
+        // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
+        WITH node
+        DETACH DELETE node
+    """)
+    #删除其他节点，并将关系（入和出方向）转移到保留节点
+    execute_update(f"""
+        MATCH (node)
+        where id(node) in [{remove_node_ids}]
+        MATCH(keep_node)
+        where id(keep_node)={keep_node_id}
+        // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
+        WITH node
+        DETACH DELETE node
+    """)
+        
+def merge_duplicate_nodes():
     
     cql = """
     MATCH (n)
@@ -240,84 +312,11 @@ def merge_duplicate_nodes(tenant_id:str = "7d19a176807611efb0f80242ac120006",
         results = session.run(cql)
         df = pd.DataFrame(results.data())
         grouped = df.groupby('name')
+        exe = ThreadPoolExecutor(max_workers=10)
         for name,grouped_data in grouped:
-            log.info(f"processing {name}")
-            # 计算每个组的 entity_type count
-            entity_type_grouped = grouped_data.groupby('entity_type').size().reset_index(name='count')
-            # 找到 count 最大的 entity_type
-            entity_type:str = entity_type_grouped['entity_type'][entity_type_grouped['count'].idxmax()]
+            exe.submit(merge_group_of_nodes,name,grouped_data)
+        exe.shutdown(wait=True)
             
-            #找到全部的 entiti_type 去重
-            labels:list = grouped_data['entity_type'].unique().tolist()
-            
-            #找到全部的 description
-            description:str = '\n'.join(grouped_data['description'])
-            prompt = f"以下是关于{name}的描述信息，你是宠物医生，将以下内容润色，去重，综合成有序，容易理解的语句:{description}"
-            description_summary = llm_bdl.chat(prompt, [{"role": "user", "content": "输出:"}], {"temperature": 0.5})
-            
-            
-            #找到全部的 source_id,去重
-            file_names = chain(*[get_filepaths_from_source_id(sid) for sid in grouped_data['source_id']])
-            source_id:str = '\n'.join(set(file_names))
-            
-            keep_node_id = grouped_data[grouped_data['entity_type'] == entity_type]["id"].iloc[0]
-            
-            labels_str = ' '.join([f':`{la}`' for la in labels])
-            
-            #更新保留节点，融合进其他节点的信息
-            update_cql = f"""
-                match(n) 
-                where id(n)={keep_node_id}
-                set n{labels_str},
-                n.description='{escape(description_summary)}',
-                n.source_id='{escape(source_id)}'
-            """
-            results = session.run(update_cql)
-            summary = results.consume()
-            log.info(f"{summary.counters.properties_set} properties_set,{summary.counters.labels_added } labels_added,{summary.counters.labels_removed} labels_removed.")
-            
-            remove_node_ids = ','.join([str(id) for id in grouped_data['id'] if id != keep_node_id])
-
-             #删除其他节点，并将关系（入和出方向）转移到保留节点
-            transfer_cql:str = f"""
-                    MATCH (node)
-                    where id(node) in [{remove_node_ids}]
-                    MATCH(keep_node)
-                    where id(keep_node)={keep_node_id}
-                    WITH node,keep_node
-                    // Transfer outgoing relationships from the duplicate nodes to the "keep" node
-                    MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
-                    MERGE (keep_node)-[outgoing_rel2:CONNECTED_TO]->(target) // create the same outgoing relationship for the "keep" node
-
-                    WITH node,keep_node
-                    // Transfer incoming relationships from the duplicate nodes to the "keep" node
-                    MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
-                    MERGE (source)-[incoming_rel2:CONNECTED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
-
-                    // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
-                    WITH node
-                    DETACH DELETE node
-                """
-                
-            results = session.run(transfer_cql)
-            summary = results.consume()
-            log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
-          
-            #删除其他节点，并将关系（入和出方向）转移到保留节点
-            transfer_cql:str = f"""
-                    MATCH (node)
-                    where id(node) in [{remove_node_ids}]
-                    MATCH(keep_node)
-                    where id(keep_node)={keep_node_id}
-                    // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
-                    WITH node
-                    DETACH DELETE node
-                """
-            results = session.run(transfer_cql)
-            summary = results.consume()
-            log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
-          
-             
     
 def main():
     merge_duplicate_nodes()
