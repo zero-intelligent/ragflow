@@ -136,3 +136,19 @@ def file_cache(func):
             log.debug(f"{func.__module__}{func.__name__} result dump to file {filepath}.")
             return ret
     return decorator
+
+
+def get_filepaths_from_source_id(multi_source_id:str):
+    if not multi_source_id:
+        return ""
+    results = []
+    source_id_list = re.split(r'[;\n]+', multi_source_id)
+    for source_id in source_id_list:
+        if source_id and source_id.strip():
+            match=re.match(r'^(.*?)(?=-graph|-\d)', source_id)
+            if match:
+                results.append(match.group(0))
+    return results
+                
+            
+

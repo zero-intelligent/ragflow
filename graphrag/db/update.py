@@ -1,7 +1,13 @@
 
 
+from itertools import chain
+import pandas as pd
+from api.db import LLMType
+from api.db.services.llm_service import LLMBundle
 from graphrag.db import driver,query
 from loguru import logger as log
+
+from graphrag.utils import escape, get_filepaths_from_source_id
 
 
 #只保留数组中每行的第一个实体，其他实体向第一个实体对齐
@@ -115,142 +121,208 @@ def update_index():
                 summary = entity_type_index_result.consume()
                 log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
             
-
-
-def add_trigger():
-    add_trigger_cql = """
-    :use system;
-    CALL apoc.trigger.install(
-        'neo4j',
-        'sendAllChangesToApi_afterAsync',
-        "CALL apoc.load.jsonParams(
-            'http://39.101.69.172:9381/v1/knowledge_graph/trigger?tenant_id=7d19a176807611efb0f80242ac120006&kb_id=fb7c4312973b11ef88ed0242ac120006',  // 外部 API 的 URL
-            {method: 'POST'},  // 使用 POST 方法
-            apoc.convert.toJson({
-                createdNodes: $createdNodes,
-                deletedNodes: $deletedNodes,
-                createdRelationships: $createdRelationships,
-                deletedRelationships: $deletedRelationships,
-                removedLabels: $removedLabels,
-                assignedNodeProperties: $assignedNodeProperties,
-                assignedRelationshipProperties: $assignedRelationshipProperties
-            })
-        ) YIELD value
-        RETURN value",
-        {phase: 'afterAsync'}
-    );
-    
-    """
-    result = query(add_trigger_cql)
-    summary = result.consume()
-    log.info(f"{summary.query},{summary.counters.system_updates} system_updates.")
-    
-
-def remove_unlabled_entity():
-    # 找到所有 entity_type属性为空（label为空）的节点，如果存在和此节点id一样的其他节点，并且entity_type 非空，则删除此entity_type 属性为空的节点
-    while True:
-        remove_unlabled_entity = """
-            // Step 1: 找出无标签的节点
-            MATCH (n1)
-            WHERE size(labels(n1))=0
-            limit 100
-
-            // Step 2: 在有标签的节点中匹配同 id 节点
-            WITH n1
-            MATCH (n2)
-            WHERE n2.id = n1.id AND size(labels(n2))>0
-            LIMIT 100
-
-            // Step 1: Transfer outgoing relationships from n1 , only if m exists
-            WITH n1, n2
-            MATCH (n1)-[r1]->(m)
-            WHERE m IS NOT NULL  // Ensure m exists before proceeding
-            WITH n1, n2, r1, m
-            CREATE (n2)-[r2:CONNECTED_TO]->(m)
-            SET r2 = r1
-            DELETE r1
-
-            // Step 2: Transfer incoming relationships to n1, only if m exists
-            WITH n1, n2
-            MATCH (m)-[r3]->(n1)
-            WHERE m IS NOT NULL  // Ensure m exists before proceeding
-            WITH n1, n2, r3, m
-            CREATE (m)-[r4:CONNECTED_TO]->(n2)
-            SET r4 = r3
-            DELETE r3
-
-            // Step 3: Delete n1
-            DETACH DELETE n1
-
-            // Return the count of nodes processed
-            RETURN count(n2)
+def clean_dirty_nodes():
+    clean_cqls = [
 
         """
+        // 将labels为空的节点赋值为 非空的entity_type
+        MATCH (n)
+        where n.entity_type is not null and n.entity_type <> '' and size(labels(n))=0
+        WITH n, n.entity_type AS entityType
+        CALL apoc.create.addLabels([n], [entityType]) YIELD node
+        RETURN count(*)
+        """,
         
-        
-        remove_unlabled_entity_sub_query = """
-        // Step 1: 查找前 100 个无标签的节点
-        MATCH (n1)
-        WHERE size(labels(n1)) = 0
-        WITH n1
-        LIMIT 100
-
-        // Step 2: 使用子查询处理每个无标签节点的关系转移和删除
-        CALL (n1) {
-            // 在有标签的节点中匹配相同 id 的 n2 节点
-            MATCH (n2)
-            WHERE n2.id = n1.id AND size(labels(n2)) > 0
-            LIMIT 1  // 每个 n1 只匹配一个 n2
-            
-            // Step 3: 转移 n1 的出边关系到 n2
-            CALL(n1,n2) {
-                MATCH (n1)-[r1]->(m)
-                WHERE m IS NOT NULL  // 确保目标节点 m 存在
-                CREATE (n2)-[r2:CONNECTED_TO]->(m)
-                SET r2 = r1
-                DELETE r1
-            }
-
-            // Step 4: 转移 n1 的入边关系到 n2
-            CALL(n1,n2) {
-                MATCH (m)-[r3]->(n1)
-                WHERE m IS NOT NULL  // 确保起始节点 m 存在
-                CREATE (m)-[r4:CONNECTED_TO]->(n2)
-                SET r4 = r3
-                DELETE r3
-            }
-
-            // Step 5: 删除 n1 节点
-            DETACH DELETE n1
-
-            RETURN n2.id AS transferred_to_id  // 返回每个 n2 的 id
-        }
-        RETURN count(*) AS nodes_processed
-
         """
+        // 将 entity_type为空的节点赋值为非空的label
+        MATCH (n)
+        where (n.entity_type is null or n.entity_type='') and size(labels(n))>0
+        set n.entity_type=labels(n)[0]
+        RETURN count(*)
+        """,
         
-        # 以上脚本可能会导致 neo4j 异常退出！！！！！，调试好再发布。
-        result = query(remove_unlabled_entity)
+        """
+        // 清除掉 entity_type or source_id  or description is null 的节点
+        match (n) 
+        where n.entity_type is null or n.source_id is null or n.description is null
+        detach delete n;
+        """,
+        
+        """
+        // 清除数据源 source_id 非文件的节点
+        match (n) 
+        where not n.source_id contains '.pdf.txt' 
+        detach delete n;
+        
+        """
+    ]
+        
+    for cql in clean_cqls:
+        result = query(cql)
         summary = result.consume()
         log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
         
-        if not summary.counters.nodes_deleted:
-            break
-
-clean_cqls = [
-    """
-    // 清除实体类型为空 并且 描述为空的字符
+def remove_duplicate_ndoes():
+    cql = """
     MATCH (n)
-    where (size(labels(n))=0 or n.entity_type='') and n.description=''
-    DETACH DELETE n
-    """,
-    
-    ""
-]
-def remove_enity_with_empty_entity_type_and_empty_desc():
-    pass
+    WITH n.id AS name, n.entity_type AS entity_type, n.description AS description, n.source_id AS source_id, COLLECT(n) AS nodes
+    WHERE SIZE(nodes) > 1
+    UNWIND nodes AS node
+    WITH node, name, entity_type, description, source_id, nodes[0] AS keep_node
+    // Transfer outgoing relationships from the duplicate nodes to the "keep" node
+    MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
+    MERGE (keep_node)-[outgoing_rel2:RELATED_TO]->(target) // create the same outgoing relationship for the "keep" node
 
+    WITH node, name, entity_type, description, source_id, keep_node
+    // Transfer incoming relationships from the duplicate nodes to the "keep" node
+    MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
+    MERGE (source)-[incoming_rel2:RELATED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
+
+    // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
+    WITH node, keep_node
+    WHERE node <> keep_node
+    DETACH DELETE node
+    """
+    with driver.session() as session:
+        results = session.run(cql)
+        summary = results.consume()
+        log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
+        
+    
+    ## 孤立节点删除
+    cql = """
+    MATCH (n)
+    WITH n.id AS name, n.entity_type AS entity_type, n.description AS description, n.source_id AS source_id, COLLECT(n) AS nodes
+    WHERE SIZE(nodes) > 1
+    UNWIND nodes AS node
+    WITH node, nodes[0] AS keep_node
+    WHERE node <> keep_node
+    DETACH DELETE node
+    """
+    with driver.session() as session:
+        results = session.run(cql)
+        summary = results.consume()
+        log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
+        
+    
+      
+        
+def export_duplicate_nodes(export_csv_file="duplicate_nodes.csv"):
+    cql = """
+    MATCH (n)
+    WITH n.id AS name, COLLECT(n) AS nodes
+    WHERE SIZE(nodes) > 1
+    UNWIND nodes AS node
+    RETURN id(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
+    ORDER BY node.id,node.entity_type;
+    """
+    with driver.session() as session:
+        results = session.run(cql)
+        df = pd.DataFrame(results.data())
+        # Export DataFrame to CSV
+        df.to_csv(export_csv_file, index=False)
+
+        
+def merge_duplicate_nodes(tenant_id:str = "7d19a176807611efb0f80242ac120006",
+                          llm_id:str="qwen-plus"):
+    
+    llm_bdl = LLMBundle(tenant_id, LLMType.CHAT, llm_id)
+    
+    cql = """
+    MATCH (n)
+    WITH n.id AS name, COLLECT(n) AS nodes
+    WHERE SIZE(nodes) > 1
+    UNWIND nodes AS node
+    RETURN id(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
+    ORDER BY node.id;
+    """
+    with driver.session() as session:
+        results = session.run(cql)
+        df = pd.DataFrame(results.data())
+        grouped = df.groupby('name')
+        for name,grouped_data in grouped:
+            log.info(f"processing {name}")
+            # 计算每个组的 entity_type count
+            entity_type_grouped = grouped_data.groupby('entity_type').size().reset_index(name='count')
+            # 找到 count 最大的 entity_type
+            entity_type:str = entity_type_grouped['entity_type'][entity_type_grouped['count'].idxmax()]
+            
+            #找到全部的 entiti_type 去重
+            labels:list = grouped_data['entity_type'].unique().tolist()
+            
+            #找到全部的 description
+            description:str = '\n'.join(grouped_data['description'])
+            prompt = f"以下是关于{name}的描述信息，你是宠物医生，将以下内容润色，去重，综合成有序，容易理解的语句:{description}"
+            description_summary = llm_bdl.chat(prompt, [{"role": "user", "content": "输出:"}], {"temperature": 0.5})
+            
+            
+            #找到全部的 source_id,去重
+            file_names = chain(*[get_filepaths_from_source_id(sid) for sid in grouped_data['source_id']])
+            source_id:str = '\n'.join(set(file_names))
+            
+            keep_node_id = grouped_data[grouped_data['entity_type'] == entity_type]["id"].iloc[0]
+            
+            labels_str = ' '.join([f':`{la}`' for la in labels])
+            
+            #更新保留节点，融合进其他节点的信息
+            update_cql = f"""
+                match(n) 
+                where id(n)={keep_node_id}
+                set n{labels_str},
+                n.description='{escape(description_summary)}',
+                n.source_id='{escape(source_id)}'
+            """
+            results = session.run(update_cql)
+            summary = results.consume()
+            log.info(f"{summary.counters.properties_set} properties_set,{summary.counters.labels_added } labels_added,{summary.counters.labels_removed} labels_removed.")
+            
+            remove_node_ids = ','.join([str(id) for id in grouped_data['id'] if id != keep_node_id])
+
+             #删除其他节点，并将关系（入和出方向）转移到保留节点
+            transfer_cql:str = f"""
+                    MATCH (node)
+                    where id(node) in [{remove_node_ids}]
+                    MATCH(keep_node)
+                    where id(keep_node)={keep_node_id}
+                    WITH node,keep_node
+                    // Transfer outgoing relationships from the duplicate nodes to the "keep" node
+                    MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
+                    MERGE (keep_node)-[outgoing_rel2:CONNECTED_TO]->(target) // create the same outgoing relationship for the "keep" node
+
+                    WITH node,keep_node
+                    // Transfer incoming relationships from the duplicate nodes to the "keep" node
+                    MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
+                    MERGE (source)-[incoming_rel2:CONNECTED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
+
+                    // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
+                    WITH node
+                    DETACH DELETE node
+                """
+                
+            results = session.run(transfer_cql)
+            summary = results.consume()
+            log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
+          
+            #删除其他节点，并将关系（入和出方向）转移到保留节点
+            transfer_cql:str = f"""
+                    MATCH (node)
+                    where id(node) in [{remove_node_ids}]
+                    MATCH(keep_node)
+                    where id(keep_node)={keep_node_id}
+                    // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
+                    WITH node
+                    DETACH DELETE node
+                """
+            results = session.run(transfer_cql)
+            summary = results.consume()
+            log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
+          
+             
+    
 def main():
+    merge_duplicate_nodes()
+    # remove_duplicate_ndoes()
+    # export_duplicate_nodes()
     # check_lost_import_file()
     # add_trigger()
     # update_similary_entity_types()

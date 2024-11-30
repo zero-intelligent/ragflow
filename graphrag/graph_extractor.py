@@ -127,14 +127,9 @@ class GraphExtractor:
         # Wire defaults into the prompt variables
         prompt_variables = {
             **prompt_variables,
-            self._tuple_delimiter_key: prompt_variables.get(self._tuple_delimiter_key)
-            or DEFAULT_TUPLE_DELIMITER,
-            self._record_delimiter_key: prompt_variables.get(self._record_delimiter_key)
-            or DEFAULT_RECORD_DELIMITER,
-            self._completion_delimiter_key: prompt_variables.get(
-                self._completion_delimiter_key
-            )
-            or DEFAULT_COMPLETION_DELIMITER,
+            self._tuple_delimiter_key:      prompt_variables.get(self._tuple_delimiter_key) or DEFAULT_TUPLE_DELIMITER,
+            self._record_delimiter_key:     prompt_variables.get(self._record_delimiter_key) or DEFAULT_RECORD_DELIMITER,
+            self._completion_delimiter_key: prompt_variables.get(self._completion_delimiter_key) or DEFAULT_COMPLETION_DELIMITER,
             self._entity_types_key: ",".join(
                 prompt_variables.get(self._entity_types_key) or DEFAULT_ENTITY_TYPES
             ),
