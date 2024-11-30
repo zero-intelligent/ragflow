@@ -317,8 +317,67 @@ def merge_duplicate_nodes():
             exe.submit(merge_group_of_nodes,name,grouped_data)
         exe.shutdown(wait=True)
             
+def merge_similar_nodes():
+    """
+        需要合并的节点情况，包含：
+        1. 左括弧左侧为空格，例如: "ORAL-BLEEDING (口腔出血)" 应该为： "ORAL-BLEEDING(口腔出血)"
+        2. 中英文顺序颠倒， 例如：“鼓音(TYMPANIC-SOUND)” 应该是： "TYMPANIC-SOUND(鼓音)"
+        3. 纯中文情况，例如："鼓膜 (鼓膜)"
+        4. 英文名称一样，中文不一样，例如: "RODENT (啮齿动物)", "RODENT (啮齿类动物)"
+        5. 中文名称一样，英文不一样，例如: "SCREW (螺钉)“,"SCREWS (螺钉)"
+        
+        此函数执行完成后，需要执行：merge_duplicate_nodes
+    """
     
+    #1. 左括弧左侧为空格的情况，重名为标准情况
+    execute_update("""
+        MATCH (n)
+        where n.id contains ' ('
+        set n.id=replace(n.id,' (','(')
+    """)
+    
+    #2.中英文顺序颠倒， 例如：“鼓音(TYMPANIC-SOUND)” 应该是： "TYMPANIC-SOUND(鼓音)"
+    execute_update("""
+        MATCH (n)
+        WHERE n.id =~ '^[\u4e00-\u9fa5].*'  // 确保首字母为中文
+        WITH n,
+            split(n.id, '(')[0] AS cn_name, 
+            split(n.id, '(')[1] AS en_part
+        where cn_name is not null and en_part is not null
+        WITH n,cn_name, left(en_part,size(en_part) - 1) AS en_name
+        set n.id= en_name + '(' + cn_name + ')'
+    """)
+    
+ 
+    #4. 英文名称一样，中文不一样，例如: "RODENT (啮齿动物)", "RODENT (啮齿类动物)"
+    execute_update("""
+        MATCH (n)
+        WITH split(n.id,'(')[0] AS en_name,COLLECT(n) AS nodes
+        WHERE SIZE(nodes) > 1 and en_name is not null 
+        UNWIND nodes AS node
+        with node,en_name,split(nodes[0].id,'(')[1] AS cn_name,nodes
+        where node <> nodes[0]
+        with node,en_name,cn_name
+        set node.id= en_name + '(' + cn_name
+    """)
+    
+    #5. 中文名称一样，英文不一样，例如: "SCREW (螺钉)“,"SCREWS (螺钉)"
+    execute_update("""
+        MATCH (n)
+        WITH split(n.id,'(')[1] AS cn_name,COLLECT(n) AS nodes
+        WHERE SIZE(nodes) > 1 and cn_name=~ '^[\u4e00-\u9fa5]+$'
+        UNWIND nodes AS node
+        with node,cn_name,split(nodes[0].id,'(')[0] AS en_name,nodes
+        where node <> nodes[0]
+        with node,en_name,cn_name
+        set node.id= en_name + '(' + cn_name
+    """)
+    
+
+
+        
 def main():
+    merge_similar_nodes()
     merge_duplicate_nodes()
     # remove_duplicate_ndoes()
     # export_duplicate_nodes()
