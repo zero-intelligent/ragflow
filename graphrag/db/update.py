@@ -329,14 +329,14 @@ def merge_similar_nodes():
         此函数执行完成后，需要执行：merge_duplicate_nodes
     """
     
-    #1. 左括弧左侧为空格的情况，重名为标准情况
+    log.info("1. 融合左括弧左侧为空格的情况，重名为标准情况")
     execute_update("""
         MATCH (n)
         where n.id contains ' ('
         set n.id=replace(n.id,' (','(')
     """)
     
-    #2.中英文顺序颠倒， 例如：“鼓音(TYMPANIC-SOUND)” 应该是： "TYMPANIC-SOUND(鼓音)"
+    log.info("2. 融合中英文顺序颠倒， 例如：‘鼓音(TYMPANIC-SOUND)’ 应该是:'TYMPANIC-SOUND(鼓音)'")
     execute_update("""
         MATCH (n)
         WHERE n.id =~ '^[\u4e00-\u9fa5].*'  // 确保首字母为中文
@@ -349,7 +349,7 @@ def merge_similar_nodes():
     """)
     
  
-    #4. 英文名称一样，中文不一样，例如: "RODENT (啮齿动物)", "RODENT (啮齿类动物)"
+    log.info('4.融合英文名称一样，中文不一样，例如: "RODENT (啮齿动物)", "RODENT (啮齿类动物)"')
     execute_update("""
         MATCH (n)
         WITH split(n.id,'(')[0] AS en_name,COLLECT(n) AS nodes
@@ -361,7 +361,7 @@ def merge_similar_nodes():
         set node.id= en_name + '(' + cn_name
     """)
     
-    #5. 中文名称一样，英文不一样，例如: "SCREW (螺钉)“,"SCREWS (螺钉)"
+    log.info('5. 融合中文名称一样，英文不一样，例如: "SCREW (螺钉)“,"SCREWS (螺钉)"')
     execute_update("""
         MATCH (n)
         WITH split(n.id,'(')[1] AS cn_name,COLLECT(n) AS nodes
@@ -372,8 +372,6 @@ def merge_similar_nodes():
         with node,en_name,cn_name
         set node.id= en_name + '(' + cn_name
     """)
-    
-
 
         
 def main():
