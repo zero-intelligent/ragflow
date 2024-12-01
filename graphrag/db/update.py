@@ -96,12 +96,45 @@ similar_entity_types = [
 ]
 
 def update_similary_entity_types():
+    
+    log.info("消除 entity_types 中的空格")
+    execute_update("""
+        MATCH (n)
+        where (n.entity_type contains ' ('
+            or n.entity_type contains '( ' 
+            or n.entity_type contains ') ' 
+            or n.entity_type contains ' )' 
+        )
+        set n.entity_type= (
+            case 
+            when n.entity_type contains ' (' then replace(n.entity_type,' (','(')
+            when n.entity_type contains '( ' then replace(n.entity_type,'( ','(')
+            when n.entity_type contains ') ' then replace(n.entity_type,') ',')')
+            when n.entity_type contains ' )' then replace(n.entity_type,' )',')')
+            end
+        )
+    """)
+    
+    log.info("移除重复标签")
+    execute_update("""
+        MATCH (n)
+        WITH n, labels(n) AS oldLabels
+        UNWIND oldLabels AS label
+        WITH n, COLLECT(DISTINCT label) AS uniqueLabels, oldLabels  // 确保 oldLabels 变量仍然可用
+        // 移除所有原始标签
+        CALL apoc.create.removeLabels([n], oldLabels) YIELD node AS removedNode
+        // 设置去重后的标签
+        CALL apoc.create.addLabels([n], uniqueLabels) YIELD node AS addedNode
+        RETURN n.id AS nodeId, labels(n) AS newLabels
+    """)
+        
     for row in similar_entity_types:
         for entity_type in row[1:]:
             target_type = row[0]
             result = query(f"MATCH (n:`{entity_type}`) REMOVE n:`{entity_type}` SET n:`{target_type}`")
             summary = result.consume()
             log.info(f"{summary.query},{summary.counters.labels_added} labels_added,{summary.counters.labels_removed} labels_removed.")
+            
 
 def update_index():
     top_10_label_query = """
@@ -166,24 +199,24 @@ def clean_dirty_nodes():
         
 def remove_duplicate_ndoes():
     cql = """
-    MATCH (n)
-    WITH n.id AS name, n.entity_type AS entity_type, n.description AS description, n.source_id AS source_id, COLLECT(n) AS nodes
-    WHERE SIZE(nodes) > 1
-    UNWIND nodes AS node
-    WITH node, name, entity_type, description, source_id, nodes[0] AS keep_node
-    // Transfer outgoing relationships from the duplicate nodes to the "keep" node
-    MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
-    MERGE (keep_node)-[outgoing_rel2:RELATED_TO]->(target) // create the same outgoing relationship for the "keep" node
+        MATCH (n)
+        WITH n.id AS name, n.entity_type AS entity_type, n.description AS description, n.source_id AS source_id, COLLECT(n) AS nodes
+        WHERE SIZE(nodes) > 1
+        UNWIND nodes AS node
+        WITH node, name, entity_type, description, source_id, nodes[0] AS keep_node
+        // Transfer outgoing relationships from the duplicate nodes to the "keep" node
+        MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
+        MERGE (keep_node)-[outgoing_rel2:RELATED_TO]->(target) // create the same outgoing relationship for the "keep" node
 
-    WITH node, name, entity_type, description, source_id, keep_node
-    // Transfer incoming relationships from the duplicate nodes to the "keep" node
-    MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
-    MERGE (source)-[incoming_rel2:RELATED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
+        WITH node, name, entity_type, description, source_id, keep_node
+        // Transfer incoming relationships from the duplicate nodes to the "keep" node
+        MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
+        MERGE (source)-[incoming_rel2:RELATED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
 
-    // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
-    WITH node, keep_node
-    WHERE node <> keep_node
-    DETACH DELETE node
+        // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
+        WITH node, keep_node
+        WHERE node <> keep_node
+        DETACH DELETE node
     """
     with driver.session() as session:
         results = session.run(cql)
@@ -299,7 +332,9 @@ def merge_group_of_nodes(node_id:str,
     """)
         
 def merge_duplicate_nodes():
-    
+    """
+        删除 id 重复的节点
+    """
     cql = """
     MATCH (n)
     WITH n.id AS name, COLLECT(n) AS nodes
