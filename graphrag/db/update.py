@@ -204,7 +204,7 @@ def export_duplicate_nodes(export_csv_file="duplicate_nodes.csv"):
     WITH n.id AS name, COLLECT(n) AS nodes
     WHERE SIZE(nodes) > 1
     UNWIND nodes AS node
-    RETURN id(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
+    RETURN elementid(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
     ORDER BY node.id,node.entity_type;
     """
     with driver.session() as session:
@@ -248,29 +248,31 @@ def merge_group_of_nodes(node_id:str,
     #更新保留节点，融合进其他节点的信息
     execute_update(f"""
         match(n) 
-        where id(n)={keep_node_id}
+        where elementid(n)={keep_node_id}
         set n{labels_str},
         n.description='{escape(description_summary)}',
         n.source_id='{escape(source_id)};'
     """)
     
-    remove_node_ids = ','.join([str(id) for id in nodes_dataframe['id'] if id != keep_node_id])
+    remove_nodes = nodes_dataframe[nodes_dataframe['id'] != keep_node_id]
 
-        #删除其他节点，并将关系（入和出方向）转移到保留节点
+    #删除其他节点，并将关系（入和出方向）转移到保留节点
     execute_update(f"""
         MATCH (node)
-        where id(node) in [{remove_node_ids}]
+        where elementid(node) in {str(list(remove_nodes['id']))}
         MATCH(keep_node)
-        where id(keep_node)={keep_node_id}
+        where elementid(keep_node)={keep_node_id}
         WITH node,keep_node
         // Transfer outgoing relationships from the duplicate nodes to the "keep" node
         MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
         MERGE (keep_node)-[outgoing_rel2:CONNECTED_TO]->(target) // create the same outgoing relationship for the "keep" node
+        ON CREATE SET outgoing_rel2 = outgoing_rel  // Transfer properties of the outgoing relationship
 
         WITH node,keep_node
         // Transfer incoming relationships from the duplicate nodes to the "keep" node
         MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
         MERGE (source)-[incoming_rel2:CONNECTED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
+        ON CREATE SET incoming_rel2 = incoming_rel  // Transfer properties of the incoming relationship
 
         // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
         WITH node
@@ -279,9 +281,9 @@ def merge_group_of_nodes(node_id:str,
     #删除其他节点，并将关系（入和出方向）转移到保留节点
     execute_update(f"""
         MATCH (node)
-        where id(node) in [{remove_node_ids}]
+        where elementid(node) in {str(list(remove_nodes['id']))}
         MATCH(keep_node)
-        where id(keep_node)={keep_node_id}
+        where elementid(keep_node)={keep_node_id}
         // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
         WITH node
         DETACH DELETE node;
@@ -296,14 +298,14 @@ def merge_duplicate_nodes():
     WITH n.id AS name, COLLECT(n) AS nodes
     WHERE SIZE(nodes) > 1
     UNWIND nodes AS node
-    RETURN id(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
+    RETURN elementid(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
     ORDER BY node.id;
     """
     with driver.session() as session:
         results = session.run(cql)
         df = pd.DataFrame(results.data())
         grouped = df.groupby('name')
-        exe = ThreadPoolExecutor(max_workers=10)
+        exe = ThreadPoolExecutor(max_workers=20)
         for name,grouped_data in grouped:
             exe.submit(merge_group_of_nodes,name,grouped_data)
         exe.shutdown(wait=True)
@@ -389,6 +391,19 @@ def update_index():
             if (labels := record['lbl']):
                 execute_update(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.id)")
                 execute_update(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.entity_type)")
+                
+        # 所有节点建全文索引
+        full_index_name = "ALL_FULL_INDEX"
+        
+        # 如果存在旧的全文索引，删除
+        index_list = session.run("show index")
+        if any([i['name']==full_index_name for i in index_list]):
+            execute_update(f"DROP INDEX {full_index_name}")
+        
+        labels = session.run("call db.labels()")
+        labels_str = '|'.join([f"`{r['label']}`" for r in labels])
+        create_full_index_cql = f"CREATE FULLTEXT INDEX {full_index_name} FOR (n:{labels_str}) ON EACH [n.id,n.entity_type,n.description,n.source_id]"
+        execute_update(create_full_index_cql)
                
 def remove_trigger():
     execute_update("call apoc.trigger.removeAll();")
@@ -401,8 +416,8 @@ def main():
     merge_similar_nodes()
     merge_duplicate_nodes()
     remove_duplicate_ndoes() # 对merge_duplicate_nodes的补充，确保删除孤立无边节点
+    
     # export_duplicate_nodes()
-    # update_index()
 
 
 if __name__ == "__main__":
