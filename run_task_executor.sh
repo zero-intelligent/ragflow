@@ -4,6 +4,14 @@
 APP_HOME="$(cd "$(dirname "$0")" && pwd)"
 echo "APP_HOME:$APP_HOME"
 
+ES_PORT=1200
+MYSQL_PORT=5455
+REDIS_PORT=6379
+
+sudo -u root sh -c "while ! nc -zv zero $ES_PORT; do sleep 1; done"
+sudo -u root sh -c "while ! nc -zv zero $MYSQL_PORT; do sleep 1; done"
+sudo -u root sh -c "while ! nc -zv zero $REDIS_PORT; do sleep 1; done"
+
 cd $APP_HOME
 source .venv/bin/activate
 
