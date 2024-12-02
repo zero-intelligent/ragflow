@@ -8,7 +8,6 @@ from api.db import LLMType
 from api.db.services.llm_service import LLMBundle
 from graphrag.db import driver, execute_update,query
 from loguru import logger as log
-
 from graphrag.utils import escape, get_filepaths_from_source_id
 
 
@@ -95,7 +94,7 @@ similar_entity_types = [
     ["BONE(骨骼)","BONE (骨骼)"]
 ]
 
-def update_similary_entity_types():
+def merge_similary_entity_types():
     
     log.info("消除 entity_types 中的空格")
     execute_update("""
@@ -128,6 +127,7 @@ def update_similary_entity_types():
         RETURN n.id AS nodeId, labels(n) AS newLabels
     """)
         
+    log.info("移除相似的 entity_type")
     for row in similar_entity_types:
         for entity_type in row[1:]:
             target_type = row[0]
@@ -135,70 +135,42 @@ def update_similary_entity_types():
             summary = result.consume()
             log.info(f"{summary.query},{summary.counters.labels_added} labels_added,{summary.counters.labels_removed} labels_removed.")
             
-
-def update_index():
-    top_10_label_query = """
-        match(n) 
-        with labels(n) as lbl,count(n) as cnt 
-        return lbl,cnt 
-        order by cnt desc
-        limit 10
-    """
-    with driver.session() as session:
-        result = session.run(top_10_label_query)
-        for record in result:
-            if (labels := record['lbl']):
-                id_index_result = session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.id)")
-                summary = id_index_result.consume()
-                log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
-                
-                entity_type_index_result = session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.entity_type)")
-                summary = entity_type_index_result.consume()
-                log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
             
 def clean_dirty_nodes():
-    clean_cqls = [
-
-        """
-        // 将labels为空的节点赋值为 非空的entity_type
+    log.info("将labels为空的节点赋值为 非空的entity_type")
+    execute_update("""
         MATCH (n)
         where n.entity_type is not null and n.entity_type <> '' and size(labels(n))=0
         WITH n, n.entity_type AS entityType
         CALL apoc.create.addLabels([n], [entityType]) YIELD node
         RETURN count(*)
-        """,
-        
-        """
-        // 将 entity_type为空的节点赋值为非空的label
+    """)
+    
+    log.info("将 entity_type为空的节点赋值为非空的label")
+    execute_update("""
         MATCH (n)
         where (n.entity_type is null or n.entity_type='') and size(labels(n))>0
         set n.entity_type=labels(n)[0]
         RETURN count(*)
-        """,
-        
-        """
-        // 清除掉 entity_type or source_id  or description is null 的节点
+    """)  
+    
+    log.info("清除掉 entity_type or source_id  or description is null 的节点")
+    execute_update("""
         match (n) 
         where n.entity_type is null or n.source_id is null or n.description is null
         detach delete n;
-        """,
-        
-        """
-        // 清除数据源 source_id 非文件的节点
+    """)  
+    
+    log.info("清除掉 entity_type or source_id  or description is null 的节点")
+    execute_update("""
         match (n) 
         where not n.source_id contains '.pdf.txt' 
         detach delete n;
-        
-        """
-    ]
-        
-    for cql in clean_cqls:
-        result = query(cql)
-        summary = result.consume()
-        log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
+    """) 
+
         
 def remove_duplicate_ndoes():
-    cql = """
+    execute_update("""
         MATCH (n)
         WITH n.id AS name, n.entity_type AS entity_type, n.description AS description, n.source_id AS source_id, COLLECT(n) AS nodes
         WHERE SIZE(nodes) > 1
@@ -217,28 +189,18 @@ def remove_duplicate_ndoes():
         WITH node, keep_node
         WHERE node <> keep_node
         DETACH DELETE node
-    """
-    with driver.session() as session:
-        results = session.run(cql)
-        summary = results.consume()
-        log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
-        
+    """)
     
     ## 孤立节点删除
-    cql = """
-    MATCH (n)
-    WITH n.id AS name, n.entity_type AS entity_type, n.description AS description, n.source_id AS source_id, COLLECT(n) AS nodes
-    WHERE SIZE(nodes) > 1
-    UNWIND nodes AS node
-    WITH node, nodes[0] AS keep_node
-    WHERE node <> keep_node
-    DETACH DELETE node
-    """
-    with driver.session() as session:
-        results = session.run(cql)
-        summary = results.consume()
-        log.info(f"{summary.counters.nodes_deleted} nodes_deleted,{summary.counters.relationships_deleted } links_deleted,{summary.counters.relationships_created} relationships_created.")
-        
+    execute_update("""
+        MATCH (n)
+        WITH n.id AS name, n.entity_type AS entity_type, n.description AS description, n.source_id AS source_id, COLLECT(n) AS nodes
+        WHERE SIZE(nodes) > 1
+        UNWIND nodes AS node
+        WITH node, nodes[0] AS keep_node
+        WHERE node <> keep_node
+        DETACH DELETE node
+    """)
     
       
         
@@ -355,7 +317,7 @@ def merge_duplicate_nodes():
 def merge_similar_nodes():
     """
         需要合并的节点情况，包含：
-        1. 左括弧左侧为空格，例如: "ORAL-BLEEDING (口腔出血)" 应该为： "ORAL-BLEEDING(口腔出血)"
+        1. 左括弧侧为空格，例如: "ORAL-BLEEDING (口腔出血)" 应该为： "ORAL-BLEEDING(口腔出血)"
         2. 中英文顺序颠倒， 例如：“鼓音(TYMPANIC-SOUND)” 应该是： "TYMPANIC-SOUND(鼓音)"
         3. 纯中文情况，例如："鼓膜 (鼓膜)"
         4. 英文名称一样，中文不一样，例如: "RODENT (啮齿动物)", "RODENT (啮齿类动物)"
@@ -367,8 +329,19 @@ def merge_similar_nodes():
     log.info("1. 融合左括弧左侧为空格的情况，重名为标准情况")
     execute_update("""
         MATCH (n)
-        where n.id contains ' ('
-        set n.id=replace(n.id,' (','(')
+        where (n.id contains ' ('
+            or n.id contains '( ' 
+            or n.id contains ') ' 
+            or n.id contains ' )' 
+        )
+        set n.id= (
+            case 
+            when n.id contains ' (' then replace(n.id,' (','(')
+            when n.id contains '( ' then replace(n.id,'( ','(')
+            when n.id contains ') ' then replace(n.id,') ',')')
+            when n.id contains ' )' then replace(n.id,' )',')')
+            end
+        )
     """)
     
     log.info("2. 融合中英文顺序颠倒， 例如：‘鼓音(TYMPANIC-SOUND)’ 应该是:'TYMPANIC-SOUND(鼓音)'")
@@ -410,15 +383,12 @@ def merge_similar_nodes():
 
         
 def main():
+    merge_similary_entity_types()
     merge_similar_nodes()
     merge_duplicate_nodes()
-    # remove_duplicate_ndoes()
+    remove_duplicate_ndoes() # 对merge_duplicate_nodes的补充，确保删除孤立无边节点
     # export_duplicate_nodes()
-    # check_lost_import_file()
-    # add_trigger()
-    # update_similary_entity_types()
     # update_index()
-    # remove_unlabled_entity()
 
 
 if __name__ == "__main__":

@@ -13,10 +13,10 @@ def execute_update(cql:str):
     with driver.session() as session:
         results = session.run(cql)
         counters = results.consume().counters
-        int_attributes = {attr: getattr(counters, attr) for attr in dir(counters)}
-        count_repr = [f"{v} {k}" for k,v in int_attributes.items() if v and type(v) is int]
+        counter_attrs = {attr: getattr(counters, attr) for attr in dir(counters)}
+        counter_repr = [f"{v} {k}" for k,v in counter_attrs.items() if v and type(v) is int]
         if counters.contains_updates:
-            log.info(','.join(count_repr))
+            log.info(','.join(counter_repr))
         else:
             log.info('no update.')
         
