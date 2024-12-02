@@ -387,14 +387,8 @@ def update_index():
         result = session.run(top_10_label_query)
         for record in result:
             if (labels := record['lbl']):
-                id_index_result = session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.id)")
-                summary = id_index_result.consume()
-                log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
-                
-                entity_type_index_result = session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.entity_type)")
-                summary = entity_type_index_result.consume()
-                log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
-        
+                execute_update(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.id)")
+                execute_update(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.entity_type)")
                
 def remove_trigger():
     execute_update("call apoc.trigger.removeAll();")
