@@ -15,57 +15,50 @@ from graphrag.utils import escape, get_filepaths_from_source_id
 similar_entity_types = [
     ["DISEASE(疾病)","DISEASE (疾病)","疾病","|>疾病","TYPE-OF-DISEASE(疾病类型)","TYPE-OF-DISEASE (疾病类型)","RELATED-DISEASE(相关疾病)","DISORDER(疾病)","| 疾病","DISEASE"],
     ["LESION(病变)","LESION (病变)"],
-    ["SIGN(体征)","SIGN (体征)","体征"],
-    ["MEDICATION(药物)","MEDICATION (药物)","药物","DRUG(药物)","DRUG-CLASS(药物类别)","MEDICINE(药物)","MEDICATION-CLASS(药物类别)","DRUG"],
-    ["DIAGNOSTIC-TEST (诊断测试)","DIAGNOSTIC-TEST (诊断测试)","诊断测试","DIAGNOSIS-TEST(诊断测试)","|>诊断测试","DIAGNOSIS-TEST (诊断测试)"],
+    ["SIGN(体征)","体征"],
+    ["MEDICATION(药物)","药物","DRUG(药物)","DRUG-CLASS(药物类别)","MEDICINE(药物)","MEDICATION-CLASS(药物类别)","DRUG"],
+    ["DIAGNOSTIC-TEST (诊断测试)","诊断测试","DIAGNOSIS-TEST(诊断测试)","|>诊断测试","DIAGNOSIS-TEST (诊断测试)"],
     ["PARASITE(寄生虫)","PARASITE (寄生虫)","寄生虫"],
-    ["ANIMAL-BEHAVIOR(动物行为)","ANIMAL-BEHAVIOR (动物行为)","动物行为","BEHAVIOR(动物行为)"],
-    ["PREVENTION(预防方法)","PREVENTION (预防方法)","PREVENTIVE(预防方法)","预防措施"],
-    ["BREED(品种)","BREED (品种)","宠物品种","|>宠物品种","PET-SPECIES(宠物种类)","SPECIES(物种)","DOG(犬)","犬","犬种","PET-SPECIES (宠物种类)","宠物种类"],
-    ["AGE(年龄)","AGE (年龄)","宠物年龄"],
-    ["LIVING-ENVIRONMENT(居住环境)","LIVING-ENVIRONMENT (居住环境)","居住环境"],
-    ["PROGNOSIS(预后)","PROGNOSIS (预后)","预后","PROGNOSTIC-FACTOR(预后因素)"],
-    ["TOXIN(毒素)","TOXIN (毒素)","TOXICANT(毒素)","MYCOTOXIN(真菌毒素)","毒素"],
-    ["EPIDEMIOLOGY(流行病学)","EPIDEMIOLOGY (流行病学)"],
-    ["RESTRAINT-METHOD(保定法)","RESTRAINT-METHOD (保定法)"],
-    ["EXAMINATION-METHOD(检查方法)","EXAMINATION-METHOD (检查方法)"],
-    ["COMPLICATION(并发症)","COMPLICATION (并发症)","COMPLICATIONS(并发症)","并发症"],
-    ["NUTRITION(营养)","NUTRITION (营养)","NUTRIENT(营养)","NUTRIENT(营养素)","营养","NUTRIENT (营养)","NUTRIENT (营养素)","NUTRIENT(营养物质)","NUTRIENT(营养成分)"],
+    ["ANIMAL-BEHAVIOR(动物行为)","动物行为","BEHAVIOR(动物行为)"],
+    ["PREVENTION(预防方法)","PREVENTIVE(预防方法)","预防措施"],
+    ["BREED(品种)","宠物品种","|>宠物品种","PET-SPECIES(宠物种类)","SPECIES(物种)","DOG(犬)","犬","犬种","PET-SPECIES (宠物种类)","宠物种类"],
+    ["AGE(年龄)","宠物年龄"],
+    ["LIVING-ENVIRONMENT(居住环境)","居住环境"],
+    ["PROGNOSIS(预后)","预后","PROGNOSTIC-FACTOR(预后因素)"],
+    ["TOXIN(毒素)","TOXICANT(毒素)","MYCOTOXIN(真菌毒素)","毒素"],
+    ["COMPLICATION(并发症)","并发症"],
+    ["NUTRITION(营养)","NUTRIENT(营养)","NUTRIENT(营养素)","营养","NUTRIENT (营养)","NUTRIENT (营养素)","NUTRIENT(营养物质)","NUTRIENT(营养成分)"],
     ["ENVIRONMENTAL-FACTOR(环境因素)","ENVIRONMENTAL-FACTORS(环境因素)","ENVIRONMENTAL-FACTORS (环境因素)","环境因素"],
-    ["FOOD(食物)","FOOD (食物)","食物"],
-    ["VIRUS(病毒)","病毒","VIRUS (病毒)"],
-    ["VIRUS-CHARACTERISTIC(病毒特性)","VIRUS-CHARACTERISTIC (病毒特性)"],
-    ["BACTERIA(细菌)","BACTERIA (细菌)","细菌"],
-    ["ORGAN-OR-SYSTEM(器官或系统)","ORGAN-OR-SYSTEM (器官或系统)","器官","ORGAN-OR-SYSTEM (器官-OR-系统)","ORGAN-OR-SYSTEM (器官或 SYSTEM)","ORGAN-OR-SYSTEM(器官-OR-系统)","ORGAN","ORGAN-FUNCTION(器官功能)","TISSUE(组织)","TISSUE (组织)"],
-    ["TREATMENT-METHOD(治疗方法)","TREATMENT-METHOD (治疗方法)","治疗方法","|>治疗方法","TREATMENT METHOD"],
-    ["SYMPTOM(症状)","SYMPTOM (症状)","症状","|>|>症状","|>症状","SYMPTOM(症状)|","SYMPTOM"],
-    ["PROTEIN(蛋白质)","PROTEIN(蛋白)","PROTEIN (蛋白质)","蛋白质","PROTEIN(蛋白)","PROTEIN-SOURCE(蛋白质来源)","蛋白","PROTEIN (蛋白)"],
-    ["CAUSE(病因)","CAUSE (病因)","病因","ETIOLOGY(病因)","ETIOLOGIC-FACTOR(病因)","ETIOLOGIES(病因)","ETIOLOGIC-FACTOR (致病因素)","ETIOLOGIC-FACTOR(病因因素)","CAUSAL-FACTOR(病因)","CAUSAL-FACTOR (病因)","ETIOLOGY-AND-PATHOGENESIS(病因及发病机制)","ETIOLOGY (病因)","CAUSATIVE-FACTOR(致病因素)","CAUSE-OF-DISEASE(致病因素)","CAUSE(原因)","CAUSE (原因)"],
-    ["VACCINE(疫苗)","VACCINE (疫苗)","疫苗","VACCINATION(疫苗接种)"],
-    ["TOXIN(毒素)","毒素","TOXIN (毒素)","TOXICANT(毒素)","MYCOTOXIN(真菌毒素)"],
-    ["SURGERY(手术方法)","SURGERY (手术方法)","SURGICAL-PROCEDURE(手术方法)","SURGERY-METHOD (手术方法)","手术方法"],
-    ["EQUIPMENT(设备)","EQUIPMENT (设备)","MEDICAL-DEVICE(医疗设备)","MEDICAL-DEVICE (医疗设备)","设备","DEVICE(设备)","EQUIPMENT-SETTING(设备设置)","EQUIPMENT(器材设备)"],
-    ["ALLERGEN(过敏源)","ALLERGEN (过敏源)","过敏源"],
-    ["ALLERGIC-REACTION(过敏反应)","ALLERGIC-REACTION (过敏反应)","ADVERSE-REACTION (过敏反应)","过敏反应"],
-    ["LIFESTYLE(生活习惯)","LIFESTYLE (生活习惯)","生活习惯"],
-    ["SIDE-EFFECT(副作用)","SIDE-EFFECT (副作用)","ADVERSE-EFFECT(副作用)","TOXIC-EFFECT(毒副作用)"],
-    ["PROCEDURE(程序)","PROCEDURE (程序)"],
-    ["SURGICAL-PROCEDURE(手术程序)","SURGICAL-PROCEDURE (手术程序)","SURGERY-PROCEDURE(手术程序)","PROCEDURE(手术程序)"],
-    ["PHYSIOLOGICAL-PROCESS(生理过程)","PHYSIOLOGICAL-PROCESS (生理过程)","生理过程","PHYSIOLOGY(生理过程)","PATHOPHYSIOLOGY (病理生理过程)"],
+    ["FOOD(食物)","食物"],
+    ["VIRUS(病毒)","病毒"],
+    ["VIRUS-CHARACTERISTIC(病毒特性)"],
+    ["BACTERIA(细菌)","细菌"],
+    ["ORGAN-OR-SYSTEM(器官或系统)","器官","ORGAN-OR-SYSTEM (器官-OR-系统)","ORGAN-OR-SYSTEM (器官或 SYSTEM)","ORGAN-OR-SYSTEM(器官-OR-系统)","ORGAN","ORGAN-FUNCTION(器官功能)","TISSUE(组织)","TISSUE (组织)"],
+    ["TREATMENT-METHOD(治疗方法)","治疗方法","|>治疗方法","TREATMENT METHOD"],
+    ["SYMPTOM(症状)","症状","|>|>症状","|>症状","SYMPTOM(症状)|","SYMPTOM"],
+    ["PROTEIN(蛋白质)","PROTEIN (蛋白质)","蛋白质","PROTEIN(蛋白)","PROTEIN-SOURCE(蛋白质来源)","蛋白","PROTEIN (蛋白)"],
+    ["CAUSE(病因)","病因","ETIOLOGY(病因)","ETIOLOGIC-FACTOR(病因)","ETIOLOGIES(病因)","ETIOLOGIC-FACTOR (致病因素)","ETIOLOGIC-FACTOR(病因因素)","CAUSAL-FACTOR(病因)","CAUSAL-FACTOR (病因)","ETIOLOGY-AND-PATHOGENESIS(病因及发病机制)","ETIOLOGY (病因)","CAUSATIVE-FACTOR(致病因素)","CAUSE-OF-DISEASE(致病因素)","CAUSE(原因)","CAUSE (原因)"],
+    ["VACCINE(疫苗)","疫苗","VACCINATION(疫苗接种)"],
+    ["TOXIN(毒素)","毒素","TOXICANT(毒素)","MYCOTOXIN(真菌毒素)"],
+    ["SURGERY(手术方法)","SURGICAL-PROCEDURE(手术方法)","SURGERY-METHOD (手术方法)","手术方法"],
+    ["EQUIPMENT(设备)","MEDICAL-DEVICE(医疗设备)","MEDICAL-DEVICE (医疗设备)","设备","DEVICE(设备)","EQUIPMENT-SETTING(设备设置)","EQUIPMENT(器材设备)"],
+    ["ALLERGEN(过敏源)","过敏源"],
+    ["ALLERGIC-REACTION(过敏反应)","ADVERSE-REACTION (过敏反应)","过敏反应"],
+    ["LIFESTYLE(生活习惯)","生活习惯"],
+    ["SIDE-EFFECT(副作用)","ADVERSE-EFFECT(副作用)","TOXIC-EFFECT(毒副作用)"],
+    ["SURGICAL-PROCEDURE(手术程序)","SURGERY-PROCEDURE(手术程序)","PROCEDURE(手术程序)"],
+    ["PHYSIOLOGICAL-PROCESS(生理过程)","生理过程","PHYSIOLOGY(生理过程)","PATHOPHYSIOLOGY (病理生理过程)"],
     ["PATHOLOGY(病理过程)","病理过程","PATHOLOGICAL-PROCESS(病理过程)","|>病理过程","PATHOLOGICAL-PROCESS (病理过程)","|>病理过程"],
-    ["BIOLOGICAL-PROCESS(生物过程)","BIOLOGICAL-PROCESS (生物过程)"],
     ["METABOLISM(代谢过程)","METABOLIC-PROCESS (代谢过程)"],
-    ["VITAMIN(维生素)","VITAMIN (维生素)"],
-    ["ANTIBODY(抗体)","ANTIBODY (抗体)","AUTOANTIBODY(自身抗体)"],
-    ["TUMOR(肿瘤)","肿瘤","TUMOR (肿瘤)","NEOPLASIA(肿瘤)","NEOPLASM(肿瘤)","TUMOUR-OF-MESENCHYMAL-TISSUE(间叶组织的肿瘤)","NEOPLASTIC-DISEASE(肿瘤性疾病)","NEOPLASIA (肿瘤)","TUMOUR(肿瘤)"],
-    ["WATER-INTAKE(饮水情况)","WATER-INTAKE (饮水情况)","饮水情况"],
-    ["HORMONE(激素)","HORMONE (激素)","激素","|激素"],
-    ["DRUG-INTERACTION(药物相互作用)","DRUG-INTERACTIONS(药物相互作用)","DRUG-INTERACTION (药物相互作用)"],
-    ["SUTURE-MATERIAL(缝合材料)","SUTURE-MATERIAL (缝合材料)"],
-    ["TRAINING-METHOD(训练方法)","TRAINING-METHOD (训练方法)","TRAINING-METHODS (训练方法)"],
-    ["GENDER(性别)","GENDER (性别)","宠物性别"],
-    ["INJURY(损伤)","INJURY (损伤)","损伤"],
-    ["ADVERSE-REACTION(不良反应)","ADVERSE-EFFECT(不良反应)","ADVERSE-REACTIONS(不良反应)","ADVERSE-REACTION (不良反应)"],
+    ["ANTIBODY(抗体)","AUTOANTIBODY(自身抗体)"],
+    ["TUMOR(肿瘤)","肿瘤","NEOPLASIA(肿瘤)","NEOPLASM(肿瘤)","TUMOUR-OF-MESENCHYMAL-TISSUE(间叶组织的肿瘤)","NEOPLASTIC-DISEASE(肿瘤性疾病)","NEOPLASIA (肿瘤)","TUMOUR(肿瘤)"],
+    ["WATER-INTAKE(饮水情况)","饮水情况"],
+    ["HORMONE(激素)","激素","|激素"],
+    ["DRUG-INTERACTION(药物相互作用)","DRUG-INTERACTION (药物相互作用)"],
+    ["TRAINING-METHOD(训练方法)","TRAINING-METHODS (训练方法)"],
+    ["GENDER(性别)","宠物性别"],
+    ["INJURY(损伤)","损伤"],
+    ["ADVERSE-REACTION(不良反应)","ADVERSE-REACTIONS(不良反应)","ADVERSE-REACTION (不良反应)"],
     ["MEDICAL-DEVICE(医疗器械)","SURGICAL-INSTRUMENT(手术器械)","SURGICAL-DEVICE(手术器械)","SURGICAL-INSTRUMENTS(手术器械)","INSTRUMENTATION(器械)","SURGICAL-INSTRUMENTS(外科器械)","INSTRUMENT(器械)","INSTRUMENT (器械)","MEDICAL-DEVICE (医疗器械)","SURGICAL-INSTRUMENTS(外科手术器械)","SURGICAL-INSTRUMENTS (手术器械)","SURGICAL-INSTRUMENT (手术器械)","INSTRUMENT(仪器)","INSTRUMENT (仪器)"],
     ["METABOLITE(代谢物)","METABOLITE (代谢物)"],
     ["PATHOGEN(病原)","|>病原体","PATHOGEN(病原体)","病原体","PATHOGEN (病原体)","病原"],
@@ -99,24 +92,26 @@ def merge_similary_entity_types():
     log.info("消除 entity_types 中的空格")
     execute_update("""
         MATCH (n)
-        where (n.entity_type contains ' ('
+        where n.entity_type is not null and 
+        (      n.entity_type contains ' ('
             or n.entity_type contains '( ' 
             or n.entity_type contains ') ' 
             or n.entity_type contains ' )' 
         )
-        set n.entity_type= (
+        set n.entity_type=(
             case 
             when n.entity_type contains ' (' then replace(n.entity_type,' (','(')
             when n.entity_type contains '( ' then replace(n.entity_type,'( ','(')
             when n.entity_type contains ') ' then replace(n.entity_type,') ',')')
             when n.entity_type contains ' )' then replace(n.entity_type,' )',')')
             end
-        )
+        );
     """)
     
     log.info("移除重复标签")
     execute_update("""
         MATCH (n)
+        where size(labels(n)) > 1
         WITH n, labels(n) AS oldLabels
         UNWIND oldLabels AS label
         WITH n, COLLECT(DISTINCT label) AS uniqueLabels, oldLabels  // 确保 oldLabels 变量仍然可用
@@ -124,16 +119,16 @@ def merge_similary_entity_types():
         CALL apoc.create.removeLabels([n], oldLabels) YIELD node AS removedNode
         // 设置去重后的标签
         CALL apoc.create.addLabels([n], uniqueLabels) YIELD node AS addedNode
-        RETURN n.id AS nodeId, labels(n) AS newLabels
+        RETURN n.id AS nodeId, labels(n) AS newLabels;
     """)
         
     log.info("移除相似的 entity_type")
     for row in similar_entity_types:
         for entity_type in row[1:]:
             target_type = row[0]
-            result = query(f"MATCH (n:`{entity_type}`) REMOVE n:`{entity_type}` SET n:`{target_type}`")
-            summary = result.consume()
-            log.info(f"{summary.query},{summary.counters.labels_added} labels_added,{summary.counters.labels_removed} labels_removed.")
+            update_query:str = f"MATCH (n:`{entity_type}`) REMOVE n:`{entity_type}` SET n:`{target_type}`"
+            log.info(update_query)
+            execute_update(update_query)
             
             
 def clean_dirty_nodes():
@@ -143,15 +138,14 @@ def clean_dirty_nodes():
         where n.entity_type is not null and n.entity_type <> '' and size(labels(n))=0
         WITH n, n.entity_type AS entityType
         CALL apoc.create.addLabels([n], [entityType]) YIELD node
-        RETURN count(*)
+        RETURN count(*);
     """)
     
     log.info("将 entity_type为空的节点赋值为非空的label")
     execute_update("""
         MATCH (n)
         where (n.entity_type is null or n.entity_type='') and size(labels(n))>0
-        set n.entity_type=labels(n)[0]
-        RETURN count(*)
+        set n.entity_type=labels(n)[0];
     """)  
     
     log.info("清除掉 entity_type or source_id  or description is null 的节点")
@@ -161,10 +155,10 @@ def clean_dirty_nodes():
         detach delete n;
     """)  
     
-    log.info("清除掉 entity_type or source_id  or description is null 的节点")
+    log.info("清除掉 source_id 非书籍的节点")
     execute_update("""
         match (n) 
-        where not n.source_id contains '.pdf.txt' 
+        where n.source_id is null or not n.source_id contains '.pdf.txt' 
         detach delete n;
     """) 
 
@@ -188,7 +182,7 @@ def remove_duplicate_ndoes():
         // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
         WITH node, keep_node
         WHERE node <> keep_node
-        DETACH DELETE node
+        DETACH DELETE node;
     """)
     
     ## 孤立节点删除
@@ -199,7 +193,7 @@ def remove_duplicate_ndoes():
         UNWIND nodes AS node
         WITH node, nodes[0] AS keep_node
         WHERE node <> keep_node
-        DETACH DELETE node
+        DETACH DELETE node;
     """)
     
       
@@ -257,7 +251,7 @@ def merge_group_of_nodes(node_id:str,
         where id(n)={keep_node_id}
         set n{labels_str},
         n.description='{escape(description_summary)}',
-        n.source_id='{escape(source_id)}'
+        n.source_id='{escape(source_id)};'
     """)
     
     remove_node_ids = ','.join([str(id) for id in nodes_dataframe['id'] if id != keep_node_id])
@@ -280,7 +274,7 @@ def merge_group_of_nodes(node_id:str,
 
         // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
         WITH node
-        DETACH DELETE node
+        DETACH DELETE node;
     """)
     #删除其他节点，并将关系（入和出方向）转移到保留节点
     execute_update(f"""
@@ -290,7 +284,7 @@ def merge_group_of_nodes(node_id:str,
         where id(keep_node)={keep_node_id}
         // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
         WITH node
-        DETACH DELETE node
+        DETACH DELETE node;
     """)
         
 def merge_duplicate_nodes():
@@ -341,7 +335,7 @@ def merge_similar_nodes():
             when n.id contains ') ' then replace(n.id,') ',')')
             when n.id contains ' )' then replace(n.id,' )',')')
             end
-        )
+        );
     """)
     
     log.info("2. 融合中英文顺序颠倒， 例如：‘鼓音(TYMPANIC-SOUND)’ 应该是:'TYMPANIC-SOUND(鼓音)'")
@@ -353,7 +347,7 @@ def merge_similar_nodes():
             split(n.id, '(')[1] AS en_part
         where cn_name is not null and en_part is not null
         WITH n,cn_name, left(en_part,size(en_part) - 1) AS en_name
-        set n.id= en_name + '(' + cn_name + ')'
+        set n.id= en_name + '(' + cn_name + ')';
     """)
     
  
@@ -366,7 +360,7 @@ def merge_similar_nodes():
         with node,en_name,split(nodes[0].id,'(')[1] AS cn_name,nodes
         where node <> nodes[0]
         with node,en_name,cn_name
-        set node.id= en_name + '(' + cn_name
+        set node.id= en_name + '(' + cn_name;
     """)
     
     log.info('5. 融合中文名称一样，英文不一样，例如: "SCREW (螺钉)“,"SCREWS (螺钉)"')
@@ -378,11 +372,37 @@ def merge_similar_nodes():
         with node,cn_name,split(nodes[0].id,'(')[0] AS en_name,nodes
         where node <> nodes[0]
         with node,en_name,cn_name
-        set node.id= en_name + '(' + cn_name
+        set node.id= en_name + '(' + cn_name;
     """)
 
+def update_index():
+    top_10_label_query = """
+        match(n) 
+        with labels(n) as lbl,count(n) as cnt 
+        return lbl,cnt 
+        order by cnt desc
+        limit 20
+    """
+    with driver.session() as session:
+        result = session.run(top_10_label_query)
+        for record in result:
+            if (labels := record['lbl']):
+                id_index_result = session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.id)")
+                summary = id_index_result.consume()
+                log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
+                
+                entity_type_index_result = session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:`{labels[0]}`) ON (n.entity_type)")
+                summary = entity_type_index_result.consume()
+                log.info(f"{summary.query} {summary.counters.indexes_added} indexes_added.")
         
+               
+def remove_trigger():
+    execute_update("call apoc.trigger.removeAll();")
+    
 def main():
+    remove_trigger()
+    update_index()
+    clean_dirty_nodes()
     merge_similary_entity_types()
     merge_similar_nodes()
     merge_duplicate_nodes()
