@@ -1,6 +1,6 @@
 
-
-from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cache
 from itertools import chain
 import pandas as pd
@@ -335,10 +335,17 @@ def merge_duplicate_nodes():
         results = session.run(cql)
         df = pd.DataFrame(results.data())
         grouped = df.groupby('name')
-        exe = ThreadPoolExecutor(max_workers=20)
-        for name,grouped_data in grouped:
-            exe.submit(merge_group_of_nodes,name,grouped_data)
-        exe.shutdown(wait=True)
+        with ThreadPoolExecutor(max_workers=20) as exe:
+            futures = []
+            for idx, (name, grouped_data) in enumerate(grouped):
+                future = exe.submit(merge_group_of_nodes, name, grouped_data)  # 提交任务
+                futures.append(future)
+
+            # 使用 tqdm 来显示进度条，确保只在任务完成后更新进度
+            for idx, future in tqdm(enumerate(as_completed(futures)), total=len(futures), desc="merge_group_of_nodes", unit="group"):
+                # 这里的`as_completed`保证任务执行顺序是按完成的顺序来更新进度
+                future.result()  # 通过调用 `result()` 等待任务完成并获取结果，确保任务已执行完
+        
             
 def merge_similar_nodes():
     """
@@ -387,7 +394,7 @@ def merge_similar_nodes():
     execute_update("""
         MATCH (n)
         WITH split(n.id,'(')[0] AS en_name,COLLECT(n) AS nodes
-        WHERE SIZE(nodes) > 1 and en_name is not null 
+        WHERE SIZE(nodes) > 1 and en_name is not null and en_name <> ''
         UNWIND nodes AS node
         with node,en_name,split(nodes[0].id,'(')[1] AS cn_name,nodes
         where node <> nodes[0]
@@ -398,13 +405,15 @@ def merge_similar_nodes():
     log.info('5. 融合中文名称一样，英文不一样，例如: "SCREW (螺钉)“,"SCREWS (螺钉)"')
     execute_update("""
         MATCH (n)
-        WITH split(n.id,'(')[1] AS cn_name,COLLECT(n) AS nodes
-        WHERE SIZE(nodes) > 1 and cn_name=~ '^[\u4e00-\u9fa5]+$'
+        WITH split(n.id,'(')[1] AS cn_part,COLLECT(n) AS nodes
+        WHERE cn_part is not null and cn_part <> '' and  SIZE(nodes) > 1
+        WITH nodes,left(cn_part,size(cn_part) - 1) AS cn_name
+        WHERE cn_name=~ '^[\u4e00-\u9fa5]+$'
         UNWIND nodes AS node
         with node,cn_name,split(nodes[0].id,'(')[0] AS en_name,nodes
         where node <> nodes[0]
         with node,en_name,cn_name
-        set node.id= en_name + '(' + cn_name;
+        set node.id= en_name + '(' + cn_name + ')';
     """)
 
 def update_index():
