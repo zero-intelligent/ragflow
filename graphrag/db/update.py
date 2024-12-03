@@ -28,12 +28,12 @@ similar_entity_types = [
     ["TOXIN(毒素)","TOXICANT(毒素)","MYCOTOXIN(真菌毒素)","毒素"],
     ["COMPLICATION(并发症)","并发症"],
     ["NUTRITION(营养)","NUTRIENT(营养)","NUTRIENT(营养素)","营养","NUTRIENT (营养)","NUTRIENT (营养素)","NUTRIENT(营养物质)","NUTRIENT(营养成分)"],
-    ["ENVIRONMENTAL-FACTOR(环境因素)","ENVIRONMENTAL-FACTORS(环境因素)","ENVIRONMENTAL-FACTORS (环境因素)","环境因素"],
+    ["ENVIRONMENTAL-FACTOR(环境因素)","ENVIRONMENTAL-FACTORS(环境 FACTORS)","ENVIRONMENTAL-FACTORS(环境因素)","ENVIRONMENTAL-FACTORS (环境因素)","环境因素"],
     ["FOOD(食物)","食物"],
     ["VIRUS(病毒)","病毒"],
     ["VIRUS-CHARACTERISTIC(病毒特性)"],
     ["BACTERIA(细菌)","细菌"],
-    ["ORGAN-OR-SYSTEM(器官或系统)","器官","ORGAN-OR-SYSTEM (器官-OR-系统)","ORGAN-OR-SYSTEM (器官或 SYSTEM)","ORGAN-OR-SYSTEM(器官-OR-系统)","ORGAN","ORGAN-FUNCTION(器官功能)","TISSUE(组织)","TISSUE (组织)"],
+    ["ORGAN-OR-SYSTEM(器官或系统)","ORGAN-OR-SYSTEM(器官或 SYSTEM)","器官","ORGAN-OR-SYSTEM (器官-OR-系统)","ORGAN-OR-SYSTEM (器官或 SYSTEM)","ORGAN-OR-SYSTEM(器官-OR-系统)","ORGAN","ORGAN-FUNCTION(器官功能)","TISSUE(组织)","TISSUE (组织)"],
     ["TREATMENT-METHOD(治疗方法)","治疗方法","|>治疗方法","TREATMENT METHOD"],
     ["SYMPTOM(症状)","症状","|>|>症状","|>症状","SYMPTOM(症状)|","SYMPTOM"],
     ["PROTEIN(蛋白质)","PROTEIN (蛋白质)","蛋白质","PROTEIN(蛋白)","PROTEIN-SOURCE(蛋白质来源)","蛋白","PROTEIN (蛋白)"],
@@ -111,13 +111,14 @@ def merge_similary_entity_types():
     log.info("移除重复标签")
     execute_update("""
         MATCH (n)
-        where size(labels(n)) > 1
+        WHERE any(label IN labels(n) WHERE label CONTAINS ' ')  // 查找包含空格的标签
         WITH n, labels(n) AS oldLabels
         UNWIND oldLabels AS label
-        WITH n, COLLECT(DISTINCT label) AS uniqueLabels, oldLabels  // 确保 oldLabels 变量仍然可用
+        WITH n, oldLabels,REPLACE(label, ' ', '') AS cleanedLabel  // 移除空格
+        WITH n, COLLECT(DISTINCT cleanedLabel) AS uniqueLabels, oldLabels  // 去重并保留旧标签
         // 移除所有原始标签
         CALL apoc.create.removeLabels([n], oldLabels) YIELD node AS removedNode
-        // 设置去重后的标签
+        // 添加去重后的标签
         CALL apoc.create.addLabels([n], uniqueLabels) YIELD node AS addedNode
         RETURN n.id AS nodeId, labels(n) AS newLabels;
     """)
@@ -130,8 +131,33 @@ def merge_similary_entity_types():
             log.info(update_query)
             execute_update(update_query)
             
+            update_query:str = f"MATCH (n) WHERE n.entity_type='{entity_type}' SET n.entity_type='{target_type}'"
+            log.info(update_query)
+            execute_update(update_query)
+            
             
 def clean_dirty_nodes():
+    
+    to_delete_ids = [
+        "ELDERLY-FEMALE-SMALL-BREED-DOGS(老龄雌性小型纯种犬)",
+        "3-MONTH-OLD-MALE(3月龄雄性)",
+        "4-YEAR-OLD-MALE(4岁雄性)",
+        "3-YEAR-OLD-FEMALE(3岁雌性)",
+        "3-YEAR-OLD-FEMALE-CAT(3岁雌性猫)",
+        "LARGE-MALE-DOGS-UNDER-3-YEARS-OLD(3岁以下大型公犬)",
+        "ELDERLY-MALE-DOG(老龄公犬)",
+        "OLDER-MALE-LARGE-BREEDS(老年、雄性、大型犬)",
+        "6-WEEK-OLD-PERSIAN-CAT(6周龄波斯猫)",
+        "ILEOSTOMY(回肠造口术)",
+        "VARIOUS-AGE-AND-BREED(各种年龄和品种)",
+        "SEX-AND-BREED(性别和品种)"
+    ]
+    execute_update(f"""
+        MATCH (n)
+        where n.id in {str(to_delete_ids)}
+        DETACH DELETE n
+    """)
+    
     log.info("将labels为空的节点赋值为 非空的entity_type")
     execute_update("""
         MATCH (n)
@@ -151,7 +177,9 @@ def clean_dirty_nodes():
     log.info("清除掉 entity_type or source_id  or description is null 的节点")
     execute_update("""
         match (n) 
-        where n.entity_type is null or n.source_id is null or n.description is null
+        where (n.entity_type is null or n.entity_type = '') 
+            or (n.source_id is null or n.source_id='')
+            or (n.description is null or n.description='')
         detach delete n;
     """)  
     
@@ -222,7 +250,6 @@ def merge_group_of_nodes(node_id:str,
                         nodes_dataframe:pd.DataFrame
                         ):
     llm_bdl = get_llm()
-    log.info(f"processing {node_id}")
     # 计算每个组的 entity_type count
     entity_type_grouped = nodes_dataframe.groupby('entity_type').size().reset_index(name='count')
     # 找到 count 最大的 entity_type
@@ -246,9 +273,10 @@ def merge_group_of_nodes(node_id:str,
     labels_str = ' '.join([f':`{la}`' for la in labels])
     
     #更新保留节点，融合进其他节点的信息
+    log.info(f"updating attrs node id={node_id}")
     execute_update(f"""
         match(n) 
-        where elementid(n)={keep_node_id}
+        where elementid(n)='{keep_node_id}'
         set n{labels_str},
         n.description='{escape(description_summary)}',
         n.source_id='{escape(source_id)};'
@@ -257,33 +285,35 @@ def merge_group_of_nodes(node_id:str,
     remove_nodes = nodes_dataframe[nodes_dataframe['id'] != keep_node_id]
 
     #删除其他节点，并将关系（入和出方向）转移到保留节点
+    log.info(f"transfer relations of node id={node_id}")
     execute_update(f"""
         MATCH (node)
         where elementid(node) in {str(list(remove_nodes['id']))}
         MATCH(keep_node)
-        where elementid(keep_node)={keep_node_id}
+        where elementid(keep_node)='{keep_node_id}'
         WITH node,keep_node
         // Transfer outgoing relationships from the duplicate nodes to the "keep" node
         MATCH (node)-[outgoing_rel]->(target)  // match all outgoing relationships of the current node
         MERGE (keep_node)-[outgoing_rel2:CONNECTED_TO]->(target) // create the same outgoing relationship for the "keep" node
-        ON CREATE SET outgoing_rel2 = outgoing_rel  // Transfer properties of the outgoing relationship
+        ON CREATE SET outgoing_rel2 = properties(outgoing_rel)  // Transfer properties of the outgoing relationship
 
         WITH node,keep_node
         // Transfer incoming relationships from the duplicate nodes to the "keep" node
         MATCH (source)-[incoming_rel]->(node)  // match all incoming relationships to the current node
         MERGE (source)-[incoming_rel2:CONNECTED_TO]->(keep_node) // create the same incoming relationship for the "keep" node
-        ON CREATE SET incoming_rel2 = incoming_rel  // Transfer properties of the incoming relationship
+        ON CREATE SET incoming_rel2 = properties(incoming_rel)  // Transfer properties of the incoming relationship
 
         // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
         WITH node
         DETACH DELETE node;
     """)
     #删除其他节点，并将关系（入和出方向）转移到保留节点
+    log.info(f"detach delete node id={node_id}")
     execute_update(f"""
         MATCH (node)
         where elementid(node) in {str(list(remove_nodes['id']))}
         MATCH(keep_node)
-        where elementid(keep_node)={keep_node_id}
+        where elementid(keep_node)='{keep_node_id}'
         // Delete the duplicate node if its ID, entity_type, description, and source_id match the "keep" node
         WITH node
         DETACH DELETE node;
@@ -409,13 +439,15 @@ def remove_trigger():
     execute_update("call apoc.trigger.removeAll();")
     
 def main():
-    remove_trigger()
-    update_index()
+    # merge_similary_entity_types()
     clean_dirty_nodes()
-    merge_similary_entity_types()
-    merge_similar_nodes()
-    merge_duplicate_nodes()
-    remove_duplicate_ndoes() # 对merge_duplicate_nodes的补充，确保删除孤立无边节点
+    # remove_trigger()
+    # update_index()
+    # clean_dirty_nodes()
+    # merge_similary_entity_types()
+    # merge_similar_nodes()
+    # merge_duplicate_nodes()
+    # remove_duplicate_ndoes() # 对merge_duplicate_nodes的补充，确保删除孤立无边节点
     
     # export_duplicate_nodes()
 
