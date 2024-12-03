@@ -324,12 +324,12 @@ def merge_duplicate_nodes():
         删除 id 重复的节点
     """
     cql = """
-    MATCH (n)
-    WITH n.id AS name, COLLECT(n) AS nodes
-    WHERE SIZE(nodes) > 1
-    UNWIND nodes AS node
-    RETURN elementid(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
-    ORDER BY node.id;
+        MATCH (n)
+        WITH n.id AS name, COLLECT(n) AS nodes
+        WHERE SIZE(nodes) > 1
+        UNWIND nodes AS node
+        RETURN elementid(node) AS id, node.id AS name, node.entity_type AS entity_type, node.description AS description, node.source_id AS source_id
+        ORDER BY node.id;
     """
     with driver.session() as session:
         results = session.run(cql)
@@ -439,15 +439,13 @@ def remove_trigger():
     execute_update("call apoc.trigger.removeAll();")
     
 def main():
-    # merge_similary_entity_types()
     clean_dirty_nodes()
-    # remove_trigger()
-    # update_index()
-    # clean_dirty_nodes()
-    # merge_similary_entity_types()
-    # merge_similar_nodes()
-    # merge_duplicate_nodes()
-    # remove_duplicate_ndoes() # 对merge_duplicate_nodes的补充，确保删除孤立无边节点
+    remove_trigger()
+    update_index()
+    merge_similary_entity_types()
+    merge_similar_nodes()
+    merge_duplicate_nodes()
+    remove_duplicate_ndoes() # 对merge_duplicate_nodes的补充，确保删除孤立无边节点
     
     # export_duplicate_nodes()
 
