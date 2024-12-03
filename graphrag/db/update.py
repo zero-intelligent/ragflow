@@ -337,12 +337,12 @@ def merge_duplicate_nodes():
         grouped = df.groupby('name')
         with ThreadPoolExecutor(max_workers=20) as exe:
             futures = []
-            for idx, (name, grouped_data) in enumerate(grouped):
+            for name, grouped_data in grouped:
                 future = exe.submit(merge_group_of_nodes, name, grouped_data)  # 提交任务
                 futures.append(future)
 
             # 使用 tqdm 来显示进度条，确保只在任务完成后更新进度
-            for idx, future in tqdm(enumerate(as_completed(futures)), total=len(futures), desc="merge_group_of_nodes", unit="group"):
+            for future in tqdm(as_completed(futures), total=len(futures), desc="merge_group_of_nodes", unit="group"):
                 # 这里的`as_completed`保证任务执行顺序是按完成的顺序来更新进度
                 future.result()  # 通过调用 `result()` 等待任务完成并获取结果，确保任务已执行完
         
